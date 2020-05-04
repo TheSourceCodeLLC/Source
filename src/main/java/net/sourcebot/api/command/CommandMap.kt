@@ -9,5 +9,10 @@ class CommandMap {
         command.aliases.forEach { aliases[it] = command }
     }
 
-    fun get(identifier: String) = labels[identifier] ?: aliases[identifier]
+    fun unregister(command: Command) {
+        labels.remove(command.name)
+        command.aliases.forEach { aliases.remove(it) }
+    }
+
+    operator fun get(identifier: String) = labels[identifier] ?: aliases[identifier]
 }
