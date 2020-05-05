@@ -17,7 +17,9 @@ import java.util.*
 import kotlin.collections.HashSet
 
 fun main() {
-    Source()
+    val source = Source()
+    //Register base module
+    source.loadModule(source)
 }
 
 class Source internal constructor() : SourceModule {
@@ -40,12 +42,12 @@ class Source internal constructor() : SourceModule {
             properties.getStringRequired("token"),
             EnumSet.complementOf(ignoredIntents)
         ).addEventListeners(eventSubsystem).build().awaitReady()
-        loadModule(this)
     }
 
     fun loadModule(module: SourceModule) {
         modules.add(module)
         module.commands.forEach(commandMap::register)
+        module.registerEvents(eventSubsystem)
     }
 
     fun unloadModule(module: SourceModule) {
