@@ -8,9 +8,7 @@ import net.sourcebot.api.command.CommandMap
 import net.sourcebot.api.event.EventSubsystem
 import net.sourcebot.api.misc.Properties
 import net.sourcebot.api.module.SourceModule
-import net.sourcebot.base.EightBallCommand
 import net.sourcebot.base.HelpCommand
-import net.sourcebot.base.OngCommand
 import net.sourcebot.base.TimingsCommand
 import java.nio.file.Path
 import java.util.*
@@ -60,9 +58,7 @@ class Source internal constructor() : SourceModule {
     override val description = "Source base module"
     override val commands = setOf(
         HelpCommand(modules, commandMap),
-        TimingsCommand(),
-        EightBallCommand(),
-        OngCommand()
+        TimingsCommand()
     )
 
     override fun registerEvents(eventSubsystem: EventSubsystem) {
