@@ -1,0 +1,7 @@
+{
+  "token": "",
+  "commands": {
+    "prefix": "!",
+    "delete-seconds": 15
+  }
+}

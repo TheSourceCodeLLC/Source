@@ -1,4 +1,4 @@
-package net.sourcebot.module.misc
+package net.sourcebot.base
 
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.alert.Alert

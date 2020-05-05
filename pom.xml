@@ -64,7 +64,7 @@
                 <version>${kotlin.version}</version>
                 <configuration>
                     <args>
-                        <arg>-Xjvm-default</arg>
+                        <arg>-Xjvm-default=enable</arg>
                     </args>
                 </configuration>
                 <executions>

@@ -1,17 +1,17 @@
-package net.sourcebot.module.info
+package net.sourcebot.base
 
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.alert.Alert
+import net.sourcebot.api.alert.error.UnknownTopicAlert
+import net.sourcebot.api.alert.info.CommandInfoAlert
+import net.sourcebot.api.alert.info.ModuleInfoAlert
+import net.sourcebot.api.alert.info.ModuleListAlert
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.CommandMap
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.module.SourceModule
-import net.sourcebot.module.info.alert.CommandInfoAlert
-import net.sourcebot.module.info.alert.ModuleInfoAlert
-import net.sourcebot.module.info.alert.ModuleListAlert
-import net.sourcebot.module.info.alert.UnknownTopicAlert
 
 class HelpCommand(
     private val modules: Set<SourceModule>,

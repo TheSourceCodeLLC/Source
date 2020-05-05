@@ -1,12 +1,12 @@
-package net.sourcebot.module.misc
+package net.sourcebot.base
 
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.alert.Alert
+import net.sourcebot.api.alert.info.EightBallAlert
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.module.misc.alert.EightBallAlert
 
 class EightBallCommand : Command() {
     private val answers = arrayOf(

@@ -49,7 +49,7 @@ class Properties(private val json: JsonObject) {
         supplier(this, path) ?: throw IllegalArgumentException("Could not load value at `${path}`!")
 
     companion object {
-        @JvmStatic fun fromPath(path: Path): Properties = JsonReader(FileReader(path.toFile())).use {
+        @JvmStatic fun fromPath(path: Path) = JsonReader(FileReader(path.toFile())).use {
             Properties(JsonParser.parseReader(it) as JsonObject)
         }
     }

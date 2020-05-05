@@ -1,10 +1,10 @@
-package net.sourcebot.module.info
+package net.sourcebot.base
 
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.alert.Alert
+import net.sourcebot.api.alert.info.TimingsAlert
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.module.info.alert.TimingsAlert
 import java.time.Instant
 
 class TimingsCommand : Command() {

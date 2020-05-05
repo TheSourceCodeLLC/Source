@@ -24,7 +24,7 @@ abstract class Command {
         "$parentStr ${argumentInfo.asList()}"
     }
 
-    fun getChild(identifier: String) = children[identifier]
+    private fun getChild(identifier: String) = children[identifier]
 
     fun cascade(message: Message, args: Arguments): Command {
         if (args.hasNext()) {

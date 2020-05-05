@@ -1,4 +1,4 @@
-package net.sourcebot.module.info.alert
+package net.sourcebot.api.alert.info
 
 import net.sourcebot.api.alert.InfoAlert
 import net.sourcebot.api.command.Command
