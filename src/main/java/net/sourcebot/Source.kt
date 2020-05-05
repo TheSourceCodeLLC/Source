@@ -16,7 +16,9 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.collections.HashSet
 
-fun main() = Source()
+fun main() {
+    Source()
+}
 
 class Source internal constructor() : SourceModule {
     private val ignoredIntents = EnumSet.of(
