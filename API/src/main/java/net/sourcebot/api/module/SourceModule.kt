@@ -29,11 +29,11 @@ abstract class SourceModule {
     }
 
     val config: Properties by lazy {
-        saveResource("/config.json").let {
-            FileReader(it).use { reader ->
-                JsonParser.parseReader(reader) as JsonObject
-            }.let(::Properties)
-        }
+        val file = File(dataFolder, "config.json")
+        if (!file.exists()) saveResource("/config.json")
+        return@lazy FileReader(file).use {
+            JsonParser.parseReader(it) as JsonObject
+        }.let(::Properties)
     }
 
     fun saveResource(absPath: String): File {
