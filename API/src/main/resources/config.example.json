@@ -1,0 +1,15 @@
+{
+  "token": "",
+  "guild": "",
+  "commands": {
+    "prefix": "!",
+    "delete-seconds": 15
+  },
+  "mongodb": {
+    "host": "localhost",
+    "port": 27017,
+    "database": "sourcebot",
+    "username": "sourcebot",
+    "password": "password"
+  }
+}

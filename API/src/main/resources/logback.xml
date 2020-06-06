@@ -1,0 +1,16 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.out</target>
+        <encoder>
+            <pattern>[%highlight(%d{hh:mm:ss a z} %-5level)] [%highlight(%logger)] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+    <logger name="net.dv8tion.jda" level="INFO"/>
+    <logger name="net.dv8tion.jda.internal" level="WARN"/>
+    <logger name="uk.org.lidalia.sysoutslf4j" level="WARN"/>
+    <logger name="org.mongodb.driver.cluster" level="WARN"/>
+</configuration>
