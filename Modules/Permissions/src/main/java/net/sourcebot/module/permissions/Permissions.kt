@@ -2,6 +2,8 @@ package net.sourcebot.module.permissions
 
 import net.sourcebot.Source
 import net.sourcebot.api.module.SourceModule
+import net.sourcebot.module.permissions.commands.group.CreateGroupCommand
+import net.sourcebot.module.permissions.commands.group.DeleteGroupCommand
 import net.sourcebot.module.permissions.commands.parent.AddParentCommand
 import net.sourcebot.module.permissions.commands.parent.ClearParentsCommand
 import net.sourcebot.module.permissions.commands.parent.ParentInfoCommand
@@ -23,7 +25,10 @@ class Permissions : SourceModule() {
             ParentInfoCommand(permissionHandler),
             AddParentCommand(permissionHandler),
             RemoveParentCommand(permissionHandler),
-            ClearParentsCommand(permissionHandler)
+            ClearParentsCommand(permissionHandler),
+
+            CreateGroupCommand(permissionHandler),
+            DeleteGroupCommand(permissionHandler)
         )
     }
 }

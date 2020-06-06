@@ -139,4 +139,12 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub The-SourceCode Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/The-SourceCode/SourceV5</url>
+        </repository>
+    </distributionManagement>
 </project>
