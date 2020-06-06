@@ -5,7 +5,7 @@ How to use:
 * Compile Source on your local machine:
   - `git clone git@github.com:The-SourceCode/SourceV5.git`
   - `cd SourceV5`
-  - `mvn install -DtargetRoot=.\target`
+  - `mvn install -DtargetRoot=/path/to/target`
 * Create a folder somewhere for the bot to run in (runtime dir)
 * Copy `API-v5.jar` from `target/bin/Source` to the runtime dir.
 * Create a folder named `modules` in the runtime dir (module dir)
