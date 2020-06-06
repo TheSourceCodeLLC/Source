@@ -14,7 +14,7 @@ import java.util.regex.Pattern
  * @version April 25, 2020
  */
 abstract class AbstractMessageHandler constructor(private val prefix: String) {
-    private val ARGS_PATTERN = Pattern.compile("(\".*?\"|\\S+)")
+    private val ARGS_PATTERN = Pattern.compile("(\".*?\"|[^ ]+)")
 
     fun onMessageReceived(event: MessageReceivedEvent) {
         val message = event.message
