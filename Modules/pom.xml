@@ -5,7 +5,7 @@
     <parent>
         <artifactId>Source</artifactId>
         <groupId>net.sourcebot</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
