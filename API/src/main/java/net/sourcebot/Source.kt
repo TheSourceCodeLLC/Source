@@ -24,21 +24,19 @@ import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J
 import java.io.File
 import java.io.FileFilter
 import java.io.FileReader
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 import kotlin.Comparator
 import kotlin.collections.ArrayList
 
-class Source internal constructor() {
+class Source internal constructor(val properties: Properties) {
     private val ignoredIntents = EnumSet.of(
         GUILD_MESSAGE_TYPING, DIRECT_MESSAGE_TYPING
     )
 
     val sourceEventSystem = EventSystem<SourceEvent>()
     val jdaEventSystem = EventSystem<GenericEvent>()
-
-    val properties = FileReader("config.json").use {
-        JsonParser.parseReader(it) as JsonObject
-    }.let(::Properties)
 
     val mongodb = MongoDB(properties.required("mongodb"))
     val permissionHandler = PermissionHandler(mongodb)
@@ -111,7 +109,16 @@ class Source internal constructor() {
 
             SysOutOverSLF4J.sendSystemOutAndErrToSLF4J()
             JsonSerial.register(Properties.Serial())
-            return Source().apply {
+            val configFile = File("config.json")
+            if (!configFile.exists()) {
+                Source::class.java.getResourceAsStream("/config.example.json").use {
+                    Files.copy(it, Path.of("config.json"))
+                }
+            }
+            val properties = FileReader(configFile).use {
+                JsonParser.parseReader(it) as JsonObject
+            }.let(::Properties)
+            return Source(properties).apply {
                 registerSerial()
                 loadModules()
                 logger.info("Source is now online!")

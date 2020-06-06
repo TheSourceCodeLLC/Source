@@ -5,6 +5,9 @@ import net.sourcebot.api.alert.Alert
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 
+/**
+ * Represents a command to be executed via tha [CommandHandler]
+ */
 abstract class Command {
     private val children = CommandMap<Command>()
 

@@ -4,6 +4,9 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.alert.ErrorAlert
 
+/**
+ * Called when a user has permission to use a command, but not in the current channel.
+ */
 class InvalidChannelAlert(jda: JDA, contexts: Set<String>) : ErrorAlert("Invalid Channel!") {
     init {
         val validChannels = mutableSetOf<TextChannel>()

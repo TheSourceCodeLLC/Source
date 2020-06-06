@@ -1,8 +1,14 @@
 package net.sourcebot.api.module
 
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
+import net.sourcebot.api.properties.Properties
 import org.slf4j.Logger
+import java.io.File
+import java.io.FileReader
+import java.nio.file.Files
 import kotlin.properties.Delegates
 
 abstract class SourceModule {
@@ -17,6 +23,30 @@ abstract class SourceModule {
         if (enable) onEnable(source) else onDisable()
     }
         internal set
+
+    val dataFolder: File by lazy {
+        File(moduleDescription.name)
+    }
+
+    val config: Properties by lazy {
+        saveResource("/config.json").let {
+            FileReader(it).use { reader ->
+                JsonParser.parseReader(reader) as JsonObject
+            }.let(::Properties)
+        }
+    }
+
+    fun saveResource(absPath: String): File {
+        if (!absPath.startsWith("/")) throw IllegalArgumentException("Resource path must be absolute!")
+        val relPath = absPath.substring(1)
+        return this::class.java.getResourceAsStream(absPath).use {
+            if (it == null) throw IllegalStateException("Could not locate '$relPath' in module JAR!")
+            val asPath = dataFolder.toPath().resolve(relPath)
+            dataFolder.mkdirs()
+            Files.copy(it, asPath)
+            asPath.toFile()
+        }
+    }
 
     /**
      * Fired when this Module is being loaded; before it is enabled.

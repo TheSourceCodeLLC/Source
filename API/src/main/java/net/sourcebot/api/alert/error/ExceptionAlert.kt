@@ -2,8 +2,13 @@ package net.sourcebot.api.alert.error
 
 import net.sourcebot.api.alert.ErrorAlert
 
-class ExceptionAlert(exception: Throwable) : ErrorAlert("Exception!", exception.toString()) {
+/**
+ * Renders an [ErrorAlert] for the provided [Throwable] and outputs the original stacktrace.
+ *
+ * @param[throwable] The [Throwable] that was caught to fire this alert.
+ */
+class ExceptionAlert(throwable: Throwable) : ErrorAlert("Exception!", throwable.toString()) {
     init {
-        exception.printStackTrace()
+        throwable.printStackTrace()
     }
 }

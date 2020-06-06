@@ -3,10 +3,7 @@ package net.sourcebot.module.permissions.commands.permission
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.alert.Alert
 import net.sourcebot.api.alert.SuccessAlert
-import net.sourcebot.api.command.argument.Argument
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.command.argument.OptionalArgument
+import net.sourcebot.api.command.argument.*
 import net.sourcebot.api.permission.PermissionHandler
 import net.sourcebot.module.permissions.commands.PermissionCommand
 
@@ -30,7 +27,7 @@ class SetPermissionCommand(
         args.backtrack()
         val targetHolder = getPermissionHolder(type, args, message.guild)
         val node = args.next("You did not specify a node to set!")
-        val flag = args.next("You did not specify a flag for the node!").toBoolean()
+        val flag = args.next(Adapter.BOOLEAN, "You did not specify a flag for the node!")
         val context = args.next()
         val desc = if (context != null) {
             targetHolder.setPermission(node, flag, context)

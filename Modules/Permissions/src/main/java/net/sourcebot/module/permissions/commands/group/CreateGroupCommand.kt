@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.alert.Alert
 import net.sourcebot.api.alert.ErrorAlert
 import net.sourcebot.api.alert.SuccessAlert
+import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
@@ -27,7 +28,7 @@ class CreateGroupCommand(
         return if (exists) {
             ErrorAlert("Duplicate Group!", "The group `$name` already exists!")
         } else {
-            val weight = args.next("You did not specify a valid group weight!").toInt()
+            val weight = args.next(Adapter.INTEGER, "You did not specify a valid group weight!")
             permissionHandler.createGroup(name, weight)
             SuccessAlert("Group Created!", "Created group `$name` with a weight of `$weight`!")
         }
