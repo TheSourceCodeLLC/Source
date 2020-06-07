@@ -52,16 +52,15 @@ class CommandHandler(
                 val contexts = mutableListOf<String>()
                 contexts.add(channel.id)
                 if (parent != null) contexts.add(parent.id)
-                if (!hasPermission(user, command.permission!!, contexts)) {
-                    val availableContexts = user.getContexts(command.permission!!)
-                    return if (availableContexts.isEmpty()) {
-                        respond(message, NoPermissionAlert().buildFor(author), true)
-                    } else {
-                        respond(message, InvalidChannelAlert(
-                            message.jda,
-                            availableContexts
-                        ).buildFor(author), true)
-                    }
+                val effectiveNodes = getEffectiveNodes(command.permission!!)
+                if (effectiveNodes.none { hasPermission(user, it, contexts) }) {
+                    val availableIn = effectiveNodes.flatMap { user.getContexts(it) }.toSet()
+                    return respond(
+                        message,
+                        if (availableIn.isEmpty()) NoPermissionAlert().buildFor(author)
+                        else InvalidChannelAlert(message.jda, availableIn).buildFor(author),
+                        true
+                    )
                 }
             }
             val nextId = arguments.next() ?: break
@@ -111,9 +110,25 @@ class CommandHandler(
 
     fun unregister(module: SourceModule) = commandMap.removeIf { it.module == module }
 
-    private fun hasPermission(sourceUser: SourceUser, node: String, context: List<String>): Boolean {
-        val matchesContext = context.any { sourceUser.hasPermission(node, it) }
-        if (matchesContext) return true
-        return sourceUser.hasPermission(node)
+    private fun hasPermission(
+        sourceUser: SourceUser,
+        node: String,
+        context: List<String>
+    ) =
+        if (context.any { sourceUser.hasPermission(node, it) }) true
+        else sourceUser.hasPermission(node)
+
+    private fun getEffectiveNodes(node: String): Set<String> {
+        return HashSet<String>().apply {
+            var permission = node
+            var index = permission.length
+            do {
+                add(permission)
+                index = permission.lastIndexOf('.', index)
+                if (index == -1) break
+                permission = permission.substring(0, index) + ".*"
+            } while (true)
+            add("*")
+        }
     }
 }
