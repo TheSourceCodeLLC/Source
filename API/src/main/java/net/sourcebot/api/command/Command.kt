@@ -16,9 +16,13 @@ abstract class Command {
     abstract val description: String
 
     open val aliases = emptyArray<String>()
-    open val argumentInfo = ArgumentInfo(
-        Argument(children.getCommandNames().joinToString("|"), "The subcommand you wish to perform")
-    )
+    open val argumentInfo: ArgumentInfo by lazy {
+        val children = children.getCommandNames()
+        if (children.isEmpty()) ArgumentInfo()
+        else ArgumentInfo(
+            Argument(children.joinToString("|"), "The subcommand you wish to perform")
+        )
+    }
 
     open var cleanupResponse = true
     open var parent: Command? = null
