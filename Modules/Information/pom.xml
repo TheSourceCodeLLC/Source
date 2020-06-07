@@ -3,43 +3,28 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>Source</artifactId>
-        <groupId>net.sourcebot</groupId>
+        <artifactId>Modules</artifactId>
+        <groupId>net.sourcebot.module</groupId>
         <version>1.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>net.sourcebot.module</groupId>
-    <artifactId>Modules</artifactId>
-    <packaging>pom</packaging>
+    <groupId>net.sourcebot.module.information</groupId>
+    <artifactId>Information</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <description>Module responsible for general information commands.</description>
 
     <properties>
-        <author/>
+        <author>Hwiggy#0001</author>
     </properties>
-
-    <modules>
-        <module>Help</module>
-        <module>Permissions</module>
-        <module>Tags</module>
-        <module>Information</module>
-        <module>Cryptography</module>
-    </modules>
-
-    <dependencies>
-        <dependency>
-            <groupId>net.sourcebot</groupId>
-            <artifactId>API</artifactId>
-        </dependency>
-    </dependencies>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.2.0</version>
                 <configuration>
-                    <skipAssembly>true</skipAssembly>
+                    <skipAssembly>false</skipAssembly>
                 </configuration>
             </plugin>
         </plugins>

@@ -28,6 +28,7 @@ abstract class Command {
     open var parent: Command? = null
 
     open val permission: String? = null
+    open val guildOnly = false
 
     val usage: String by lazy {
         var parent = this.parent
@@ -49,4 +50,6 @@ abstract class Command {
         command.parent = this
         return true
     }
+
+    protected fun addChildren(vararg command: Command) = command.all(::addChild)
 }

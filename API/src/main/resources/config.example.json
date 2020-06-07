@@ -3,7 +3,7 @@
   "guild": "",
   "commands": {
     "prefix": "!",
-    "delete-seconds": 15
+    "delete-seconds": 20
   },
   "mongodb": {
     "host": "localhost",

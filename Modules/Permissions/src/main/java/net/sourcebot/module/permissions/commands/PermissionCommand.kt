@@ -13,6 +13,7 @@ abstract class PermissionCommand(
     internal val permissionHandler: PermissionHandler
 ) : RootCommand() {
     override val guildOnly = true
+
     fun getPermissionHolder(type: String, args: Arguments, guild: Guild): PermissionHolder {
         return when (type.toLowerCase()) {
             "user" -> {
@@ -26,7 +27,7 @@ abstract class PermissionCommand(
             }
             "role" -> {
                 val role = args.nextRole(guild, "You did not specify a valid role!")
-                permissionHandler.getRole(role) ?: throw InvalidSyntaxException("You did not specify a valid role!")
+                permissionHandler.getRole(role)
             }
             else -> throw InvalidSyntaxException("Invalid target type, `$type`!")
         }

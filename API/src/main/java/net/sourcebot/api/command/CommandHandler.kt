@@ -38,27 +38,28 @@ class CommandHandler(
         var command: Command = rootCommand
         do {
             if (command.permission != null) {
-                if (!inGuild) {
+                if (inGuild) {
+                    val member = message.member!!
+                    val user = permissionHandler.getUser(member)
+                    val channel = message.channel as TextChannel
+                    val parent = channel.parent
+                    val contexts = mutableListOf<String>()
+                    contexts.add(channel.id)
+                    if (parent != null) contexts.add(parent.id)
+                    val effectiveNodes = getEffectiveNodes(command.permission!!)
+                    if (effectiveNodes.none { hasPermission(user, it, contexts) }) {
+                        val availableIn = effectiveNodes.flatMap { user.getContexts(it) }.toSet()
+                        return respond(
+                            message,
+                            if (availableIn.isEmpty()) NoPermissionAlert().buildFor(author)
+                            else InvalidChannelAlert(message.jda, availableIn).buildFor(author),
+                            true
+                        )
+                    }
+                } else if (command.guildOnly) {
                     return respond(
                         message,
                         GuildOnlyCommandAlert().buildFor(author),
-                        true
-                    )
-                }
-                val member = message.member!!
-                val user = permissionHandler.getUser(member)
-                val channel = message.channel as TextChannel
-                val parent = channel.parent
-                val contexts = mutableListOf<String>()
-                contexts.add(channel.id)
-                if (parent != null) contexts.add(parent.id)
-                val effectiveNodes = getEffectiveNodes(command.permission!!)
-                if (effectiveNodes.none { hasPermission(user, it, contexts) }) {
-                    val availableIn = effectiveNodes.flatMap { user.getContexts(it) }.toSet()
-                    return respond(
-                        message,
-                        if (availableIn.isEmpty()) NoPermissionAlert().buildFor(author)
-                        else InvalidChannelAlert(message.jda, availableIn).buildFor(author),
                         true
                     )
                 }
@@ -118,17 +119,10 @@ class CommandHandler(
         if (context.any { sourceUser.hasPermission(node, it) }) true
         else sourceUser.hasPermission(node)
 
-    private fun getEffectiveNodes(node: String): Set<String> {
-        return HashSet<String>().apply {
-            var permission = node
-            var index = permission.length
-            do {
-                add(permission)
-                index = permission.lastIndexOf('.', index)
-                if (index == -1) break
-                permission = permission.substring(0, index) + ".*"
-            } while (true)
-            add("*")
+    private fun getEffectiveNodes(permission: String): Set<String> =
+        mutableSetOf(permission).apply {
+            addAll(permission.mapIndexed { idx, c ->
+                if (c == '.') permission.substring(0..idx) + ".*" else null
+            }.filterNotNull().toMutableSet()).apply { add("*") }
         }
-    }
 }
