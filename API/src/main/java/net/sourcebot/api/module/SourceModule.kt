@@ -25,7 +25,7 @@ abstract class SourceModule {
         internal set
 
     val dataFolder: File by lazy {
-        File(moduleDescription.name)
+        File("modules", moduleDescription.name)
     }
 
     val config: Properties by lazy {

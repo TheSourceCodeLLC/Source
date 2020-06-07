@@ -17,6 +17,7 @@ class CommandMap<C : Command> {
     operator fun get(identifier: String) = labels[identifier] ?: aliases[identifier]
 
     fun getCommands(): Collection<C> = labels.values
+    fun getCommandNames(): Collection<String> = labels.keys
 
     fun removeIf(predicate: (C) -> Boolean) {
         labels.entries.removeIf { predicate(it.value) }

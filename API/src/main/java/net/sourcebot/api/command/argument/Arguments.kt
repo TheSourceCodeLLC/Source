@@ -37,7 +37,7 @@ class Arguments(private var raw: Array<String>) : Iterator<String?> {
      * @return The joined arguments or null if there were no arguments to join.
      */
     fun slurp(delimiter: String): String? {
-        val slurped = raw.copyOfRange(index, raw.size).joinToString(delimiter)
+        val slurped = raw.copyOfRange(index, raw.size).joinToString(delimiter).trim()
         return if (slurped.isEmpty()) null else slurped
     }
 

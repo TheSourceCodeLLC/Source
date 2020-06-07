@@ -2,6 +2,7 @@ package net.sourcebot.api.command
 
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.alert.Alert
+import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 
@@ -15,7 +16,10 @@ abstract class Command {
     abstract val description: String
 
     open val aliases = emptyArray<String>()
-    open val argumentInfo = ArgumentInfo()
+    open val argumentInfo = ArgumentInfo(
+        Argument(children.getCommandNames().joinToString("|"), "The subcommand you wish to perform")
+    )
+
     open var cleanupResponse = true
     open var parent: Command? = null
 

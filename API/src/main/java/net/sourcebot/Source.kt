@@ -26,6 +26,8 @@ import java.io.FileFilter
 import java.io.FileReader
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter.ofPattern
 import java.util.*
 import kotlin.Comparator
 import kotlin.collections.ArrayList
@@ -96,6 +98,10 @@ class Source internal constructor(val properties: Properties) {
     }
 
     companion object {
+        @JvmStatic val TIME_ZONE: ZoneId = ZoneId.of("America/New_York")
+        @JvmStatic val DATE_FORMAT = ofPattern("MM/dd/yyyy")
+        @JvmStatic val TIME_FORMAT = ofPattern("hh:mm:ss a z")
+        @JvmStatic val DATE_TIME_FORMAT = ofPattern("MM/dd/yyyy hh:mm:ss a z")
         @JvmStatic val logger: Logger = LoggerFactory.getLogger(Source::class.java)
         private var enabled = false
 
