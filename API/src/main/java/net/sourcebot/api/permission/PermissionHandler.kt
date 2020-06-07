@@ -76,6 +76,8 @@ class PermissionHandler(mongodb: MongoDB) {
         }
     }
 
+    fun getGroups(): Collection<SourceGroup> = groupCache.values
+
     fun createGroup(name: String, weight: Int): Boolean {
         val cached = groupCache[name]
         return if (cached != null) false
