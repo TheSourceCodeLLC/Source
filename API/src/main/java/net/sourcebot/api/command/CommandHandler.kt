@@ -104,6 +104,7 @@ class CommandHandler(
     private fun handleException(command: Command, exception: Exception) =
         if (exception is InvalidSyntaxException) {
             ErrorAlert(
+                "Invalid Syntax!",
                 "${exception.message!!}\n" +
                 "**Syntax:** ${getSyntax(command)}"
             )
@@ -134,7 +135,7 @@ class CommandHandler(
     private fun getEffectiveNodes(permission: String): Set<String> =
         mutableSetOf(permission).apply {
             addAll(permission.mapIndexed { idx, c ->
-                if (c == '.') permission.substring(0..idx) + ".*" else null
+                if (c == '.') permission.substring(0..idx) + "*" else null
             }.filterNotNull().toMutableSet()).apply { add("*") }
         }
 

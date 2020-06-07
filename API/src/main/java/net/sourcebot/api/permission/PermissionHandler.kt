@@ -29,7 +29,9 @@ class PermissionHandler(mongodb: MongoDB) {
     fun getUser(member: Member): SourceUser {
         val cached = userCache[member]
         return if (cached != null) {
-            cached.roles = member.roles.map(this::getRole).toSet()
+            cached.roles = member.roles.toMutableList().apply {
+                add(member.guild.publicRole)
+            }.map(this::getRole).toSet()
             cached
         } else userCache.computeIfAbsent(member) {
             users.find(Document("id", member.id)).first()?.let {
