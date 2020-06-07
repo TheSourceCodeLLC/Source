@@ -4,7 +4,9 @@ import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.TextChannel
-import net.sourcebot.api.alert.error.*
+import net.sourcebot.api.alert.ErrorAlert
+import net.sourcebot.api.alert.error.ExceptionAlert
+import net.sourcebot.api.alert.error.InvalidChannelAlert
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.module.SourceModule
@@ -51,8 +53,16 @@ class CommandHandler(
                         val availableIn = effectiveNodes.flatMap { user.getContexts(it) }.toSet()
                         return respond(
                             message,
-                            if (availableIn.isEmpty()) NoPermissionAlert().buildFor(author)
-                            else InvalidChannelAlert(message.jda, availableIn).buildFor(author),
+                            (if (availableIn.isEmpty()) {
+                                if (command.guildOnly) ErrorAlert(
+                                    "No Permission!",
+                                    "You do not have permission to use that command!"
+                                )
+                                else ErrorAlert(
+                                    "No Permission!",
+                                    "You don't have permission to use that command here, but you do in DMs!"
+                                )
+                            } else InvalidChannelAlert(message.jda, availableIn)).buildFor(author),
                             true
                         )
                     }
@@ -84,14 +94,16 @@ class CommandHandler(
     private fun respond(message: Message, embed: MessageEmbed, cleanup: Boolean) {
         message.channel.sendMessage(embed).queue {
             if (!cleanup) return@queue
-            message.delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)
+            if (message.channelType == ChannelType.TEXT) {
+                message.delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)
+            }
             it.delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)
         }
     }
 
     private fun handleException(command: Command, exception: Exception) =
         if (exception is InvalidSyntaxException) {
-            InvalidSyntaxAlert(
+            ErrorAlert(
                 "${exception.message!!}\n" +
                 "**Syntax:** ${getSyntax(command)}"
             )
@@ -125,4 +137,11 @@ class CommandHandler(
                 if (c == '.') permission.substring(0..idx) + ".*" else null
             }.filterNotNull().toMutableSet()).apply { add("*") }
         }
+
+    /**
+     * Called when a user uses a command marked as guildOnly outside of a Guild (i.e Direct Message)
+     */
+    private class GuildOnlyCommandAlert : ErrorAlert(
+        "Guild Only Command!", "This command may not be used outside of a guild!"
+    )
 }

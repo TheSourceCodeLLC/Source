@@ -12,6 +12,7 @@ import net.sourcebot.api.command.argument.Arguments
 class OngCommand : RootCommand() {
     override val name = "ong"
     override val description = "Use the Ong language."
+    override val permission = "cryptography.$name"
 
     init {
         addChildren(

@@ -13,6 +13,7 @@ import java.util.*
 class Base64Command : RootCommand() {
     override val name = "base64"
     override val description = "Use Base64."
+    override val permission = "cryptography.$name"
 
     init {
         addChildren(
