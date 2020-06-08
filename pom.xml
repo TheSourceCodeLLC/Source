@@ -6,7 +6,7 @@
 
     <groupId>net.sourcebot</groupId>
     <artifactId>Source</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.6-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -134,7 +134,7 @@
             <dependency>
                 <groupId>net.sourcebot</groupId>
                 <artifactId>API</artifactId>
-                <version>v5.5</version>
+                <version>v5.6</version>
                 <scope>provided</scope>
             </dependency>
         </dependencies>
