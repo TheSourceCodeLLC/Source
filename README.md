@@ -1,6 +1,7 @@
 # Source V5
 
 Source V5 API and Official Modules are available via GitHub Packages.
+GitHub Packages may not be maintained! Use at your own risk!
 
 # Build Instructions:
 Note: You need Java 11 to compile and run Source.
