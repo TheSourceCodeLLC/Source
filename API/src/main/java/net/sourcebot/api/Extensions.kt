@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets
 fun String.urlEncoded(charset: Charset = StandardCharsets.UTF_8): String = URLEncoder.encode(this, charset)
 
 fun Arguments.nextMember(guild: Guild): Member? {
-    val target = next()?.replace("<@(\\d+)>".toRegex(), "$1") ?: return null
+    val target = next()?.replace("<@!?(\\d+)>".toRegex(), "$1") ?: return null
     try {
         val byId = guild.getMemberById(target)
         if (byId != null) return byId
