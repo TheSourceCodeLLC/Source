@@ -71,6 +71,7 @@ class HelpCommand(
                     ) {
                         init {
                             val commands = commandHandler.getCommands(asModule)
+                                .sortedBy(RootCommand::name)
                             val listing = if (commands.isEmpty()) {
                                 "This module does not have any commands."
                             } else {
