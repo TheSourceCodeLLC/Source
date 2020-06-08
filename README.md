@@ -15,7 +15,7 @@ Note: You need Java 11 to compile and run Source.
 * Copy any modules you want to run into the module dir. 
 * Copy `config.example.json` to the runtime dir, and rename it to `config.json`, or start the bot to pregenerate it.
 * Configure the bot to your liking.
-* Start the bot, i.e `java -jar API-v5.jar`
+* Start the bot, i.e `java -jar API.jar`
 
 # Using Permissions
 To enable permission modification via commands, you must install the Permissions module
