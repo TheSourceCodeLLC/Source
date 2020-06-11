@@ -8,7 +8,6 @@
   "mongodb": {
     "host": "localhost",
     "port": 27017,
-    "database": "sourcebot",
     "username": "sourcebot",
     "password": "password"
   }

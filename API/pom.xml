@@ -5,12 +5,11 @@
     <parent>
         <artifactId>Source</artifactId>
         <groupId>net.sourcebot</groupId>
-        <version>1.6-SNAPSHOT</version>
+        <version>5.7</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>API</artifactId>
-    <version>v5.6</version>
 
     <repositories>
         <repository>

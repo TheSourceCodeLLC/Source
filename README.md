@@ -21,30 +21,31 @@ Note: You need Java 11 to compile and run Source.
   * Unix: `java -jar API.jar`
 
 # Using Permissions
-To enable permission modification via commands, you must install the Permissions module
+Members with the `ADMINISTRATOR` permission will ignore permission requirements.
 
-To set permissions with commands, you need permission for the `setpermission` command.
-
-You will need to modify user data on MongoDB to set this permission.
-After setting a permission in MongoDB; it is necessary to restart the bot. 
-If you do it right, you will only need to do this once.
-
-To set the permission via MongoDB, you must add the following object element to the respective `permissions` object array; either on an entry in the `role-permissions` or `user-permissions` collection:
-```json
-{
-  "node": "setpermission",
-  "flag": true
-}
+Command Breakdown:
 ```
-
-Alternatively, you can grant access to ALL permissions with the following object:
-```json
-{
-  "node": "*",
-  "flag": true
-}
+permissions:
+  <group|user|role>: The type of entity to modify
+    <target>: The entity to modify
+      parents: Commands relating to parents
+        add: Add a parent to this entity
+          <toAdd>: Name of the parent to add
+        remove: Remove a parent from this entity
+          <toRemove>: Name of the parent to remove
+        list: List this entity's parents
+        clear: Clear this entity's parents
+      permissions: Commands relating to permissions
+        set: Set a permission for this entity
+          <toSet>: The permission node to set
+          <flag>: The flag for the new node
+          (context): An optional context to set in
+        unset: Unset a permission for this entity
+          <toUnset>: The permission node to unset
+          (context): An optional context to unset from
+        check:
+          <toCheck>: The permission node to check
+          (context): An optional context to check in
+        clear: Clear this entity's permissions
+          (context): An optional context to clear in
 ```
-
-Make sure the role ID or user ID you are updated corresponds to the proper one in your Discord server.
-
-   

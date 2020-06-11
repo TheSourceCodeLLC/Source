@@ -1,0 +1,7 @@
+{
+  "main": "net.sourcebot.impl.BaseModule",
+  "name": "Source",
+  "version": "${project.version}",
+  "description": "Source base commands.",
+  "author": "TheSourceCode"
+}

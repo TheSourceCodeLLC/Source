@@ -5,24 +5,25 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.InputStream
 import java.io.InputStreamReader
 import java.net.URLClassLoader
 import java.util.concurrent.ConcurrentHashMap
 import java.util.jar.JarFile
 
-class ModuleClassLoader(
+open class ModuleClassLoader(
     file: File,
     private val moduleHandler: ModuleHandler
 ) : URLClassLoader(
     arrayOf(file.toURI().toURL()), moduleHandler
 ) {
+    private val jar = JarFile(file)
+
+    internal val classes = ConcurrentHashMap<String, Class<*>>()
     internal val moduleDescription: ModuleDescription = getResourceAsStream("module.json").use {
         if (it == null) throw InvalidModuleException("Could not find module.json!")
         else JsonParser.parseReader(InputStreamReader(it)) as JsonObject
     }.let(::ModuleDescription)
-
-    internal val classes = ConcurrentHashMap<String, Class<*>>()
-    private val jar = JarFile(file)
 
     @JvmOverloads
     fun findClass(name: String, searchParent: Boolean = true): Class<*> = classes.computeIfAbsent(name) {
@@ -41,13 +42,16 @@ class ModuleClassLoader(
         found ?: throw ClassNotFoundException(name)
     }
 
+    override fun getResourceAsStream(name: String): InputStream? =
+        jar.getJarEntry(name).let(jar::getInputStream)
+
     override fun close() {
         jar.close()
         classes.clear()
         super.close()
     }
 
-    fun initialize(): SourceModule {
+    open fun initialize(): SourceModule {
         val main = moduleDescription.main
         val mainClass = Class.forName(main, true, this)
         val moduleClass = mainClass.asSubclass(SourceModule::class.java)

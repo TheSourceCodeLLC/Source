@@ -2,22 +2,26 @@ package net.sourcebot
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import net.dv8tion.jda.api.JDABuilder
+import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.EventListener
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.GatewayIntent.DIRECT_MESSAGE_TYPING
 import net.dv8tion.jda.api.requests.GatewayIntent.GUILD_MESSAGE_TYPING
+import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.sourcebot.api.command.CommandHandler
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
+import net.sourcebot.api.module.ModuleClassLoader
 import net.sourcebot.api.module.ModuleHandler
+import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.permission.*
 import net.sourcebot.api.properties.JsonSerial
 import net.sourcebot.api.properties.Properties
+import net.sourcebot.impl.BaseModule
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J
@@ -51,8 +55,22 @@ class Source internal constructor(val properties: Properties) {
         permissionHandler
     )
 
-    @get:JvmName("getJDA")
-    val jda = JDABuilder.create(
+    private val baseFile = File(Source::class.java.protectionDomain.codeSource.location.toURI())
+    private val baseClassLoader: ModuleClassLoader = object : ModuleClassLoader(
+        baseFile,
+        moduleHandler
+    ) {
+        override fun initialize(): SourceModule {
+            val loader = this
+            return BaseModule().apply {
+                classLoader = loader
+                source = this@Source
+                logger = Source.logger
+            }
+        }
+    }
+
+    val shardManager = DefaultShardManagerBuilder.create(
         properties.required("token"),
         EnumSet.complementOf(ignoredIntents)
     ).addEventListeners(
@@ -62,7 +80,9 @@ class Source internal constructor(val properties: Properties) {
                 commandHandler.onMessageReceived(event)
             }
         }
-    ).build().awaitReady()
+    ).setActivityProvider {
+        Activity.watching("TSC. Shard $it")
+    }.build()
 
     private fun registerSerial() {
         MongoSerial.register(SourcePermission.Serial())
@@ -72,12 +92,16 @@ class Source internal constructor(val properties: Properties) {
     }
 
     private fun loadModules() {
+        moduleHandler.indexModule(baseFile, baseClassLoader)!!.let {
+            val loaded = moduleHandler.loadModule(it)
+            moduleHandler.enableModule(loaded!!)
+        }
         logger.debug("Indexing Modules...")
         val modulesFolder = File("modules")
         if (!modulesFolder.exists()) modulesFolder.mkdir()
         val indexed = modulesFolder.listFiles(FileFilter {
             it.name.endsWith(".jar")
-        })!!.sortedWith(Comparator.comparing(File::getName)).mapNotNull(moduleHandler::indexModule)
+        })!!.sortedWith(Comparator.comparing(File::getName)).mapNotNull { moduleHandler.indexModule(it) }
         logger.debug("Loading Modules...")
         val errored = ArrayList<String>()
         val loaded = indexed.mapNotNull {

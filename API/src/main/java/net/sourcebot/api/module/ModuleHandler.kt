@@ -13,8 +13,11 @@ class ModuleHandler(internal val source: Source) : ClassLoader() {
     private val loaderIndex = HashMap<String, ModuleClassLoader>()
     private val moduleIndex = HashMap<String, SourceModule>()
 
-    fun indexModule(file: File): String? = try {
-        val moduleClassLoader = ModuleClassLoader(file, this)
+    @JvmOverloads
+    fun indexModule(
+        file: File,
+        moduleClassLoader: ModuleClassLoader = ModuleClassLoader(file, this)
+    ): String? = try {
         val moduleDescription = moduleClassLoader.moduleDescription
         val (name, version, description, author) = moduleDescription
 

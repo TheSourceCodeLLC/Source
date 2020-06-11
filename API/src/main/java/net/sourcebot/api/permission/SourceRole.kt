@@ -8,24 +8,28 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 class SourceRole internal constructor(
-    private val permissionHandler: PermissionHandler,
-    internal val id: String,
+    private val permissionData: PermissionData,
+    val id: String,
+    val guild: String,
     internal val permissions: MutableList<SourcePermission> = ArrayList(),
     internal val parents: SortedSet<SourceGroup> = TreeSet(Comparator.comparing(SourceGroup::weight))
-) : PermissionHolderImpl(permissions, parents) {
-    override fun update(): UpdateResult = permissionHandler.updateRole(this)
-    override fun delete(): DeleteResult = permissionHandler.deleteRole(this)
+) : SimplePermissible(permissions, parents) {
+    override fun update(): UpdateResult = permissionData.updateRole(this)
+    override fun delete(): DeleteResult = permissionData.deleteRole(this)
 
     class Serial(private val permissionHandler: PermissionHandler) : MongoSerial<SourceRole> {
         override fun queryDocument(obj: SourceRole) = Document("id", obj.id)
         override fun deserialize(document: Document) = document.let {
             val id = it["id"] as String
-            val permissions = permissionHandler.getPermissions(it)
-            val parents = permissionHandler.getParents(it)
-            SourceRole(permissionHandler, id, permissions, parents)
+            val guild = it["guild"] as String
+            val permissionData = permissionHandler.getData(guild)
+            val permissions = permissionData.getPermissions(it)
+            val parents = permissionData.getParents(it)
+            SourceRole(permissionData, id, guild, permissions, parents)
         }
 
         override fun serialize(obj: SourceRole) = queryDocument(obj).apply {
+            append("guild", obj.guild)
             val permissions = obj.permissions.map {
                 MongoSerial.toDocument(it)
             }
