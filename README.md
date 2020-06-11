@@ -17,11 +17,13 @@ Note: You need Java 11 to compile and run Source.
 * Copy `config.example.json` to the runtime dir, and rename it to `config.json`, or start the bot to pregenerate it.
 * Configure the bot to your liking.
 
-NOTE: It is recommended to let Source have full reign over a separate mongodb instance!
+NOTE: It is recommended to let Source have full reign over a separate mongodb instance! <br>
+Source needs the ability to create and delete databases at will as to separate guild data! <br>
+If you do not have the option to do this, **Source may be a poor choice for you!** <br>
 
-Source needs the ability to create and delete databases at will as to separate guild data!
-
-If you do not have the option to do this, **Source may be a poor choice for you!**
+NOTE: Source uses privileged gateway intents. <br>
+You will need to activate the two privileged Gateway Intents for Source to function. <br>
+To do this, you will need to activate to the Discord Developers Portal, under the 'Bot' section. <br>
 
 * Start the bot:
   * Windows: `java -DuseJansi=true -jar API.jar`
