@@ -11,7 +11,7 @@ class ModuleHandler(internal val source: Source) : ClassLoader() {
     private val classes = ConcurrentHashMap<String, Class<*>>()
 
     private val loaderIndex = HashMap<String, ModuleClassLoader>()
-    private val moduleIndex = HashMap<String, SourceModule>()
+    internal val moduleIndex = HashMap<String, SourceModule>()
 
     @JvmOverloads
     fun indexModule(

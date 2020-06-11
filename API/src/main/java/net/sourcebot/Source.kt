@@ -15,9 +15,9 @@ import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
-import net.sourcebot.api.module.ModuleClassLoader
+import net.sourcebot.api.module.InvalidModuleException
+import net.sourcebot.api.module.ModuleDescription
 import net.sourcebot.api.module.ModuleHandler
-import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.permission.*
 import net.sourcebot.api.properties.JsonSerial
 import net.sourcebot.api.properties.Properties
@@ -28,6 +28,7 @@ import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J
 import java.io.File
 import java.io.FileFilter
 import java.io.FileReader
+import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZoneId
@@ -55,19 +56,13 @@ class Source internal constructor(val properties: Properties) {
         permissionHandler
     )
 
-    private val baseFile = File(Source::class.java.protectionDomain.codeSource.location.toURI())
-    private val baseClassLoader: ModuleClassLoader = object : ModuleClassLoader(
-        baseFile,
-        moduleHandler
-    ) {
-        override fun initialize(): SourceModule {
-            val loader = this
-            return BaseModule().apply {
-                classLoader = loader
-                source = this@Source
-                logger = Source.logger
-            }
-        }
+    private val baseModule = BaseModule().apply {
+        moduleDescription = Source::class.java.getResourceAsStream("/module.json").use {
+            if (it == null) throw InvalidModuleException("Could not find module.json!")
+            else JsonParser.parseReader(InputStreamReader(it)) as JsonObject
+        }.let(::ModuleDescription)
+        source = this@Source
+        logger = Source.logger
     }
 
     val shardManager = DefaultShardManagerBuilder.create(
@@ -92,11 +87,9 @@ class Source internal constructor(val properties: Properties) {
     }
 
     private fun loadModules() {
-        moduleHandler.indexModule(baseFile, baseClassLoader)!!.let {
-            val loaded = moduleHandler.loadModule(it)
-            moduleHandler.enableModule(loaded!!)
-        }
         logger.debug("Indexing Modules...")
+        moduleHandler.moduleIndex["Source"] = baseModule
+        moduleHandler.enableModule(baseModule)
         val modulesFolder = File("modules")
         if (!modulesFolder.exists()) modulesFolder.mkdir()
         val indexed = modulesFolder.listFiles(FileFilter {

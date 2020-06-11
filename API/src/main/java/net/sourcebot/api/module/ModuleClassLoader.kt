@@ -11,7 +11,7 @@ import java.net.URLClassLoader
 import java.util.concurrent.ConcurrentHashMap
 import java.util.jar.JarFile
 
-open class ModuleClassLoader(
+class ModuleClassLoader(
     file: File,
     private val moduleHandler: ModuleHandler
 ) : URLClassLoader(
@@ -56,7 +56,7 @@ open class ModuleClassLoader(
         val mainClass = Class.forName(main, true, this)
         val moduleClass = mainClass.asSubclass(SourceModule::class.java)
         val module = moduleClass.newInstance()
-        module.classLoader = this
+        module.moduleDescription = moduleDescription
         module.source = moduleHandler.source
         module.logger = LoggerFactory.getLogger(mainClass)
         return module

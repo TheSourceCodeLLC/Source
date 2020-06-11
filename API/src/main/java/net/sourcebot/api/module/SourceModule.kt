@@ -12,12 +12,11 @@ import java.nio.file.Files
 import kotlin.properties.Delegates
 
 abstract class SourceModule {
-    internal lateinit var classLoader: ModuleClassLoader
+    internal lateinit var moduleDescription: ModuleDescription
     internal lateinit var source: Source
+
     lateinit var logger: Logger
         internal set
-
-    val moduleDescription: ModuleDescription by lazy { classLoader.moduleDescription }
 
     var enabled: Boolean by Delegates.observable(false) { _, _, enable ->
         if (enable) onEnable(source) else onDisable()

@@ -1,3 +1,5 @@
 .idea/
 target/
+production/
+config.json
 *.iml
