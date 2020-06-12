@@ -144,7 +144,7 @@
         <repository>
             <id>github</id>
             <name>GitHub The-SourceCode Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/The-SourceCode/SourceV5</url>
+            <url>https://maven.pkg.github.com/TheSourceCodeLLC/Source</url>
         </repository>
     </distributionManagement>
 </project>
