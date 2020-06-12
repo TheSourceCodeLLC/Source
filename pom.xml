@@ -6,7 +6,7 @@
 
     <groupId>net.sourcebot</groupId>
     <artifactId>Source</artifactId>
-    <version>5.7</version>
+    <version>5.0.0</version>
     <packaging>pom</packaging>
 
     <modules>

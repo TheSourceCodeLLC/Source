@@ -18,10 +18,14 @@ import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.module.InvalidModuleException
 import net.sourcebot.api.module.ModuleDescription
 import net.sourcebot.api.module.ModuleHandler
+import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.permission.*
 import net.sourcebot.api.properties.JsonSerial
 import net.sourcebot.api.properties.Properties
-import net.sourcebot.impl.BaseModule
+import net.sourcebot.impl.command.GuildInfoCommand
+import net.sourcebot.impl.command.HelpCommand
+import net.sourcebot.impl.command.PermissionsCommand
+import net.sourcebot.impl.command.TimingsCommand
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J
@@ -32,12 +36,13 @@ import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ofPattern
 import java.util.*
 import kotlin.Comparator
 import kotlin.collections.ArrayList
 
-class Source internal constructor(val properties: Properties) {
+class Source internal constructor(val properties: Properties) : SourceModule() {
     private val ignoredIntents = EnumSet.of(
         GUILD_MESSAGE_TYPING, DIRECT_MESSAGE_TYPING
     )
@@ -47,7 +52,6 @@ class Source internal constructor(val properties: Properties) {
 
     val mongodb = MongoDB(properties.required("mongodb"))
     val permissionHandler = PermissionHandler(mongodb)
-
     val moduleHandler = ModuleHandler(this)
 
     val commandHandler = CommandHandler(
@@ -55,15 +59,6 @@ class Source internal constructor(val properties: Properties) {
         properties.required("commands.delete-seconds"),
         permissionHandler
     )
-
-    private val baseModule = BaseModule().apply {
-        moduleDescription = Source::class.java.getResourceAsStream("/module.json").use {
-            if (it == null) throw InvalidModuleException("Could not find module.json!")
-            else JsonParser.parseReader(InputStreamReader(it)) as JsonObject
-        }.let(::ModuleDescription)
-        source = this@Source
-        logger = Source.logger
-    }
 
     val shardManager = DefaultShardManagerBuilder.create(
         properties.required("token"),
@@ -79,6 +74,20 @@ class Source internal constructor(val properties: Properties) {
         Activity.watching("TSC. Shard $it")
     }.build()
 
+    init {
+        moduleDescription = this.javaClass.getResourceAsStream("/module.json").use {
+            if (it == null) throw InvalidModuleException("Could not find module.json!")
+            else JsonParser.parseReader(InputStreamReader(it)) as JsonObject
+        }.let(::ModuleDescription)
+        logger = Source.logger
+        source = this
+
+        registerSerial()
+        loadModules()
+
+        logger.info("Source is now online!")
+    }
+
     private fun registerSerial() {
         MongoSerial.register(SourcePermission.Serial())
         MongoSerial.register(SourceGroup.Serial(permissionHandler))
@@ -88,8 +97,8 @@ class Source internal constructor(val properties: Properties) {
 
     private fun loadModules() {
         logger.debug("Indexing Modules...")
-        moduleHandler.moduleIndex["Source"] = baseModule
-        moduleHandler.enableModule(baseModule)
+        moduleHandler.moduleIndex["Source"] = this
+        moduleHandler.enableModule(this)
         val modulesFolder = File("modules")
         if (!modulesFolder.exists()) modulesFolder.mkdir()
         val indexed = modulesFolder.listFiles(FileFilter {
@@ -114,15 +123,27 @@ class Source internal constructor(val properties: Properties) {
         loaded.forEach(moduleHandler::enableModule)
     }
 
+    override fun onEnable(source: Source) {
+        registerCommands(
+            HelpCommand(moduleHandler, commandHandler),
+            GuildInfoCommand(),
+            TimingsCommand(),
+            PermissionsCommand(permissionHandler)
+        )
+    }
+
     companion object {
-        @JvmStatic val TIME_ZONE: ZoneId = ZoneId.of("America/New_York")
-        @JvmStatic val DATE_FORMAT = ofPattern("MM/dd/yyyy")
-        @JvmStatic val TIME_FORMAT = ofPattern("hh:mm:ss a z")
-        @JvmStatic val DATE_TIME_FORMAT = ofPattern("MM/dd/yyyy hh:mm:ss a z")
-        @JvmStatic val logger: Logger = LoggerFactory.getLogger(Source::class.java)
+        @JvmField val DATE_TIME_FORMAT: DateTimeFormatter = ofPattern("MM/dd/yyyy hh:mm:ss a z")
+        @JvmField val TIME_FORMAT: DateTimeFormatter = ofPattern("hh:mm:ss a z")
+        @JvmField val DATE_FORMAT: DateTimeFormatter = ofPattern("MM/dd/yyyy")
+
+        @JvmField val TIME_ZONE: ZoneId = ZoneId.of("America/New_York")
+        @JvmField val logger: Logger = LoggerFactory.getLogger(Source::class.java)
+
         private var enabled = false
 
         @JvmStatic fun main(args: Array<String>) {
+            SysOutOverSLF4J.sendSystemOutAndErrToSLF4J()
             start()
         }
 
@@ -130,7 +151,6 @@ class Source internal constructor(val properties: Properties) {
             if (enabled) throw IllegalStateException("Source is already enabled!")
             enabled = true
 
-            SysOutOverSLF4J.sendSystemOutAndErrToSLF4J()
             JsonSerial.register(Properties.Serial())
             val configFile = File("config.json")
             if (!configFile.exists()) {
@@ -138,14 +158,9 @@ class Source internal constructor(val properties: Properties) {
                     Files.copy(it, Path.of("config.json"))
                 }
             }
-            val properties = FileReader(configFile).use {
+            return FileReader(configFile).use {
                 JsonParser.parseReader(it) as JsonObject
-            }.let(::Properties)
-            return Source(properties).apply {
-                registerSerial()
-                loadModules()
-                logger.info("Source is now online!")
-            }
+            }.let(::Properties).let(::Source)
         }
     }
 }

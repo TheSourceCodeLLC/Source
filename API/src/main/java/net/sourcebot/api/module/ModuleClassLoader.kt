@@ -52,7 +52,7 @@ class ModuleClassLoader(
     }
 
     open fun initialize(): SourceModule {
-        val main = moduleDescription.main
+        val main = moduleDescription.main ?: throw InvalidModuleException("Element `main` not present in module.json!")
         val mainClass = Class.forName(main, true, this)
         val moduleClass = mainClass.asSubclass(SourceModule::class.java)
         val module = moduleClass.newInstance()

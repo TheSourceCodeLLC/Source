@@ -4,19 +4,18 @@ import com.mongodb.MongoClient
 import com.mongodb.MongoClientURI
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
-import net.sourcebot.api.properties.Properties
 import net.sourcebot.api.urlEncoded
 import org.bson.Document
 import java.io.Closeable
 
-class MongoDB(config: Properties) : Closeable {
-    private val host: String = config.required("host")
-    private val port: Long = config.required("port")
-    private val username = config.required<String>("username").urlEncoded()
-    private val password = config.required<String>("password").urlEncoded()
-    private val authSource: String = config.optional("auth-source") ?: "admin"
-    private val uri = "mongodb://$username:$password@$host:$port/?authSource=$authSource"
-    private val client = MongoClient(MongoClientURI(uri))
+class MongoDB(uri: String) : Closeable {
+    private val encodingPattern = "://(.+):(.+)@".toRegex()
+    private val client = MongoClient(MongoClientURI(
+        encodingPattern.replace(uri) {
+            val (username, password) = it.destructured
+            "://${username.urlEncoded()}:${password.urlEncoded()}@"
+        }
+    ))
 
     override fun close() = client.close()
 

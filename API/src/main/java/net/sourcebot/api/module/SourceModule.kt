@@ -18,8 +18,9 @@ abstract class SourceModule {
     lateinit var logger: Logger
         internal set
 
-    var enabled: Boolean by Delegates.observable(false) { _, _, enable ->
-        if (enable) onEnable(source) else onDisable()
+    var enabled: Boolean by Delegates.observable(false) { _, old, new ->
+        if (old == new) return@observable
+        if (new) onEnable(source) else onDisable()
     }
         internal set
 

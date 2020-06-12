@@ -1,4 +1,4 @@
-package net.sourcebot.impl.command.help
+package net.sourcebot.impl.command
 
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.alert.Alert

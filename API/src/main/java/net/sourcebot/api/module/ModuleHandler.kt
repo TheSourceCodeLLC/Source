@@ -93,7 +93,7 @@ class ModuleHandler(internal val source: Source) : ClassLoader() {
     }
 
     fun getModules(): Collection<SourceModule> = moduleIndex.values
-    fun getModule(name: String): SourceModule? = moduleIndex.values.firstOrNull {
-        it.moduleDescription.name.startsWith(name, true)
-    }
+    fun getModule(name: String): SourceModule? = moduleIndex.entries.firstOrNull {
+        it.key.startsWith(name, true)
+    }?.value
 }

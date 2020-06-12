@@ -1,4 +1,4 @@
-package net.sourcebot.impl.command.information
+package net.sourcebot.impl.command
 
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.alert.Alert
@@ -6,6 +6,7 @@ import net.sourcebot.api.alert.InfoAlert
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
 import java.time.Instant
+import kotlin.math.abs
 
 class TimingsCommand : RootCommand() {
     override val name = "timings"
@@ -15,7 +16,7 @@ class TimingsCommand : RootCommand() {
     override fun execute(message: Message, args: Arguments): Alert {
         val sent = message.timeCreated.toInstant().toEpochMilli()
         val now = Instant.now().toEpochMilli()
-        val difference = now - sent
+        val difference = abs(sent - now)
         val gateway = message.jda.gatewayPing
         val rest = message.jda.restPing.complete()
         return InfoAlert(

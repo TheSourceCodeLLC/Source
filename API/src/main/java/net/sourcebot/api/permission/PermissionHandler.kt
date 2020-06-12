@@ -32,6 +32,15 @@ class PermissionHandler(private val mongodb: MongoDB) {
         return effective.any { hasPermission(permissible, it, contexts) }
     }
 
+    fun checkPermission(
+        permissible: Permissible,
+        node: String,
+        channel: MessageChannel,
+        ifPresent: () -> Alert
+    ): Alert =
+        if (hasPermission(permissible, node, channel)) ifPresent()
+        else getPermissionAlert(true, channel.jda, permissible, node)
+
     private fun getEffectiveNodes(permission: String): Set<String> =
         mutableSetOf(permission).apply {
             addAll(permission.mapIndexed { idx, c ->
