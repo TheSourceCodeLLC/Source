@@ -45,6 +45,8 @@ abstract class Command {
     open fun execute(message: Message, args: Arguments): Alert =
         throw InvalidSyntaxException("Invalid Subcommand!")
 
+    open fun postResponse(response: Message) {}
+
     protected fun addChild(command: Command): Boolean {
         children.register(command)
         command.parent = this
