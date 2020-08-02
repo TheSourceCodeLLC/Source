@@ -23,7 +23,7 @@ class CommandHandler(
     private var commandMap = CommandMap<RootCommand>()
 
     override fun cascade(
-        message: Message, label: String, args: Array<String>
+            message: Message, label: String, args: Array<String>
     ) {
         val author = message.author
         if (author.isFake || author.isBot) return

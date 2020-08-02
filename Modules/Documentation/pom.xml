@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>Modules</artifactId>
+        <groupId>net.sourcebot.module</groupId>
+        <version>5.0.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+
+    <groupId>net.sourcebot.module.documentation</groupId>
+    <artifactId>Documentation</artifactId>
+    <description>Module responsible for the documentation commands.</description>
+
+    <properties>
+        <author>TheForbiddenAi#3797</author>
+        <kotlin.version>1.3.72</kotlin.version>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <skipAssembly>false</skipAssembly>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.github.TheForbiddenAi</groupId>
+            <artifactId>JenkinsParser-Kotlin</artifactId>
+            <version>v1.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.giflw</groupId>
+            <artifactId>remark-java</artifactId>
+            <version>v1.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.13.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib-jdk8</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+    </dependencies>
+
+</project>
