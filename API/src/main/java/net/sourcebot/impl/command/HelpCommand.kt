@@ -64,9 +64,8 @@ class HelpCommand(
             } else {
                 val asModule = moduleHandler.getModule(topic)
                 if (asModule != null) {
-                    val desc = asModule.moduleDescription
                     object : InfoAlert(
-                        "${desc.name} Module Assistance",
+                        "${asModule.name} Module Assistance",
                         "Below are a list of commands provided by this module."
                     ) {
                         init {
@@ -98,11 +97,10 @@ class HelpCommand(
             ) {
                 init {
                     val index = moduleHandler.getModules()
-                        .sortedBy { it.moduleDescription.name }
+                        .sortedBy { it.name }
                         .filter { it.enabled }
                         .joinToString("\n") {
-                            val desc = it.moduleDescription
-                            "**${desc.name}**: ${desc.description}"
+                            "**${it.name}**: ${it.description}"
                         }
                     val listing = if (index.isEmpty()) {
                         "There are currently no modules enabled."

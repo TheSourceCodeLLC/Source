@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.alert.Alert
 import net.sourcebot.api.alert.ErrorAlert
 import net.sourcebot.api.alert.error.ExceptionAlert
+import net.sourcebot.api.alert.error.GlobalAdminOnlyAlert
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.module.SourceModule
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit
 class CommandHandler(
     private val prefix: String,
     private val deleteSeconds: Long,
+    private val globalAdmins: Set<String>,
     private val permissionHandler: PermissionHandler
 ) : AbstractMessageHandler(prefix) {
     private var commandMap = CommandMap<RootCommand>()
@@ -30,15 +32,25 @@ class CommandHandler(
         val inGuild = message.channelType == ChannelType.TEXT
         if (rootCommand.guildOnly && !inGuild) {
             return respond(
+                rootCommand,
                 message,
                 GuildOnlyCommandAlert(),
-                true
+                rootCommand.cleanupResponse
             )
         }
         val arguments = Arguments(args)
         var command: Command = rootCommand
         do {
-            if (command.permission != null) {
+            val hasGlobal = author.id in globalAdmins
+            if (!hasGlobal && command.requiresGlobal) {
+                return respond(
+                    command,
+                    message,
+                    GlobalAdminOnlyAlert(),
+                    command.cleanupResponse
+                )
+            }
+            if (!hasGlobal && command.permission != null) {
                 val permission = command.permission!!
                 if (inGuild) {
                     val permissionData = permissionHandler.getData(message.guild)
@@ -54,6 +66,7 @@ class CommandHandler(
                         val channel = message.channel as TextChannel
                         if (!permissionHandler.hasPermission(sourceUser, permission, channel)) {
                             return respond(
+                                command,
                                 message,
                                 permissionHandler.getPermissionAlert(
                                     command.guildOnly,
@@ -61,15 +74,16 @@ class CommandHandler(
                                     sourceUser,
                                     permission
                                 ),
-                                true
+                                command.cleanupResponse
                             )
                         }
                     }
                 } else if (command.guildOnly) {
                     return respond(
+                        command,
                         message,
                         GuildOnlyCommandAlert(),
-                        true
+                        command.cleanupResponse
                     )
                 }
             }
@@ -86,11 +100,12 @@ class CommandHandler(
         } catch (ex: Exception) {
             handleException(command, ex)
         }
-        return respond(message, response, command.cleanupResponse)
+        return respond(command, message, response, command.cleanupResponse)
     }
 
-    private fun respond(message: Message, alert: Alert, cleanup: Boolean) {
+    private fun respond(command: Command, message: Message, alert: Alert, cleanup: Boolean) {
         message.channel.sendMessage(alert.asMessage(message.author)).queue {
+            command.postResponse(it)
             if (!cleanup) return@queue
             if (message.channelType == ChannelType.TEXT) {
                 message.delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)

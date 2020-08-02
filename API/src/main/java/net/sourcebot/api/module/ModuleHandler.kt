@@ -1,99 +1,115 @@
 package net.sourcebot.api.module
 
-import net.sourcebot.Source
-import net.sourcebot.api.database.MongoSerial
-import net.sourcebot.api.properties.JsonSerial
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
+import java.io.FileFilter
+import java.io.InputStreamReader
 import java.util.concurrent.ConcurrentHashMap
+import java.util.jar.JarFile
 
-class ModuleHandler(internal val source: Source) : ClassLoader() {
-    private val logger = Source.logger
+class ModuleHandler : ClassLoader() {
+    private val logger: Logger = LoggerFactory.getLogger(ModuleHandler::class.java)
     private val classes = ConcurrentHashMap<String, Class<*>>()
-
-    private val loaderIndex = HashMap<String, ModuleClassLoader>()
     internal val moduleIndex = HashMap<String, SourceModule>()
 
-    @JvmOverloads
-    fun indexModule(
-        file: File,
-        moduleClassLoader: ModuleClassLoader = ModuleClassLoader(file, this)
-    ): String? = try {
-        val moduleDescription = moduleClassLoader.moduleDescription
-        val (name, version, description, author) = moduleDescription
-
-        if (loaderIndex[name] != null) throw InvalidModuleException("Duplicate module '$name' !")
-        loaderIndex[name] = moduleClassLoader
-
-        logger.debug("Found '$name v$version: $description' by $author")
-        name
-    } catch (ex: Exception) {
-        logger.error("Could not load module '${file.path}'!", ex)
-        null
-    }
-
-    fun loadModule(name: String): SourceModule? {
-        if (moduleIndex[name] != null) return moduleIndex[name]
-        val loader = loaderIndex[name] ?: return null
-        val description = loader.moduleDescription
-        description.hardDepends.filter { it !in moduleIndex }.forEach {
-            if (loadModule(it) == null) throw UnknownDependencyException("$name depends on unresolved dependency $it")
-        }
-        description.softDepends.filter { it !in moduleIndex }.forEach { loadModule(it) }
-        val module = loader.initialize()
-        moduleIndex[name] = module
-        module.logger.info("Loading $name v${description.version}")
-        module.onLoad(source)
-        return module
-    }
-
-    fun unloadModule(name: String) {
-        val loader = loaderIndex.remove(name)
-        if (loader != null) {
-            moduleIndex.remove(name)?.let {
-                source.jdaEventSystem.unregister(it)
-                source.sourceEventSystem.unregister(it)
-                source.commandHandler.unregister(it)
-                disableModule(it)
-                it.onUnload()
-            }
-            loader.classes.values.forEach {
-                JsonSerial.unregister(it)
-                MongoSerial.unregister(it)
-            }
-            classes.entries.removeAll(loader.classes.entries)
-            loader.close()
-        }
-        logger.debug("Unloaded module '$name'")
-    }
-
-    fun enableModule(module: SourceModule) {
-        if (module.enabled) return
-        val (name, version) = module.moduleDescription
-        module.logger.info("Enabling $name v$version")
-        module.enabled = true
-    }
-
-    fun disableModule(module: SourceModule) {
-        if (!module.enabled) return
-        val (name, version) = module.moduleDescription
-        module.logger.info("Disabling $name v$version")
-        module.enabled = false
-    }
-
-    public override fun findClass(name: String): Class<*> = classes.computeIfAbsent(name) {
-        loaderIndex.values.forEach {
-            val found = try {
+    public override fun findClass(
+        name: String
+    ): Class<*> = classes.computeIfAbsent(name) {
+        moduleIndex.values.map(SourceModule::classLoader).forEach {
+            return@computeIfAbsent try {
                 it.findClass(name, false)
             } catch (ex: Exception) {
                 null
-            }
-            if (found != null) return@computeIfAbsent found
+            } ?: return@forEach
         }
         throw ClassNotFoundException(name)
     }
 
-    fun getModules(): Collection<SourceModule> = moduleIndex.values
-    fun getModule(name: String): SourceModule? = moduleIndex.entries.firstOrNull {
-        it.key.startsWith(name, true)
-    }?.value
+    fun loadDescriptor(file: File): ModuleDescriptor = JarFile(file).use { jar ->
+        jar.getJarEntry("module.json")?.let(jar::getInputStream)?.use {
+            JsonParser.parseReader(InputStreamReader(it)) as JsonObject
+        }
+    }?.let(::ModuleDescriptor) ?: throw InvalidModuleException("JAR does not contain module.json!")
+
+    fun loadModules(folder: File): List<SourceModule> {
+        val loadOrder = ArrayList<File>()
+        val fileIndex = HashMap<String, File>()
+        val hardDependencies = HashMap<String, MutableSet<String>>()
+        val softDependencies = HashMap<String, MutableSet<String>>()
+        folder.listFiles(
+            FileFilter { it.extension.equals("jar", true) }
+        )?.forEach {
+            try {
+                val descriptor = loadDescriptor(it)
+                fileIndex.compute(descriptor.name) { name, indexed ->
+                    if (indexed == null) it
+                    else throw AmbiguousPluginException(name, indexed, it)
+                }
+                hardDependencies[descriptor.name] = descriptor.hardDepends.toMutableSet()
+                softDependencies[descriptor.name] = descriptor.softDepends.toMutableSet()
+            } catch (ex: Throwable) {
+                ex.printStackTrace()
+            }
+        }
+        do {
+            // Find plugins with no hard dependencies, preferring ones with no soft dependencies
+            // Make sure to exclude those that are already in the load order
+            val next = fileIndex.filterValues { it !in loadOrder }.keys.filter {
+                hardDependencies[it]?.isEmpty() ?: true
+            }.sortedBy { softDependencies[it]?.size ?: 0 }
+            // Build the plugin load order
+            loadOrder.addAll(next.map { fileIndex[it]!! })
+            // Filter the 'loaded' plugin from dependency index
+            next.forEach {
+                hardDependencies.remove(it)
+                softDependencies.remove(it)
+            }
+            // Filter the 'loaded' plugin from dependency sets
+            hardDependencies.values.forEach { it.removeAll(next) }
+            softDependencies.values.forEach { it.removeAll(next) }
+        } while (next.isNotEmpty())
+        hardDependencies.forEach { (module, deps) ->
+            logger.error("Could not load module '$module!'", UnknownDependencyException(deps))
+        }
+        return loadOrder.map { loadPlugin(it) }
+    }
+
+    fun loadPlugin(file: File): SourceModule {
+        val descriptor = loadDescriptor(file)
+        val name = descriptor.name
+        moduleIndex[name]?.let { throw AmbiguousPluginException(name, it.classLoader.file, file) }
+        descriptor.hardDepends.toMutableSet()
+            .apply { removeIf(moduleIndex::containsKey) }
+            .let { if (it.isNotEmpty()) throw UnknownDependencyException(it) }
+        val loader = ModuleClassLoader(this, file)
+        val mainClass = loader.findClass(descriptor.main, false)
+        val plugin = mainClass.newInstance() as SourceModule
+        return plugin.apply {
+            val (_, version, _, author) = descriptor
+            this.classLoader = loader
+            this.descriptor = descriptor
+
+            onLoad()
+            moduleIndex[name] = this
+            logger.info("Loaded $name v$version by $author.")
+        }
+    }
+
+    fun enableModule(plugin: SourceModule) {
+        plugin.onEnable()
+        plugin.enabled = true
+        logger.info("Enabled ${plugin.name} v${plugin.version}.")
+    }
+
+    fun disableModule(plugin: SourceModule) {
+        plugin.onDisable()
+        plugin.enabled = false
+        logger.info("Disabled ${plugin.name} v${plugin.version}.")
+    }
+
+    fun getModule(name: String) = moduleIndex[name]
+    fun getModules() = moduleIndex.values
 }

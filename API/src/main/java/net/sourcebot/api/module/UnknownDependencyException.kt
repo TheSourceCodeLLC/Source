@@ -1,8 +1,5 @@
 package net.sourcebot.api.module
 
-class UnknownDependencyException : Exception {
-    constructor() : super()
-    constructor(message: String?) : super(message)
-    constructor(message: String?, cause: Throwable?) : super(message, cause)
-    constructor(cause: Throwable?) : super(cause)
-}
+class UnknownDependencyException(
+    dependencies: Set<String>
+) : RuntimeException("Unknown Dependencies: ${dependencies.joinToString()}")

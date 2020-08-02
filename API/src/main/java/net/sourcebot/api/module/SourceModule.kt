@@ -6,26 +6,30 @@ import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.properties.Properties
 import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileReader
 import java.nio.file.Files
-import kotlin.properties.Delegates
 
 abstract class SourceModule {
-    internal lateinit var moduleDescription: ModuleDescription
-    internal lateinit var source: Source
+    val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    lateinit var logger: Logger
+    lateinit var classLoader: ModuleClassLoader
         internal set
 
-    var enabled: Boolean by Delegates.observable(false) { _, old, new ->
-        if (old == new) return@observable
-        if (new) onEnable(source) else onDisable()
-    }
+    lateinit var descriptor: ModuleDescriptor
+        internal set
+
+    val name by lazy { descriptor.name }
+    val version by lazy { descriptor.version }
+    val description by lazy { descriptor.description }
+    val author by lazy { descriptor.author }
+
+    var enabled = false
         internal set
 
     val dataFolder: File by lazy {
-        File("modules", moduleDescription.name)
+        File("modules", descriptor.name)
     }
 
     val config: Properties by lazy {
@@ -52,17 +56,12 @@ abstract class SourceModule {
      * Fired when this Module is being loaded; before it is enabled.
      * Methods in this scope should not utilize API from other Modules.
      */
-    open fun onLoad(source: Source) = Unit
-
-    /**
-     * Fired when this Module is being unloaded; after it is disabled.
-     */
-    open fun onUnload() = Unit
+    open fun onLoad() = Unit
 
     /**
      * Fired when this Module is being enabled, after it is loaded.
      */
-    open fun onEnable(source: Source) = Unit
+    open fun onEnable() = Unit
 
     /**
      * Fired when this Module is being disabled, before it is unloaded.
@@ -71,7 +70,7 @@ abstract class SourceModule {
 
     fun registerCommands(vararg command: RootCommand) {
         command.forEach {
-            source.commandHandler.registerCommand(this, it)
+            Source.instance.commandHandler.registerCommand(this, it)
         }
     }
 }

@@ -3,8 +3,8 @@ package net.sourcebot.api.module
 import com.google.gson.JsonObject
 import net.sourcebot.api.properties.Properties
 
-class ModuleDescription(json: JsonObject) : Properties(json) {
-    val main: String? = optional("main")
+class ModuleDescriptor(json: JsonObject) : Properties(json) {
+    val main: String = required("main")
 
     val name: String = required("name")
     val version: String = required("version")

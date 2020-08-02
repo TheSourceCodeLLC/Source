@@ -21,11 +21,15 @@ abstract class EmbedAlert @JvmOverloads internal constructor(
     protected var title: String,
     protected var description: String? = null
 ) : EmbedBuilder(), Alert {
+    companion object {
+        @JvmStatic var footer: String? = null
+    }
+
     override fun asMessage(user: User): Message {
         setAuthor(title, null, user.effectiveAvatarUrl)
         setDescription(description)
         setTimestamp(Instant.now())
-        setFooter("TheSourceCode • https://sourcebot.net")
+        setFooter(footer)
         return MessageBuilder(super.build()).build()
     }
 

@@ -10,13 +10,14 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.GatewayIntent.DIRECT_MESSAGE_TYPING
 import net.dv8tion.jda.api.requests.GatewayIntent.GUILD_MESSAGE_TYPING
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
+import net.sourcebot.api.alert.EmbedAlert
 import net.sourcebot.api.command.CommandHandler
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.module.InvalidModuleException
-import net.sourcebot.api.module.ModuleDescription
+import net.sourcebot.api.module.ModuleDescriptor
 import net.sourcebot.api.module.ModuleHandler
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.permission.*
@@ -30,7 +31,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J
 import java.io.File
-import java.io.FileFilter
 import java.io.FileReader
 import java.io.InputStreamReader
 import java.nio.file.Files
@@ -39,10 +39,8 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ofPattern
 import java.util.*
-import kotlin.Comparator
-import kotlin.collections.ArrayList
 
-class Source internal constructor(val properties: Properties) : SourceModule() {
+class Source internal constructor(properties: Properties) : SourceModule() {
     private val ignoredIntents = EnumSet.of(
         GUILD_MESSAGE_TYPING, DIRECT_MESSAGE_TYPING
     )
@@ -52,11 +50,12 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
 
     val mongodb = MongoDB(properties.required("mongodb"))
     val permissionHandler = PermissionHandler(mongodb)
-    val moduleHandler = ModuleHandler(this)
+    val moduleHandler = ModuleHandler()
 
     val commandHandler = CommandHandler(
         properties.required("commands.prefix"),
         properties.required("commands.delete-seconds"),
+        properties.required("commands.global-admins"),
         permissionHandler
     )
 
@@ -75,12 +74,12 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
     }.build()
 
     init {
-        moduleDescription = this.javaClass.getResourceAsStream("/module.json").use {
+        instance = this
+        EmbedAlert.footer = properties.required("alert.footer")
+        descriptor = this.javaClass.getResourceAsStream("/module.json").use {
             if (it == null) throw InvalidModuleException("Could not find module.json!")
             else JsonParser.parseReader(InputStreamReader(it)) as JsonObject
-        }.let(::ModuleDescription)
-        logger = Source.logger
-        source = this
+        }.let(::ModuleDescriptor)
 
         registerSerial()
         loadModules()
@@ -96,34 +95,14 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
     }
 
     private fun loadModules() {
-        logger.debug("Indexing Modules...")
         moduleHandler.moduleIndex["Source"] = this
         moduleHandler.enableModule(this)
         val modulesFolder = File("modules")
         if (!modulesFolder.exists()) modulesFolder.mkdir()
-        val indexed = modulesFolder.listFiles(FileFilter {
-            it.name.endsWith(".jar")
-        })!!.sortedWith(Comparator.comparing(File::getName)).mapNotNull { moduleHandler.indexModule(it) }
-        logger.debug("Loading Modules...")
-        val errored = ArrayList<String>()
-        val loaded = indexed.mapNotNull {
-            try {
-                moduleHandler.loadModule(it)
-            } catch (ex: Throwable) {
-                when (ex) {
-                    is StackOverflowError -> logger.error("Cyclic dependency problem for module '$it' !")
-                    else -> logger.error("Error loading module '$it' !", ex)
-                }
-                errored.add(it)
-                null
-            }
-        }
-        errored.forEach(moduleHandler::unloadModule)
-        logger.debug("All modules have been loaded, now enabling...")
-        loaded.forEach(moduleHandler::enableModule)
+        moduleHandler.loadModules(modulesFolder)
     }
 
-    override fun onEnable(source: Source) {
+    override fun onEnable() {
         registerCommands(
             HelpCommand(moduleHandler, commandHandler),
             GuildInfoCommand(),
@@ -140,7 +119,9 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
         @JvmField val TIME_ZONE: ZoneId = ZoneId.of("America/New_York")
         @JvmField val logger: Logger = LoggerFactory.getLogger(Source::class.java)
 
-        private var enabled = false
+        @JvmStatic lateinit var instance: Source
+        var enabled = false
+            internal set
 
         @JvmStatic fun main(args: Array<String>) {
             SysOutOverSLF4J.sendSystemOutAndErrToSLF4J()
@@ -149,7 +130,6 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
 
         @JvmStatic fun start(): Source {
             if (enabled) throw IllegalStateException("Source is already enabled!")
-            enabled = true
 
             JsonSerial.register(Properties.Serial())
             val configFile = File("config.json")

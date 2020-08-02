@@ -1,44 +1,33 @@
 package net.sourcebot.api.module
 
 import com.google.common.io.ByteStreams
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.InputStream
-import java.io.InputStreamReader
 import java.net.URLClassLoader
 import java.util.concurrent.ConcurrentHashMap
 import java.util.jar.JarFile
 
 class ModuleClassLoader(
-    file: File,
-    private val moduleHandler: ModuleHandler
+    private val moduleHandler: ModuleHandler,
+    val file: File
 ) : URLClassLoader(
     arrayOf(file.toURI().toURL()), moduleHandler
 ) {
     private val jar = JarFile(file)
 
-    internal val classes = ConcurrentHashMap<String, Class<*>>()
-    internal val moduleDescription: ModuleDescription = getResourceAsStream("module.json").use {
-        if (it == null) throw InvalidModuleException("Could not find module.json!")
-        else JsonParser.parseReader(InputStreamReader(it)) as JsonObject
-    }.let(::ModuleDescription)
+    private val classes = ConcurrentHashMap<String, Class<*>>()
 
     @JvmOverloads
     fun findClass(name: String, searchParent: Boolean = true): Class<*> = classes.computeIfAbsent(name) {
-        var found: Class<*>? = null
-        if (searchParent) found = moduleHandler.findClass(name)
-        if (found == null) {
-            val className = name.replace(".", "/").plus(".class")
-            val entry = jar.getJarEntry(className) ?: throw ClassNotFoundException(name)
-            val classBytes = try {
-                jar.getInputStream(entry).use(ByteStreams::toByteArray)
-            } catch (ex: Exception) {
-                throw ClassNotFoundException(name, ex)
-            }
-            found = defineClass(name, classBytes, 0, classBytes.size)
+        val className = name.replace(".", "/").plus(".class")
+        val entry = jar.getJarEntry(className) ?: throw ClassNotFoundException(name)
+        val classBytes = try {
+            jar.getInputStream(entry).use(ByteStreams::toByteArray)
+        } catch (ex: Exception) {
+            throw ClassNotFoundException(name, ex)
         }
+        var found = defineClass(name, classBytes, 0, classBytes.size)
+        if (found == null && searchParent) found = moduleHandler.findClass(name)
         found ?: throw ClassNotFoundException(name)
     }
 
@@ -49,16 +38,5 @@ class ModuleClassLoader(
         jar.close()
         classes.clear()
         super.close()
-    }
-
-    open fun initialize(): SourceModule {
-        val main = moduleDescription.main ?: throw InvalidModuleException("Element `main` not present in module.json!")
-        val mainClass = Class.forName(main, true, this)
-        val moduleClass = mainClass.asSubclass(SourceModule::class.java)
-        val module = moduleClass.newInstance()
-        module.moduleDescription = moduleDescription
-        module.source = moduleHandler.source
-        module.logger = LoggerFactory.getLogger(mainClass)
-        return module
     }
 }

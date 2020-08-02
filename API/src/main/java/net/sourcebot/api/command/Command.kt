@@ -27,6 +27,7 @@ abstract class Command {
     open var cleanupResponse = true
     open var parent: Command? = null
 
+    open val requiresGlobal = false
     open val permission: String? = null
     open val guildOnly = false
 
@@ -44,6 +45,8 @@ abstract class Command {
 
     open fun execute(message: Message, args: Arguments): Alert =
         throw InvalidSyntaxException("Invalid Subcommand!")
+
+    open fun postResponse(response: Message) = Unit
 
     protected fun addChild(command: Command): Boolean {
         children.register(command)

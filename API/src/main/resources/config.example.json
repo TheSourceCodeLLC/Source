@@ -2,7 +2,11 @@
   "token": "",
   "commands": {
     "prefix": "!",
-    "delete-seconds": 20
+    "delete-seconds": 20,
+    "global-admins": []
   },
-  "mongodb": "mongodb://username:password@host:27017"
+  "mongodb": "mongodb://username:password@host:27017",
+  "alert": {
+    "footer": "SourceBot"
+  }
 }
