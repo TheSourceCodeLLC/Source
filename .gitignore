@@ -4,3 +4,4 @@ production/
 config.json
 *.iml
 *.jar
+modules/

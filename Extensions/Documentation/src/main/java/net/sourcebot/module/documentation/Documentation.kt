@@ -5,15 +5,19 @@ import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.documentation.commands.*
 import net.sourcebot.module.documentation.events.DocSelectorEvent
 
-class Documentation() : SourceModule() {
+class Documentation : SourceModule() {
 
-    override fun onEnable(source: Source) {
-        registerCommands(JDACommand())
-        registerCommands(JavaCommand())
-        registerCommands(SpigotCommand())
-        registerCommands(BungeeCordCommand())
-        registerCommands(DJSCommand())
-        registerCommands(MDNCommand())
+    override fun onEnable() {
+        val source = Source.instance
+
+        registerCommands(
+            JDACommand(),
+            JavaCommand(),
+            SpigotCommand(),
+            BungeeCordCommand(),
+            DJSCommand(),
+            MDNCommand()
+        )
 
         val deleteSeconds: Long = source.properties.required("commands.delete-seconds")
         source.shardManager.addEventListener(DocSelectorEvent(deleteSeconds))

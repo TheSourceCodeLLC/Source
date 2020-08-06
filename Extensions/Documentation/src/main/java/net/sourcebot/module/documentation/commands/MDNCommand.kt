@@ -35,7 +35,7 @@ class MDNCommand : RootCommand() {
 
         val query = args.next("Unable to find query!").replace("#", ".").removeSuffix("()")
 
-        if(cache.hasAlert(query)) {
+        if (cache.hasAlert(query)) {
             return cache.getAlert(query)!!
         }
 
@@ -43,9 +43,9 @@ class MDNCommand : RootCommand() {
 
         try {
             val searchDocument = Jsoup.connect(connectionStr)
-                    .ignoreContentType(true)
-                    .maxBodySize(0)
-                    .get()
+                .ignoreContentType(true)
+                .maxBodySize(0)
+                .get()
 
             val notFoundAlert = ErrorAlert(user.name, "Unable to find `$query` in the MDN Documentation!")
             val resultAnchorList = searchDocument.select("a.result-title")
@@ -55,31 +55,31 @@ class MDNCommand : RootCommand() {
             }
 
             val filteredResultList = resultAnchorList.stream()
-                    .filter {
-                        val text: String = it.text()?.removeSuffix("()") ?: return@filter false
-                        return@filter text.equals(query, true)
-                    }.collect(Collectors.toList())
+                .filter {
+                    val text: String = it.text()?.removeSuffix("()") ?: return@filter false
+                    return@filter text.equals(query, true)
+                }.collect(Collectors.toList())
 
             if (filteredResultList.isEmpty()) {
                 val alertDescSB = StringBuilder()
 
                 // Filter checks for spaces in an attempt to remove unrelated articles from search results
                 resultAnchorList.stream()
-                        .filter { it.text() != null && it.attr("href") != null && !it.text().contains(" ") }
-                        .forEach {
-                            val itemName = "**${it.outerHtml().toMarkdown()}**"
-                            val itemUrl = baseUrl + it.attr("href")
+                    .filter { it.text() != null && it.attr("href") != null && !it.text().contains(" ") }
+                    .forEach {
+                        val itemName = "**${it.outerHtml().toMarkdown()}**"
+                        val itemUrl = baseUrl + it.attr("href")
 
-                            val itemHyperlink = MarkdownUtil.maskedLink(itemName, itemUrl)
-                            alertDescSB.append("$itemHyperlink\n")
-                        }
+                        val itemHyperlink = MarkdownUtil.maskedLink(itemName, itemUrl)
+                        alertDescSB.append("$itemHyperlink\n")
+                    }
 
                 if (alertDescSB.isEmpty()) return notFoundAlert
 
                 val searchResultAlert = DocAlert()
                 searchResultAlert.setAuthor("MDN Documentation", null, iconUrl)
-                        .setTitle("Search Results:")
-                        .setDescription(alertDescSB.toString())
+                    .setTitle("Search Results:")
+                    .setDescription(alertDescSB.toString())
 
                 cache.putAlert(query, searchResultAlert)
                 return searchResultAlert
@@ -89,9 +89,9 @@ class MDNCommand : RootCommand() {
             val resultUrl = "$baseUrl${anchorResult.attr("href")}"
 
             val resultDocument = Jsoup.connect(resultUrl)
-                    .ignoreContentType(true)
-                    .maxBodySize(0)
-                    .get()
+                .ignoreContentType(true)
+                .maxBodySize(0)
+                .get()
 
             val docAlert = DocAlert()
             docAlert.setAuthor("MDN Documentation", null, iconUrl)
@@ -100,12 +100,12 @@ class MDNCommand : RootCommand() {
             wikiElement.html(wikiElement.html().replace("<p></p>", ""))
 
             val descriptionElement = wikiElement.selectFirst("article > p")
-                    ?: return ErrorAlert(user.name, "Unable to find article description!")
+                                     ?: return ErrorAlert(user.name, "Unable to find article description!")
 
             val description = hyperlinksToMarkdown(descriptionElement).toMarkdown().approxTruncate(600)
 
             val anchorText = anchorResult?.text()?.replace(".", "#")
-                    ?: return ErrorAlert(user.name, "Unable to find anchor name!")
+                             ?: return ErrorAlert(user.name, "Unable to find anchor name!")
 
             val itemHyperlink = MarkdownUtil.maskedLink(anchorText, resultUrl)
 
@@ -147,7 +147,7 @@ class MDNCommand : RootCommand() {
 
     private fun retrieveFormattedAnchorList(wikiElement: Element, headerName: String): String {
         val elementLocator = wikiElement.selectFirst("h2#$headerName") ?: wikiElement.selectFirst("div#$headerName")
-        ?: return ""
+                             ?: return ""
 
         var descListElement = if (elementLocator.tagName() == "div") {
             elementLocator.selectFirst("dl")
@@ -163,13 +163,13 @@ class MDNCommand : RootCommand() {
         val descTagList = descListElement.select("dt")
 
         descTagList.stream()
-                .filter { it.selectFirst("a") != null && returnSB.length < 512 }
-                .map { it.selectFirst("a") }
-                .forEach {
-                    val text = it.text().substringAfter(".").removeSuffix("()")
+            .filter { it.selectFirst("a") != null && returnSB.length < 512 }
+            .map { it.selectFirst("a") }
+            .forEach {
+                val text = it.text().substringAfter(".").removeSuffix("()")
 
-                    returnSB.append("`$text` ")
-                }
+                returnSB.append("`$text` ")
+            }
 
         returnSB.trimToSize()
         return returnSB.toString()
@@ -189,34 +189,34 @@ class MDNCommand : RootCommand() {
 
         var count = 0
         descTagList.stream().limit(4)
-                .forEach {
-                    // Prevents nested dl elements from showing up
-                    val parentOfParent = it.parent()?.parent()
-                    if (parentOfParent != null && parentOfParent.tagName().equals("dd", true)) return@forEach
+            .forEach {
+                // Prevents nested dl elements from showing up
+                val parentOfParent = it.parent()?.parent()
+                if (parentOfParent != null && parentOfParent.tagName().equals("dd", true)) return@forEach
 
-                    val itemName = it.html().toMarkdown().replace("Optional", "*")
+                val itemName = it.html().toMarkdown().replace("Optional", "*")
 
-                    // Prevents text from a nested dl from being put into the item description
-                    var descElement = it.nextElementSibling() ?: return@forEach
-                    descElement = descElement.selectFirst("p") ?: descElement
+                // Prevents text from a nested dl from being put into the item description
+                var descElement = it.nextElementSibling() ?: return@forEach
+                descElement = descElement.selectFirst("p") ?: descElement
 
 
-                    // Removes HTML list elements
-                    descElement.select("ul").remove()
-                    descElement.select("ol").remove()
-                    descElement.select("dl").remove()
+                // Removes HTML list elements
+                descElement.select("ul").remove()
+                descElement.select("ol").remove()
+                descElement.select("dl").remove()
 
-                    // Removes remnants of list elements (i.e. "This can either be:")
-                    descElement = descElement.html(descElement.html().replace("(\\.)(.*)[:]".toRegex(), "$1"))
+                // Removes remnants of list elements (i.e. "This can either be:")
+                descElement = descElement.html(descElement.html().replace("(\\.)(.*)[:]".toRegex(), "$1"))
 
-                    val itemDesc = hyperlinksToMarkdown(descElement).toMarkdown().approxTruncate(128)
+                val itemDesc = hyperlinksToMarkdown(descElement).toMarkdown().approxTruncate(128)
 
-                    val appendFormat = "$itemName - $itemDesc\n"
-                    val appendString = if (count == 3 && descTagList.size > 4) "$appendFormat..." else "$appendFormat\n"
+                val appendFormat = "$itemName - $itemDesc\n"
+                val appendString = if (count == 3 && descTagList.size > 4) "$appendFormat..." else "$appendFormat\n"
 
-                    returnSB.append(appendString)
-                    count++
-                }
+                returnSB.append(appendString)
+                count++
+            }
 
         returnSB.trimToSize()
         return returnSB.toString()

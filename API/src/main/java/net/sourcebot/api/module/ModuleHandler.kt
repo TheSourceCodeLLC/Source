@@ -28,6 +28,11 @@ class ModuleHandler : ClassLoader() {
         throw ClassNotFoundException(name)
     }
 
+    fun findClass(
+        name: String,
+        loader: JarModuleClassLoader
+    ): Class<*> = classes.computeIfAbsent(name) { loader.findClass(name, false) }
+
     fun loadDescriptor(file: File): ModuleDescriptor = JarFile(file).use { jar ->
         jar.getJarEntry("module.json")?.let(jar::getInputStream)?.use {
             JsonParser.parseReader(InputStreamReader(it)) as JsonObject
@@ -80,12 +85,18 @@ class ModuleHandler : ClassLoader() {
     fun loadPlugin(file: File): SourceModule {
         val descriptor = loadDescriptor(file)
         val name = descriptor.name
-        moduleIndex[name]?.let { throw AmbiguousPluginException(name, it.classLoader.file, file) }
+        moduleIndex[name]?.let {
+            throw AmbiguousPluginException(
+                name,
+                (it.classLoader as JarModuleClassLoader).file,
+                file
+            )
+        }
         descriptor.hardDepends.toMutableSet()
             .apply { removeIf(moduleIndex::containsKey) }
             .let { if (it.isNotEmpty()) throw UnknownDependencyException(it) }
-        val loader = ModuleClassLoader(this, file)
-        val mainClass = loader.findClass(descriptor.main, false)
+        val loader = JarModuleClassLoader(this, file)
+        val mainClass = findClass(descriptor.main, loader)
         val plugin = mainClass.newInstance() as SourceModule
         return plugin.apply {
             val (_, version, _, author) = descriptor
@@ -110,6 +121,10 @@ class ModuleHandler : ClassLoader() {
         logger.info("Disabled ${plugin.name} v${plugin.version}.")
     }
 
-    fun getModule(name: String) = moduleIndex[name]
+    fun findModule(name: String): SourceModule? = moduleIndex.values.find {
+        it.name.startsWith(name, true)
+    }
+
+    fun getModule(name: String): SourceModule? = moduleIndex[name]
     fun getModules() = moduleIndex.values
 }

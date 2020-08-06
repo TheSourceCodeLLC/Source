@@ -65,7 +65,7 @@ class DocSelectorEvent(private val deleteSeconds: Long) : ListenerAdapter() {
         val invalidIdAlert = ErrorAlert(user.name, "You entered an invalid selection id!")
 
         docMessage.editMessage(invalidIdAlert.asMessage(user)).complete()
-                .delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)
+            .delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)
 
         if (channelType != ChannelType.PRIVATE) {
             cmdMessage.delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)

@@ -62,7 +62,7 @@ class HelpCommand(
                     }
                 }
             } else {
-                val asModule = moduleHandler.getModule(topic)
+                val asModule = moduleHandler.findModule(topic)
                 if (asModule != null) {
                     object : InfoAlert(
                         "${asModule.name} Module Assistance",

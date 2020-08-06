@@ -16,10 +16,7 @@ import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
-import net.sourcebot.api.module.InvalidModuleException
-import net.sourcebot.api.module.ModuleDescriptor
-import net.sourcebot.api.module.ModuleHandler
-import net.sourcebot.api.module.SourceModule
+import net.sourcebot.api.module.*
 import net.sourcebot.api.permission.*
 import net.sourcebot.api.properties.JsonSerial
 import net.sourcebot.api.properties.Properties
@@ -40,7 +37,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatter.ofPattern
 import java.util.*
 
-class Source internal constructor(properties: Properties) : SourceModule() {
+class Source internal constructor(val properties: Properties) : SourceModule() {
     private val ignoredIntents = EnumSet.of(
         GUILD_MESSAGE_TYPING, DIRECT_MESSAGE_TYPING
     )
@@ -76,6 +73,16 @@ class Source internal constructor(properties: Properties) : SourceModule() {
     init {
         instance = this
         EmbedAlert.footer = properties.required("alert.footer")
+        classLoader = object : ModuleClassLoader() {
+            override fun findClass(name: String, searchParent: Boolean): Class<*> {
+                return try {
+                    if (searchParent) moduleHandler.findClass(name)
+                    else Source::class.java.classLoader.loadClass(name)
+                } catch (ex: Exception) {
+                    null
+                } ?: throw ClassNotFoundException(name)
+            }
+        }
         descriptor = this.javaClass.getResourceAsStream("/module.json").use {
             if (it == null) throw InvalidModuleException("Could not find module.json!")
             else JsonParser.parseReader(InputStreamReader(it)) as JsonObject
@@ -99,7 +106,11 @@ class Source internal constructor(properties: Properties) : SourceModule() {
         moduleHandler.enableModule(this)
         val modulesFolder = File("modules")
         if (!modulesFolder.exists()) modulesFolder.mkdir()
-        moduleHandler.loadModules(modulesFolder)
+        logger.info("Loading modules...")
+        val modules = moduleHandler.loadModules(modulesFolder)
+        logger.info("Enabling modules...")
+        modules.forEach(moduleHandler::enableModule)
+        logger.info("All modules have been enabled!")
     }
 
     override fun onEnable() {

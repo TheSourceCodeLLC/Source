@@ -10,7 +10,6 @@ import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.module.documentation.utility.DocAlert
 import org.jsoup.Connection
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Element
 
 class DJSCommand : RootCommand() {
     override val name: String = "djs"
@@ -18,7 +17,7 @@ class DJSCommand : RootCommand() {
     override var cleanupResponse: Boolean = false
 
     private val defaultSources: MutableList<String> = mutableListOf(
-            "stable", "master", "rpc", "commando", "akairo", "akairo-master", "collection"
+        "stable", "master", "rpc", "commando", "akairo", "akairo-master", "collection"
     )
 
     override fun execute(message: Message, args: Arguments): Alert {
@@ -40,8 +39,8 @@ class DJSCommand : RootCommand() {
 
                 version = try {
                     Jsoup.connect(githubStr)
-                            .ignoreContentType(true)
-                            .execute()
+                        .ignoreContentType(true)
+                        .execute()
 
                     query = args.next("Unable to find query w/ github version!")
                     githubStr
@@ -58,9 +57,9 @@ class DJSCommand : RootCommand() {
 
         return try {
             val response: Connection.Response = Jsoup.connect(apiUrl)
-                    .ignoreContentType(true)
-                    .method(Connection.Method.GET)
-                    .execute()
+                .ignoreContentType(true)
+                .method(Connection.Method.GET)
+                .execute()
 
             val responseBody: String = response.body().replace("\"icon_url\":", "\"iconUrl\":")
             Gson().fromJson(responseBody, DocAlert::class.java)

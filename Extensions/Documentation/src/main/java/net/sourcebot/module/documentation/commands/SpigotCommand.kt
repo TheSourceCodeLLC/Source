@@ -10,26 +10,26 @@ import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.module.documentation.utility.DocSelectorStorage
 import net.sourcebot.module.documentation.utility.JenkinsHandler
 
-class JDACommand : RootCommand() {
-    override val name: String = "jda"
-    override val description: String = "Allows the user to query the JDA Documentation."
+class SpigotCommand : RootCommand() {
+    override val name: String = "spigot"
+    override val description: String = "Allows the user to query the Spigot Documentation."
     override var cleanupResponse: Boolean = false
     override val argumentInfo: ArgumentInfo = ArgumentInfo(
-            Argument("query", "The item you are searching for in the JDA documentation.")
+        Argument("query", "The item you are searching for in the Spigot documentation.")
     )
 
-    private val jenkinsHandler = JenkinsHandler("https://ci.dv8tion.net/job/JDA/javadoc/allclasses.html",
-            "https://camo.githubusercontent.com/f2e0860a3b1a34658f23a8bcea96f9725b1f8a73/68747470733a2f2f692e696d6775722e636f6d2f4f4737546e65382e706e67",
-            "JDA Javadocs")
+    private val jenkinsHandler = JenkinsHandler("https://hub.spigotmc.org/javadocs/spigot/overview-tree.html",
+        "https://avatars0.githubusercontent.com/u/4350249?s=200&v=4",
+        "Spigot Javadocs")
 
     override fun execute(message: Message, args: Arguments): Alert {
-        return if(args.hasNext()) {
+        return if (args.hasNext()) {
             val query = args.next("Unable to find query w/o version!")
 
             jenkinsHandler.retrieveDocAlert(message, message.author, query)
         } else {
             val authorName = message.author.name
-            val description = "You can find the JDA Documentation at [ci.dv8tion.net](https://ci.dv8tion.net/job/JDA/javadoc/index.html)"
+            val description = "You can find the Spigot Documentation at [hub.spigotmc.org](https://hub.spigotmc.org/javadocs/spigot/)"
             InfoAlert(authorName, description)
         }
 

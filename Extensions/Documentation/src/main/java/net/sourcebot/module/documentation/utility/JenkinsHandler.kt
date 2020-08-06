@@ -15,9 +15,9 @@ import java.lang.reflect.Field
 import java.util.stream.Collectors
 
 class JenkinsHandler(
-        url: String,
-        val iconUrl: String,
-        val embedTitle: String
+    url: String,
+    val iconUrl: String,
+    val embedTitle: String
 ) {
 
     private val jenkins: Jenkins = Jenkins(url)
@@ -66,12 +66,12 @@ class JenkinsHandler(
             is ClassInformation -> {
 
                 val nestedClassList: List<String> = information.nestedClassList.stream()
-                        .map { it.replace("$infoName.", "") }
-                        .collect(Collectors.toList())
+                    .map { it.replace("$infoName.", "") }
+                    .collect(Collectors.toList())
 
                 val methodList: List<String> = information.methodList.stream()
-                        .map { it.substringBefore("(").trim() }
-                        .collect(Collectors.toList())
+                    .map { it.substringBefore("(").trim() }
+                    .collect(Collectors.toList())
 
                 docAlert.attemptAddEmbedField(nestedClassList, "Nested Classes:")
                 docAlert.attemptAddEmbedField(methodList, "Methods:")
@@ -110,7 +110,7 @@ class JenkinsHandler(
             val rawExtraInfo: Map<String, String> = information.rawExtraInformation
 
             rawExtraInfo.forEach { (key, value) ->
-                val replacementNewline = if(key.equals("Parameters:", true)) "<br><br>" else "<br>"
+                val replacementNewline = if (key.equals("Parameters:", true)) "<br><br>" else "<br>"
 
                 val modifiedValue = value.replace("\n", replacementNewline)
 
@@ -162,8 +162,8 @@ class JenkinsHandler(
         val strBuilder = StringBuilder()
 
         list.stream()
-                .filter { !strBuilder.toString().contains(it, true) && strBuilder.length <= 512 }
-                .forEach { strBuilder.append("`$it` ") }
+            .filter { !strBuilder.toString().contains(it, true) && strBuilder.length <= 512 }
+            .forEach { strBuilder.append("`$it` ") }
 
         if (strBuilder.length >= 512) {
             strBuilder.append("...")
@@ -180,36 +180,36 @@ class JenkinsHandler(
         var html: String = element.outerHtml()
 
         element.select("a").stream()
-                .filter { it.attr("href") != null }
-                .forEach {
+            .filter { it.attr("href") != null }
+            .forEach {
 
-                    var hrefUrl: String = it.attr("href")
-                    val text: String = it.outerHtml().toMarkdown()
+                var hrefUrl: String = it.attr("href")
+                val text: String = it.outerHtml().toMarkdown()
 
-                    if (!hrefUrl.contains("http", true)) {
-                        if (hrefUrl.contains("../") || hrefUrl.contains("#")) {
-                            hrefUrl = hrefUrl.replace("../", "")
-                            val baseClassUrl = url.substringBeforeLast("#")
+                if (!hrefUrl.contains("http", true)) {
+                    if (hrefUrl.contains("../") || hrefUrl.contains("#")) {
+                        hrefUrl = hrefUrl.replace("../", "")
+                        val baseClassUrl = url.substringBeforeLast("#")
 
-                            hrefUrl = if (hrefUrl.contains("#") && !hrefUrl.contains("/")) {
-                                baseClassUrl + hrefUrl
-                            } else baseUrl + hrefUrl
+                        hrefUrl = if (hrefUrl.contains("#") && !hrefUrl.contains("/")) {
+                            baseClassUrl + hrefUrl
+                        } else baseUrl + hrefUrl
 
-                        } else if (hrefUrl.contains(".html", true)) {
-                            hrefUrl = hrefUrl.substring(hrefUrl.lastIndexOf("/") + 1).substringBeforeLast(".")
-                            hrefUrl = retrieveClassUrl(hrefUrl)?.trim() ?: return@forEach
-                        }
-
-                    }
-
-                    if (hrefUrl.isNotEmpty()) {
-                        hrefUrl = MarkdownSanitizer.escape(hrefUrl)
-                        val hyperlink: String = MarkdownUtil.maskedLink(text, hrefUrl).replace("%29", ")")
-
-                        html = html.replace(it.outerHtml(), hyperlink)
+                    } else if (hrefUrl.contains(".html", true)) {
+                        hrefUrl = hrefUrl.substring(hrefUrl.lastIndexOf("/") + 1).substringBeforeLast(".")
+                        hrefUrl = retrieveClassUrl(hrefUrl)?.trim() ?: return@forEach
                     }
 
                 }
+
+                if (hrefUrl.isNotEmpty()) {
+                    hrefUrl = MarkdownSanitizer.escape(hrefUrl)
+                    val hyperlink: String = MarkdownUtil.maskedLink(text, hrefUrl).replace("%29", ")")
+
+                    html = html.replace(it.outerHtml(), hyperlink)
+                }
+
+            }
 
         html = html.replace("<code>\\[(.*?)]\\((.*?)\\)</code>".toRegex(), "[`$1`]($2)")
 
@@ -218,13 +218,12 @@ class JenkinsHandler(
     }
 
 
-
     private fun retrieveClassUrl(className: String): String? {
         val urlList = classURLList.stream()
-                .filter {
-                    val modifiedElement = it.substring(it.lastIndexOf("/") + 1).removeSuffix(".html")
-                    return@filter modifiedElement.equals(className, true)
-                }.collect(Collectors.toList())
+            .filter {
+                val modifiedElement = it.substring(it.lastIndexOf("/") + 1).removeSuffix(".html")
+                return@filter modifiedElement.equals(className, true)
+            }.collect(Collectors.toList())
 
         return if (urlList.size == 0) null else urlList[0]
     }
