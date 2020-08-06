@@ -2,7 +2,7 @@ package net.sourcebot.api.module
 
 import java.io.File
 
-class AmbiguousPluginException(
+class AmbiguousModuleException(
     name: String,
     firstIndexed: File,
     lastIndexed: File

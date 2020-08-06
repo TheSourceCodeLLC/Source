@@ -9,7 +9,8 @@ class LoggerConfiguration : BasicConfigurator() {
     private val loggerLevels = mapOf<String, Level>(
         Pair("net.dv8tion.jda.internal", Level.WARN),
         Pair("uk.org.lidalia.sysoutslf4j", Level.WARN),
-        Pair("org.mongodb.driver.cluster", Level.WARN)
+        Pair("org.mongodb.driver.cluster", Level.WARN),
+        Pair("org.mongodb.driver.connection", Level.WARN)
     )
 
     override fun configure(context: LoggerContext) {

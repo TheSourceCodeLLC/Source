@@ -22,18 +22,14 @@ class JarModuleClassLoader(
 
     override fun findClass(name: String, searchParent: Boolean): Class<*> = classes.computeIfAbsent(name) {
         val className = name.replace(".", "/").plus(".class")
-        val entry = jar.getJarEntry(className) ?: throw ClassNotFoundException(name)
         try {
-            val classBytes = jar.getInputStream(entry).use(ByteStreams::toByteArray)
-            defineClass(name, classBytes, 0, classBytes.size)
+            var storedClass = jar.getJarEntry(className)?.let {
+                jar.getInputStream(it)?.use(ByteStreams::toByteArray)
+            }?.let { defineClass(name, it, 0, it.size) }
+            if (storedClass == null && searchParent) storedClass = moduleHandler.findClass(name)
+            storedClass
         } catch (ex: Exception) {
-            try {
-                if (searchParent) {
-                    moduleHandler.findClass(name)
-                } else null
-            } catch (ex: Exception) {
-                null
-            }
+            null
         } ?: throw ClassNotFoundException(name)
     }
 

@@ -50,8 +50,10 @@ class ModuleHandler : ClassLoader() {
             try {
                 val descriptor = loadDescriptor(it)
                 fileIndex.compute(descriptor.name) { name, indexed ->
+                    if (name.equals("Source", true))
+                        throw InvalidModuleException("Illegal module name: 'Source' in ${it.path}!")
                     if (indexed == null) it
-                    else throw AmbiguousPluginException(name, indexed, it)
+                    else throw AmbiguousModuleException(name, indexed, it)
                 }
                 hardDependencies[descriptor.name] = descriptor.hardDepends.toMutableSet()
                 softDependencies[descriptor.name] = descriptor.softDepends.toMutableSet()
@@ -86,7 +88,9 @@ class ModuleHandler : ClassLoader() {
         val descriptor = loadDescriptor(file)
         val name = descriptor.name
         moduleIndex[name]?.let {
-            throw AmbiguousPluginException(
+            if (name.equals("Source", true))
+                throw InvalidModuleException("Illegal module name: 'Source' in ${file.path}!")
+            throw AmbiguousModuleException(
                 name,
                 (it.classLoader as JarModuleClassLoader).file,
                 file
