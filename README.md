@@ -34,7 +34,7 @@ Members that permissions do not apply to: <br>
 -  Members in a server that have `ADMINISTRATOR` permissions
 -  Global Admins as defined in the `config.json`
 
-Global Admins are the ONLY people who may use commands marked as global.
+Global Admins are the ONLY people who may use commands marked as global. <br>
 Command Breakdown:
 ```
 permissions:
