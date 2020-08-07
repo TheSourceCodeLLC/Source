@@ -4,20 +4,17 @@ import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import net.sourcebot.api.database.MongoSerial
 import org.bson.Document
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 
 class SourceUser internal constructor(
     private val permissionData: PermissionData,
     val id: String,
     val guild: String,
-    val permissions: MutableList<SourcePermission> = ArrayList(),
-    val parents: SortedSet<SourceGroup> = TreeSet(Comparator.comparing(SourceGroup::weight))
-) : SimplePermissible(permissions, parents) {
+    val permissions: MutableList<SourcePermission> = ArrayList()
+) : SimplePermissible(permissions) {
     internal var roles: Set<SourceRole> = emptySet()
     override fun update(): UpdateResult = permissionData.updateUser(this)
     override fun delete(): DeleteResult = permissionData.deleteUser(this)
+    override fun asMention() = "<@$id>"
 
     class Serial(private val permissionHandler: PermissionHandler) : MongoSerial<SourceUser> {
         override fun queryDocument(obj: SourceUser) = Document("id", obj.id)
@@ -26,8 +23,7 @@ class SourceUser internal constructor(
             val guild = it["guild"] as String
             val permissionData = permissionHandler.getData(guild)
             val permissions = permissionData.getPermissions(it)
-            val parents = permissionData.getParents(it)
-            SourceUser(permissionData, id, guild, permissions, parents)
+            SourceUser(permissionData, id, guild, permissions)
         }
 
         override fun serialize(obj: SourceUser) = queryDocument(obj).apply {
@@ -36,8 +32,6 @@ class SourceUser internal constructor(
                 MongoSerial.toDocument(it)
             }
             append("permissions", permissions)
-            val parents = obj.parents.map(SourceGroup::name)
-            append("parents", parents)
         }
     }
 

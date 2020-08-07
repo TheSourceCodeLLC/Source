@@ -7,11 +7,11 @@ GitHub Packages may not be maintained! Use at your own risk!
 Note: You need Java 11 to compile and run Source.
 
 * Compile Source on your local machine:
-  - `git clone git@github.com:The-SourceCode/SourceV5.git`
-  - `cd SourceV5`
-  - `mvn install -DtargetRoot=/path/to/SourceV5/target`
+  - `git clone git@github.com:TheSourceCodeLLC/Source.git`
+  - `cd Source`
+  - `mvn install -DtargetRoot=/path/to/Source/target`
 * Create a folder somewhere for the bot to run in (runtime dir)
-* Copy `API-v5.jar` from `target/bin/Source` to the runtime dir.
+* Copy `API.jar` from `target/bin/Source` to the runtime dir.
 * Create a folder named `modules` in the runtime dir (module dir)
 * Copy any modules you want to run into the module dir. 
 * Copy `config.example.json` to the runtime dir, and rename it to `config.json`, or start the bot to pregenerate it.
@@ -30,21 +30,16 @@ To do this, you will need to activate to the Discord Developers Portal, under th
   * Unix: `java -jar API.jar`
 
 # Using Permissions
-Members with the `ADMINISTRATOR` permission will ignore permission requirements.
+Members that permissions do not apply to:
+  Members in a server that have `ADMINISTRATOR` permissions
+  Global Admins as defined in the `config.json`
 
+Global Admins are the ONLY people who may use commands marked as global.
 Command Breakdown:
 ```
 permissions:
-  <group|user|role>: The type of entity to modify
+  <user|role>: The type of entity to modify
     <target>: The entity to modify
-      parents: Commands relating to parents
-        add: Add a parent to this entity
-          <toAdd>: Name of the parent to add
-        remove: Remove a parent from this entity
-          <toRemove>: Name of the parent to remove
-        list: List this entity's parents
-        clear: Clear this entity's parents
-      permissions: Commands relating to permissions
         set: Set a permission for this entity
           <toSet>: The permission node to set
           <flag>: The flag for the new node
@@ -52,6 +47,7 @@ permissions:
         unset: Unset a permission for this entity
           <toUnset>: The permission node to unset
           (context): An optional context to unset from
+        info: Get permission info for this entity
         check:
           <toCheck>: The permission node to check
           (context): An optional context to check in

@@ -41,18 +41,19 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
     private val ignoredIntents = EnumSet.of(
         GUILD_MESSAGE_TYPING, DIRECT_MESSAGE_TYPING
     )
+    val globalAdmins: Set<String> = properties.required("global-admins")
 
     val sourceEventSystem = EventSystem<SourceEvent>()
     val jdaEventSystem = EventSystem<GenericEvent>()
 
     val mongodb = MongoDB(properties.required("mongodb"))
-    val permissionHandler = PermissionHandler(mongodb)
+    val permissionHandler = PermissionHandler(mongodb, globalAdmins)
     val moduleHandler = ModuleHandler()
 
     val commandHandler = CommandHandler(
         properties.required("commands.prefix"),
         properties.required("commands.delete-seconds"),
-        properties.required("commands.global-admins"),
+        globalAdmins,
         permissionHandler
     )
 
@@ -71,6 +72,7 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
     }.build()
 
     init {
+        shardManager.shards.forEach { it.awaitReady() }
         instance = this
         EmbedAlert.footer = properties.required("alert.footer")
         classLoader = object : ModuleClassLoader() {
@@ -96,19 +98,18 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
 
     private fun registerSerial() {
         MongoSerial.register(SourcePermission.Serial())
-        MongoSerial.register(SourceGroup.Serial(permissionHandler))
         MongoSerial.register(SourceUser.Serial(permissionHandler))
         MongoSerial.register(SourceRole.Serial(permissionHandler))
     }
 
     private fun loadModules() {
-        moduleHandler.moduleIndex["Source"] = this
-        moduleHandler.enableModule(this)
         val modulesFolder = File("modules")
         if (!modulesFolder.exists()) modulesFolder.mkdir()
         logger.info("Loading modules...")
+        moduleHandler.loadModule(this)
         val modules = moduleHandler.loadModules(modulesFolder)
         logger.info("Enabling modules...")
+        moduleHandler.enableModule(this)
         modules.forEach(moduleHandler::enableModule)
         logger.info("All modules have been enabled!")
     }

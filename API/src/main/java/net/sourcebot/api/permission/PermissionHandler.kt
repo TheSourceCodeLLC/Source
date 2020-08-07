@@ -10,7 +10,10 @@ import net.sourcebot.api.alert.error.NoPermissionAlert
 import net.sourcebot.api.alert.error.NoPermissionDMAllowedAlert
 import net.sourcebot.api.database.MongoDB
 
-class PermissionHandler(private val mongodb: MongoDB) {
+class PermissionHandler(
+    private val mongodb: MongoDB,
+    private val globalAdmins: Set<String>
+) {
     private val dataCache = HashMap<String, PermissionData>()
 
     private fun computeContext(channel: MessageChannel): Set<String> {
@@ -23,7 +26,8 @@ class PermissionHandler(private val mongodb: MongoDB) {
     }
 
     private fun hasPermission(permissible: Permissible, node: String, context: Set<String>): Boolean =
-        if (context.any { permissible.hasPermission(node, it) }) true
+        if (permissible is SourceUser && permissible.id in globalAdmins) true
+        else if (context.any { permissible.hasPermission(node, it) }) true
         else permissible.hasPermission(node)
 
     fun hasPermission(permissible: Permissible, node: String, channel: MessageChannel): Boolean {

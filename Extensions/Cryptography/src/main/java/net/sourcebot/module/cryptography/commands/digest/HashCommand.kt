@@ -18,6 +18,7 @@ abstract class HashCommand(
     override val argumentInfo = ArgumentInfo(
         Argument("input", "The text to be hashed.")
     )
+    final override val permission by lazy { "cryptography.$name" }
 
     override fun execute(message: Message, args: Arguments): Alert {
         val input = args.slurp(" ", "You did not provide text to hash!")

@@ -8,8 +8,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.jar.JarFile
 
 abstract class ModuleClassLoader : ClassLoader() {
-    abstract fun findClass(name: String, searchParent: Boolean): Class<*>
     final override fun findClass(name: String): Class<*> = findClass(name, true)
+    abstract fun findClass(name: String, searchParent: Boolean): Class<*>
 }
 
 class JarModuleClassLoader(

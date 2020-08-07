@@ -4,11 +4,6 @@ import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 
 interface Permissible {
-    fun addParent(sourceGroup: SourceGroup): Boolean
-    fun removeParent(sourceGroup: SourceGroup): Boolean
-    fun getParents(): Set<SourceGroup>
-    fun clearParents()
-
     fun hasPermission(node: String): Boolean
     fun hasPermission(node: String, context: String): Boolean
 
@@ -21,8 +16,11 @@ interface Permissible {
     fun clearPermissions()
     fun clearPermissions(context: String)
 
+    fun getPermissions(): Collection<SourcePermission>
     fun getContexts(node: String): Set<String>
 
     fun update(): UpdateResult
     fun delete(): DeleteResult
+
+    fun asMention(): String
 }

@@ -1,28 +1,13 @@
 package net.sourcebot.api.permission
 
-import java.util.*
-import kotlin.collections.ArrayList
-
 abstract class SimplePermissible(
-    private val permissions: MutableList<SourcePermission> = ArrayList(),
-    private val parents: SortedSet<SourceGroup> = TreeSet(Comparator.comparing(SourceGroup::weight))
+    private val permissions: MutableList<SourcePermission> = ArrayList()
 ) : Permissible {
-    override fun addParent(sourceGroup: SourceGroup) = parents.add(sourceGroup)
-    override fun removeParent(sourceGroup: SourceGroup) = parents.remove(sourceGroup)
-    override fun getParents(): Set<SourceGroup> = parents
-    override fun clearParents() {
-        parents.clear()
-    }
-
     override fun hasPermission(node: String): Boolean {
-        val inherited = parents.any { it.hasPermission(node) }
-        if (inherited) return true
         return permissions.find { it.node == node && it.context == null }?.flag ?: false
     }
 
     override fun hasPermission(node: String, context: String): Boolean {
-        val inherited = parents.any { it.hasPermission(node, context) }
-        if (inherited) return true
         return permissions.find { it.node == node && it.context == context }?.flag ?: false
     }
 
@@ -52,13 +37,10 @@ abstract class SimplePermissible(
         permissions.removeIf { it.context == context }
     }
 
+    override fun getPermissions(): Collection<SourcePermission> = permissions
+
     override fun getContexts(node: String): Set<String> {
         val contexts = mutableSetOf<String>()
-        parents.forEach { parent ->
-            parent.permissions.forEach {
-                if (it.node == node && it.context != null) contexts.add(it.context)
-            }
-        }
         permissions.forEach {
             if (it.node == node && it.context != null) contexts.add(it.context)
         }

@@ -10,8 +10,6 @@ import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.nextMember
-import net.sourcebot.api.nextRole
 import net.sourcebot.api.permission.PermissionHandler
 
 class PermissionsCommand(
@@ -21,10 +19,9 @@ class PermissionsCommand(
     override val description = "Modify Source permissions."
     override val guildOnly = true
     override val argumentInfo = ArgumentInfo(
-        Argument("group|role|user", "The type of entity to modify."),
+        Argument("role|user", "The type of entity to modify."),
         Argument("target", "The target to modify."),
-        Argument("parents|permissions", "The element you wish to modify."),
-        Argument("<add|remove|list|clear>|<set|unset|check|clear>", "The operation you wish to perform."),
+        Argument("set|unset|info|check|clear", "The operation you wish to perform."),
         Argument("data...", "The data supplied to the chosen operation.")
     )
     override val aliases = arrayOf("permission", "perms", "perm")
@@ -34,14 +31,7 @@ class PermissionsCommand(
         val permissionData = permissionHandler.getData(message.guild)
         val user = permissionData.getUser(message.member!!)
         val type = args.next("You did not specify a type to modify!").toLowerCase()
-        val target = args.next("You did not specify a target!")
-        args.backtrack()
         val permissible = when (type) {
-            "group" -> {
-                val groupName = args.next("You did not specify a valid group name!")
-                permissionData.getGroup(groupName)
-                ?: throw InvalidSyntaxException("There is no group named `$groupName`!")
-            }
             "role" -> {
                 val role = args.nextRole(message.guild, "You did not specify a valid role!")
                 permissionData.getRole(role)
@@ -52,123 +42,81 @@ class PermissionsCommand(
             }
             else -> throw InvalidSyntaxException("You did not specify a valid type!")
         }
-        val toSend = when (args.next("You did not specify an element to modify!").toLowerCase()) {
-            "parents" -> {
-                permissionHandler.checkPermission(user, "permissions.$type.parents", message.channel) {
-                    when (args.next(
-                        "You did not specify an operation!\n" +
-                        "Valid operations: `add`,`remove`,`list`,`clear`"
-                    ).toLowerCase()) {
-                        "add" -> {
-                            permissionHandler.checkPermission(user, "permissions.$type.parents.add", message.channel) {
-                                val toAdd = args.next("You did not specify a group to add!")
-                                val group = permissionData.getGroup(toAdd)
-                                            ?: throw InvalidSyntaxException("There is no group named `$toAdd`!")
-                                permissible.addParent(group)
-                                SuccessAlert("Parent Added!", "Added parent `$toAdd` to $type `$target`!")
-                            }
-                        }
-                        "remove" -> {
-                            permissionHandler.checkPermission(user, "permissions.$type.parents.remove", message.channel) {
-                                val toRemove = args.next("You did not specify a group to remove!")
-                                val group = permissionData.getGroup(toRemove)
-                                            ?: throw InvalidSyntaxException("There is no group named `$toRemove`!")
-                                permissible.removeParent(group)
-                                SuccessAlert("Parent Removed!", "Removed parent `$toRemove` from $type `$target`!")
-                            }
-                        }
-                        "list" -> {
-                            permissionHandler.checkPermission(user, "permissions.$type.parents.list", message.channel) {
-                                SuccessAlert(
-                                    "${type.capitalize()} `$target`'s Parents:",
-                                    permissible.getParents().joinToString(",") {
-                                        "`${it.name}"
-                                    })
-                            }
-                        }
-                        "clear" -> {
-                            permissionHandler.checkPermission(user, "permissions.$type.parents.clear", message.channel) {
-                                permissible.clearParents()
-                                SuccessAlert("Parents Cleared!", "${type.capitalize()} `$target`'s parents have been cleared!")
-                            }
-                        }
-                        else -> throw InvalidSyntaxException(
-                            "Invalid Operation!\n" +
-                            "Valid operations: `add`,`remove`,`check`,`clear`"
-                        )
+        val asMention = permissible.asMention()
+        val toSend = when (args.next(
+            "You did not specify an operation!\n" +
+            "Valid operations: `set`,`unset`,`info`,`check`,`clear`"
+        ).toLowerCase()) {
+            "set" -> {
+                permissionHandler.checkPermission(user, "permissions.$type.set", message.channel) {
+                    val node = args.next("You did not specify a node to set!")
+                    val flag = args.next(Adapter.BOOLEAN, "You did not specify a flag for the node!")
+                    val context = args.next()
+                    val description = if (context != null) {
+                        permissible.setPermission(node, flag, context)
+                        "Set permission for $asMention: `$node` = `$flag` @ `$context`"
+                    } else {
+                        permissible.setPermission(node, flag)
+                        "Set permission for $asMention: `$node` = `$flag`"
                     }
+                    SuccessAlert("Permission Set!", description)
                 }
             }
-            "permissions" -> {
-                permissionHandler.checkPermission(user, "permissions.$type.permissions", message.channel) {
-                    when (args.next(
-                        "You did not specify an operation!\n" +
-                        "Valid operations: `set`,`unset`,`check`,`clear`"
-                    ).toLowerCase()) {
-                        "set" -> {
-                            permissionHandler.checkPermission(user, "permissions.$type.permissions.set", message.channel) {
-                                val node = args.next("You did not specify a node to set!")
-                                val flag = args.next(Adapter.BOOLEAN, "You did not specify a flag for the node!")
-                                val context = args.next()
-                                val description = if (context != null) {
-                                    permissible.setPermission(node, flag, context)
-                                    "Set permission for $type `$target`: `$node` = `$flag` @ `$context`"
-                                } else {
-                                    permissible.setPermission(node, flag)
-                                    "Set permission for $type `$target`: `$node` = `$flag`"
-                                }
-                                SuccessAlert("Permission Set!", description)
-                            }
-                        }
-                        "unset" -> {
-                            permissionHandler.checkPermission(user, "permissions.$type.permissions.unset", message.channel) {
-                                val node = args.next("You did not specify a node to unset!")
-                                val context = args.next()
-                                val description = if (context != null) {
-                                    permissible.unsetPermission(node, context)
-                                    "Unset `$node` for $type `$target` @ `$context`"
-                                } else {
-                                    permissible.unsetPermission(node)
-                                    "Unset `$node` for $type `$target`"
-                                }
-                                SuccessAlert("Permission Unset!", description)
-                            }
-                        }
-                        "check" -> {
-                            permissionHandler.checkPermission(user, "permissions.$type.permissions.check", message.channel) {
-                                val node = args.next("You did not specify a node to check!")
-                                val context = args.next()
-                                val description = if (context != null) {
-                                    val has = permissible.hasPermission(node, context)
-                                    "Permission check for $type `$target`; `$node` @ `$context`: `$has`"
-                                } else {
-                                    val has = permissible.hasPermission(node)
-                                    "Permission check for $type `$target`; `$node`: `$has`"
-                                }
-                                InfoAlert("Permission Check", description)
-                            }
-                        }
-                        "clear" -> {
-                            permissionHandler.checkPermission(user, "permissions.$type.permissions.clear", message.channel) {
-                                val context = args.next()
-                                val description = if (context != null) {
-                                    permissible.clearPermissions(context)
-                                    "Permissions cleared for $type `$target` @ `$context`"
-                                } else {
-                                    permissible.clearPermissions()
-                                    "Permissions cleared for $type `$target`"
-                                }
-                                SuccessAlert("Permissions Cleared!", description)
-                            }
-                        }
-                        else -> throw InvalidSyntaxException(
-                            "Invalid Operation!\n" +
-                            "Valid operations: `set`,`unset`,`check`,`clear`"
-                        )
+            "unset" -> {
+                permissionHandler.checkPermission(user, "permissions.$type.unset", message.channel) {
+                    val node = args.next("You did not specify a node to unset!")
+                    val context = args.next()
+                    val description = if (context != null) {
+                        permissible.unsetPermission(node, context)
+                        "Unset `$node` for $asMention @ `$context`"
+                    } else {
+                        permissible.unsetPermission(node)
+                        "Unset `$node` for $asMention"
                     }
+                    SuccessAlert("Permission Unset!", description)
                 }
             }
-            else -> throw InvalidSyntaxException("You did not specify a valid element!")
+            "info" -> {
+                permissionHandler.checkPermission(user, "permissions.info", message.channel) {
+                    val permissions = permissible.getPermissions()
+                    val infoOutput = permissions.joinToString("\n") {
+                        if (it.context != null) "${it.node}: ${it.flag} @ ${it.context}"
+                        else "${it.node}: ${it.flag}"
+                    }.ifEmpty { "No permissions set." }
+                    InfoAlert("Permission Information", "Permissions for $asMention:\n$infoOutput")
+                }
+            }
+            "check" -> {
+                permissionHandler.checkPermission(user, "permissions.$type.check", message.channel) {
+                    val node = args.next("You did not specify a node to check!")
+                    val context = args.next()
+                    val description = if (context != null) {
+                        val has = permissible.hasPermission(node, context)
+                        "Permission check for $asMention; `$node` @ `$context`: `$has`"
+                    } else {
+                        val has = permissible.hasPermission(node)
+                        "Permission check for $asMention; `$node`: `$has`"
+                    }
+                    InfoAlert("Permission Check", description)
+                }
+            }
+            "clear" -> {
+                permissionHandler.checkPermission(user, "permissions.$type.clear", message.channel) {
+                    val context = args.next()
+                    val description = if (context != null) {
+                        permissible.clearPermissions(context)
+                        "Permissions cleared for $asMention @ `$context`"
+                    } else {
+                        permissible.clearPermissions()
+                        "Permissions cleared for $asMention"
+                    }
+                    SuccessAlert("Permissions Cleared!", description)
+                }
+            }
+            else -> throw InvalidSyntaxException(
+                "Invalid Operation!\n" +
+                "Valid operations: `set`,`unset`,`info`,`check`,`clear`"
+            )
         }
         permissible.update()
         return toSend

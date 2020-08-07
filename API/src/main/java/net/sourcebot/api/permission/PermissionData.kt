@@ -15,22 +15,14 @@ class PermissionData(
 ) {
     private val users = mongodb.getCollection("user-permissions")
     private val roles = mongodb.getCollection("role-permissions")
-    private val groups = mongodb.getCollection("group-permissions")
 
     private val userCache = HashMap<String, SourceUser>()
     private val roleCache = HashMap<String, SourceRole>()
-    private val groupCache = HashMap<String, SourceGroup>()
-    private val defaultGroup = {
-        groupCache.computeIfAbsent("default") {
-            getGroup(it) ?: SourceGroup(this, it, 0, guild).apply { insert(this, groups) }
-        }
-    }
 
     fun getUser(member: Member): SourceUser = userCache.computeIfAbsent(member.id) {
         users.find(Document("id", member.id)).first()?.let {
             MongoSerial.fromDocument<SourceUser>(it)
         } ?: SourceUser(this, member.id, guild).also {
-            it.addParent(defaultGroup())
             insert(it, users)
         }
     }
@@ -43,7 +35,6 @@ class PermissionData(
         roles.find(Document("id", role.id)).first()?.let {
             MongoSerial.fromDocument<SourceRole>(it)
         } ?: SourceRole(this, role.id, guild).also {
-            it.addParent(defaultGroup())
             insert(it, roles)
         }
     }
@@ -51,41 +42,6 @@ class PermissionData(
     internal fun updateRole(sourceRole: SourceRole) = update(sourceRole, roles)
     internal fun deleteRole(sourceRole: SourceRole) =
         delete(sourceRole, roles, roleCache)
-
-    fun getGroup(name: String): SourceGroup? {
-        val cached = groupCache[name]
-        return if (cached != null) cached else {
-            val found = groups.find(Document("name", name)).first()
-            if (found != null) MongoSerial.fromDocument<SourceGroup>(found) else null
-        }
-    }
-
-    fun getGroups(): Collection<SourceGroup> = groupCache.values
-
-    fun createGroup(name: String, weight: Int): Boolean {
-        val cached = groupCache[name]
-        return if (cached != null) false
-        else {
-            val created = SourceGroup(this, name, weight, guild)
-            groupCache[name] = created
-            insert(created, groups)
-            true
-        }
-    }
-
-    internal fun updateGroup(sourceGroup: SourceGroup) = update(sourceGroup, groups)
-    internal fun deleteGroup(sourceGroup: SourceGroup): DeleteResult {
-        userCache.values.forEach {
-            if (it.removeParent(sourceGroup)) it.update()
-        }
-        roleCache.values.forEach {
-            if (it.removeParent(sourceGroup)) it.update()
-        }
-        groupCache.values.forEach {
-            if (it.removeParent(sourceGroup)) it.update()
-        }
-        return delete(sourceGroup, groups, groupCache)
-    }
 
     private fun <T> insert(
         obj: T,
@@ -121,12 +77,6 @@ class PermissionData(
         collection: MongoCollection<Document>,
         cache: HashMap<String, T>
     ) = delete(obj, T::class.java, collection, cache)
-
-    internal fun getParents(
-        document: Document
-    ): SortedSet<SourceGroup> = document.getList("parents", String::class.java)
-        .mapNotNull(::getGroup)
-        .toSortedSet(Comparator.comparing(SourceGroup::weight))
 
     internal fun getPermissions(
         document: Document

@@ -62,29 +62,29 @@ class ModuleHandler : ClassLoader() {
             }
         }
         do {
-            // Find plugins with no hard dependencies, preferring ones with no soft dependencies
+            // Find modules with no hard dependencies, preferring ones with no soft dependencies
             // Make sure to exclude those that are already in the load order
             val next = fileIndex.filterValues { it !in loadOrder }.keys.filter {
                 hardDependencies[it]?.isEmpty() ?: true
             }.sortedBy { softDependencies[it]?.size ?: 0 }
-            // Build the plugin load order
+            // Build the module load order
             loadOrder.addAll(next.map { fileIndex[it]!! })
-            // Filter the 'loaded' plugin from dependency index
+            // Filter the 'loaded' module from dependency index
             next.forEach {
                 hardDependencies.remove(it)
                 softDependencies.remove(it)
             }
-            // Filter the 'loaded' plugin from dependency sets
+            // Filter the 'loaded' module from dependency sets
             hardDependencies.values.forEach { it.removeAll(next) }
             softDependencies.values.forEach { it.removeAll(next) }
         } while (next.isNotEmpty())
         hardDependencies.forEach { (module, deps) ->
             logger.error("Could not load module '$module!'", UnknownDependencyException(deps))
         }
-        return loadOrder.map { loadPlugin(it) }
+        return loadOrder.map { loadModule(it) }
     }
 
-    fun loadPlugin(file: File): SourceModule {
+    fun loadModule(file: File): SourceModule {
         val descriptor = loadDescriptor(file)
         val name = descriptor.name
         moduleIndex[name]?.let {
@@ -101,28 +101,31 @@ class ModuleHandler : ClassLoader() {
             .let { if (it.isNotEmpty()) throw UnknownDependencyException(it) }
         val loader = JarModuleClassLoader(this, file)
         val mainClass = findClass(descriptor.main, loader)
-        val plugin = mainClass.newInstance() as SourceModule
-        return plugin.apply {
-            val (_, version, _, author) = descriptor
+        val module = mainClass.newInstance() as SourceModule
+        return module.apply {
             this.classLoader = loader
             this.descriptor = descriptor
-
-            onLoad()
-            moduleIndex[name] = this
-            logger.info("Loaded $name v$version by $author.")
+            loadModule(this)
         }
     }
 
-    fun enableModule(plugin: SourceModule) {
-        plugin.onEnable()
-        plugin.enabled = true
-        logger.info("Enabled ${plugin.name} v${plugin.version}.")
+    fun loadModule(module: SourceModule) {
+        val (name, version, _, author) = module.descriptor
+        module.onLoad()
+        moduleIndex[name] = module
+        logger.info("Loaded $name v$version by $author.")
     }
 
-    fun disableModule(plugin: SourceModule) {
-        plugin.onDisable()
-        plugin.enabled = false
-        logger.info("Disabled ${plugin.name} v${plugin.version}.")
+    fun enableModule(module: SourceModule) {
+        module.onEnable()
+        module.enabled = true
+        logger.info("Enabled ${module.name} v${module.version}.")
+    }
+
+    fun disableModule(module: SourceModule) {
+        module.onDisable()
+        module.enabled = false
+        logger.info("Disabled ${module.name} v${module.version}.")
     }
 
     fun findModule(name: String): SourceModule? = moduleIndex.values.find {
