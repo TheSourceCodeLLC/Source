@@ -33,14 +33,14 @@ class TagsCommand(
         addChild(TagsListCommand())
     }
 
-    private inner class TagsCreateCommand : Command() {
-        override val name = "create"
-        override val description = "Create a tag."
+    private inner class TagsCreateCommand : CommandBootstrap(
+        "create",
+        "Create a tag."
+    ) {
         override val argumentInfo = ArgumentInfo(
             Argument("name", "The name of the tag you wish to create."),
             Argument("content", "The content of the created tag.")
         )
-        override val permission = "tags.create"
 
         override fun execute(message: Message, args: Arguments): Alert {
             val tagCache = tagHandler.getCache(message.guild)
@@ -53,13 +53,13 @@ class TagsCommand(
         }
     }
 
-    private inner class TagsDeleteCommand : Command() {
-        override val name = "delete"
-        override val description = "Delete a tag"
+    private inner class TagsDeleteCommand : CommandBootstrap(
+        "delete",
+        "Delete a tag."
+    ) {
         override val argumentInfo = ArgumentInfo(
             Argument("name", "The name of the tag you wish to delete.")
         )
-        override val permission = "tags.delete"
 
         override fun execute(message: Message, args: Arguments): Alert {
             val tagCache = tagHandler.getCache(message.guild)
@@ -70,15 +70,15 @@ class TagsCommand(
         }
     }
 
-    private inner class TagsEditCommand : Command() {
-        override val name = "edit"
-        override val description = "Edit tag properties."
+    private inner class TagsEditCommand : CommandBootstrap(
+        "edit",
+        "Edit tag properties."
+    ) {
         override val argumentInfo = ArgumentInfo(
             Argument("name", "The name of the tag to edit."),
             Argument("category|content|type", "The property of the tag to edit."),
             Argument("value", "The new value of the property.")
         )
-        override val permission = "tags.edit"
 
         override fun execute(message: Message, args: Arguments): Alert {
             val tagCache = tagHandler.getCache(message.guild)
@@ -87,7 +87,7 @@ class TagsCommand(
             return when (val property = args.next("You did not specify a property to edit!").toLowerCase()) {
                 "category" -> {
                     tag.category = args.next("You did not specify a new tag category!")
-                    SuccessAlert("Category Updated!", "The tag `$name` now belongs to category `$${tag.category}`!")
+                    SuccessAlert("Category Updated!", "The tag `$name` now belongs to category `${tag.category}`!")
                 }
                 "content" -> {
                     tag.content = args.slurp(" ", "You did not specify new tag content!")
@@ -105,9 +105,10 @@ class TagsCommand(
         }
     }
 
-    private inner class TagsInfoCommand : Command() {
-        override val name = "info"
-        override val description = "Show tag information."
+    private inner class TagsInfoCommand : CommandBootstrap(
+        "info",
+        "Show tag information."
+    ) {
         override val argumentInfo = ArgumentInfo(
             Argument("name", "The name of the tag you wish to view info for.")
         )
@@ -120,10 +121,10 @@ class TagsCommand(
         }
     }
 
-    private inner class TagsListCommand : Command() {
-        override val name = "list"
-        override val description = "List all tags."
-
+    private inner class TagsListCommand : CommandBootstrap(
+        "list",
+        "List all tags."
+    ) {
         override fun execute(message: Message, args: Arguments): Alert {
             val tagCache = tagHandler.getCache(message.guild)
             val tags = tagCache.getTags()
@@ -156,5 +157,13 @@ class TagsCommand(
                 addField(k, list, false)
             }
         }
+    }
+
+    private abstract class CommandBootstrap(
+        final override val name: String,
+        final override val description: String
+    ) : Command() {
+        final override val permission by lazy { "tags.$name" }
+        final override val guildOnly = true
     }
 }

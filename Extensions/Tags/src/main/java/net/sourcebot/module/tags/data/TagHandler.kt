@@ -16,6 +16,7 @@ class TagHandler(
     private val tags = HashMap<String, TagCache>()
 
     override fun cascade(message: Message, label: String, args: Array<String>) {
+        if (!message.isFromGuild) return
         val tagCache = getCache(message.guild)
         val tag = tagCache.getTag(label.toLowerCase()) ?: return
         val content = tag.processArguments(args)
