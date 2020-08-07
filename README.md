@@ -30,9 +30,9 @@ To do this, you will need to activate to the Discord Developers Portal, under th
   * Unix: `java -jar API.jar`
 
 # Using Permissions
-Members that permissions do not apply to:
-  Members in a server that have `ADMINISTRATOR` permissions
-  Global Admins as defined in the `config.json`
+Members that permissions do not apply to: <br>
+-  Members in a server that have `ADMINISTRATOR` permissions
+-  Global Admins as defined in the `config.json`
 
 Global Admins are the ONLY people who may use commands marked as global.
 Command Breakdown:
