@@ -1,5 +1,8 @@
 package net.sourcebot.module.documentation.commands
 
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+import com.google.gson.JsonParser
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import net.dv8tion.jda.api.utils.MarkdownUtil
@@ -13,7 +16,6 @@ import net.sourcebot.module.documentation.utility.approxTruncate
 import net.sourcebot.module.documentation.utility.toMarkdown
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import java.util.stream.Collectors
 
 class MDNCommand : RootCommand() {
     override val name: String = "mdn"
@@ -39,59 +41,65 @@ class MDNCommand : RootCommand() {
             return cache.getAlert(query)!!
         }
 
-        val connectionStr = "https://developer.mozilla.org/en-US/search?q=$query"
+        val connectionStr = "https://developer.mozilla.org/api/v1/search/en-US?q=$query"
 
         try {
             val searchDocument = Jsoup.connect(connectionStr)
-                .ignoreContentType(true)
-                .maxBodySize(0)
-                .get()
+                    .ignoreContentType(true)
+                    .maxBodySize(0)
+                    .get()
 
             val notFoundAlert = ErrorAlert(user.name, "Unable to find `$query` in the MDN Documentation!")
-            val resultAnchorList = searchDocument.select("a.result-title")
 
-            if (resultAnchorList.isEmpty()) {
+
+            val jsonObject = JsonParser.parseString(searchDocument.body().text()).asJsonObject
+            val documentArray: JsonArray = jsonObject.getAsJsonArray("documents")
+
+            if (documentArray.size() == 0) {
                 return notFoundAlert
             }
 
-            val filteredResultList = resultAnchorList.stream()
-                .filter {
-                    val text: String = it.text()?.removeSuffix("()") ?: return@filter false
-                    return@filter text.equals(query, true)
-                }.collect(Collectors.toList())
+            val resultList: MutableList<JsonElement> = mutableListOf()
 
-            if (filteredResultList.isEmpty()) {
+            documentArray.filter {
+                val docObject = it.asJsonObject
+                val title = docObject.get("title").asString?.removeSuffix("()") ?: return@filter false
+
+                return@filter title.equals(query, true)
+            }.toCollection(resultList)
+
+            if (resultList.isEmpty()) {
                 val alertDescSB = StringBuilder()
 
-                // Filter checks for spaces in an attempt to remove unrelated articles from search results
-                resultAnchorList.stream()
-                    .filter { it.text() != null && it.attr("href") != null && !it.text().contains(" ") }
-                    .forEach {
-                        val itemName = "**${it.outerHtml().toMarkdown()}**"
-                        val itemUrl = baseUrl + it.attr("href")
+                documentArray.forEach {
+                    val docObject = it.asJsonObject
+                    val title: String = docObject.get("title").asString ?: return@forEach
+                    val url: String = "$baseUrl/${docObject.get("slug").asString ?: return@forEach}"
 
-                        val itemHyperlink = MarkdownUtil.maskedLink(itemName, itemUrl)
-                        alertDescSB.append("$itemHyperlink\n")
-                    }
+                    if (title.isEmpty()) return@forEach
+
+                    val itemHyperlink = "[$title]($url)"
+                    alertDescSB.append("**$itemHyperlink**\n")
+                }
 
                 if (alertDescSB.isEmpty()) return notFoundAlert
 
                 val searchResultAlert = DocAlert()
                 searchResultAlert.setAuthor("MDN Documentation", null, iconUrl)
-                    .setTitle("Search Results:")
-                    .setDescription(alertDescSB.toString())
+                        .setTitle("Search Results:")
+                        .setDescription(alertDescSB.toString())
 
                 cache.putAlert(query, searchResultAlert)
                 return searchResultAlert
             }
 
-            val anchorResult = filteredResultList[0]
-            val resultUrl = "$baseUrl${anchorResult.attr("href")}"
+            val docObjectResult = resultList[0].asJsonObject
+            val resultUrl = "$baseUrl/${docObjectResult.get("slug").asString}"
 
             val resultDocument = Jsoup.connect(resultUrl)
-                .ignoreContentType(true)
-                .maxBodySize(0)
-                .get()
+                    .ignoreContentType(true)
+                    .maxBodySize(0)
+                    .get()
 
             val docAlert = DocAlert()
             docAlert.setAuthor("MDN Documentation", null, iconUrl)
@@ -100,12 +108,11 @@ class MDNCommand : RootCommand() {
             wikiElement.html(wikiElement.html().replace("<p></p>", ""))
 
             val descriptionElement = wikiElement.selectFirst("article > p")
-                                     ?: return ErrorAlert(user.name, "Unable to find article description!")
+                    ?: return ErrorAlert(user.name, "Unable to find article description!")
 
             val description = hyperlinksToMarkdown(descriptionElement).toMarkdown().approxTruncate(600)
 
-            val anchorText = anchorResult?.text()?.replace(".", "#")
-                             ?: return ErrorAlert(user.name, "Unable to find anchor name!")
+            val anchorText = docObjectResult.get("title").asString.replace(".", "#")
 
             val itemHyperlink = MarkdownUtil.maskedLink(anchorText, resultUrl)
 
@@ -141,13 +148,9 @@ class MDNCommand : RootCommand() {
 
     }
 
-    override fun postResponse(response: Message) {
-
-    }
-
     private fun retrieveFormattedAnchorList(wikiElement: Element, headerName: String): String {
         val elementLocator = wikiElement.selectFirst("h2#$headerName") ?: wikiElement.selectFirst("div#$headerName")
-                             ?: return ""
+        ?: return ""
 
         var descListElement = if (elementLocator.tagName() == "div") {
             elementLocator.selectFirst("dl")
@@ -163,13 +166,13 @@ class MDNCommand : RootCommand() {
         val descTagList = descListElement.select("dt")
 
         descTagList.stream()
-            .filter { it.selectFirst("a") != null && returnSB.length < 512 }
-            .map { it.selectFirst("a") }
-            .forEach {
-                val text = it.text().substringAfter(".").removeSuffix("()")
+                .filter { it.selectFirst("a") != null && returnSB.length < 512 }
+                .map { it.selectFirst("a") }
+                .forEach {
+                    val text = it.text().substringAfter(".").removeSuffix("()")
 
-                returnSB.append("`$text` ")
-            }
+                    returnSB.append("`$text` ")
+                }
 
         returnSB.trimToSize()
         return returnSB.toString()
@@ -189,34 +192,34 @@ class MDNCommand : RootCommand() {
 
         var count = 0
         descTagList.stream().limit(4)
-            .forEach {
-                // Prevents nested dl elements from showing up
-                val parentOfParent = it.parent()?.parent()
-                if (parentOfParent != null && parentOfParent.tagName().equals("dd", true)) return@forEach
+                .forEach {
+                    // Prevents nested dl elements from showing up
+                    val parentOfParent = it.parent()?.parent()
+                    if (parentOfParent != null && parentOfParent.tagName().equals("dd", true)) return@forEach
 
-                val itemName = it.html().toMarkdown().replace("Optional", "*")
+                    val itemName = it.html().toMarkdown().replace("Optional", "*")
 
-                // Prevents text from a nested dl from being put into the item description
-                var descElement = it.nextElementSibling() ?: return@forEach
-                descElement = descElement.selectFirst("p") ?: descElement
+                    // Prevents text from a nested dl from being put into the item description
+                    var descElement = it.nextElementSibling() ?: return@forEach
+                    descElement = descElement.selectFirst("p") ?: descElement
 
 
-                // Removes HTML list elements
-                descElement.select("ul").remove()
-                descElement.select("ol").remove()
-                descElement.select("dl").remove()
+                    // Removes HTML list elements
+                    descElement.select("ul").remove()
+                    descElement.select("ol").remove()
+                    descElement.select("dl").remove()
 
-                // Removes remnants of list elements (i.e. "This can either be:")
-                descElement = descElement.html(descElement.html().replace("(\\.)(.*)[:]".toRegex(), "$1"))
+                    // Removes remnants of list elements (i.e. "This can either be:")
+                    descElement = descElement.html(descElement.html().replace("(\\.)(.*)[:]".toRegex(), "$1"))
 
-                val itemDesc = hyperlinksToMarkdown(descElement).toMarkdown().approxTruncate(128)
+                    val itemDesc = hyperlinksToMarkdown(descElement).toMarkdown().approxTruncate(128)
 
-                val appendFormat = "$itemName - $itemDesc\n"
-                val appendString = if (count == 3 && descTagList.size > 4) "$appendFormat..." else "$appendFormat\n"
+                    val appendFormat = "$itemName - $itemDesc\n"
+                    val appendString = if (count == 3 && descTagList.size > 4) "$appendFormat..." else "$appendFormat\n"
 
-                returnSB.append(appendString)
-                count++
-            }
+                    returnSB.append(appendString)
+                    count++
+                }
 
         returnSB.trimToSize()
         return returnSB.toString()

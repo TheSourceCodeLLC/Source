@@ -9,7 +9,7 @@ class Documentation : SourceModule() {
 
     override fun onEnable() {
         val source = Source.instance
-
+        
         registerCommands(
             JDACommand(),
             JavaCommand(),
