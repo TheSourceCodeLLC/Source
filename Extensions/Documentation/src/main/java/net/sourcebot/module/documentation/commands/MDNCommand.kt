@@ -1,8 +1,7 @@
 package net.sourcebot.module.documentation.commands
 
-import com.google.gson.JsonArray
-import com.google.gson.JsonElement
-import com.google.gson.JsonParser
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import net.dv8tion.jda.api.utils.MarkdownUtil
@@ -11,6 +10,7 @@ import net.sourcebot.api.alert.ErrorAlert
 import net.sourcebot.api.alert.InfoAlert
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.properties.JsonSerial
 import net.sourcebot.module.documentation.utility.DocAlert
 import net.sourcebot.module.documentation.utility.approxTruncate
 import net.sourcebot.module.documentation.utility.toMarkdown
@@ -45,26 +45,24 @@ class MDNCommand : RootCommand() {
 
         try {
             val searchDocument = Jsoup.connect(connectionStr)
-                    .ignoreContentType(true)
-                    .maxBodySize(0)
-                    .get()
+                .ignoreContentType(true)
+                .maxBodySize(0)
+                .get()
 
             val notFoundAlert = ErrorAlert(user.name, "Unable to find `$query` in the MDN Documentation!")
 
 
-            val jsonObject = JsonParser.parseString(searchDocument.body().text()).asJsonObject
-            val documentArray: JsonArray = jsonObject.getAsJsonArray("documents")
+            val jsonObject = JsonSerial.mapper.readTree(searchDocument.body().text())
+            val documentArray = jsonObject["documents"] as ArrayNode
 
             if (documentArray.size() == 0) {
                 return notFoundAlert
             }
 
-            val resultList: MutableList<JsonElement> = mutableListOf()
+            val resultList: MutableList<JsonNode> = mutableListOf()
 
             documentArray.filter {
-                val docObject = it.asJsonObject
-                val title = docObject.get("title").asString?.removeSuffix("()") ?: return@filter false
-
+                val title = it["title"].asText()?.removeSuffix("()") ?: return@filter false
                 return@filter title.equals(query, true)
             }.toCollection(resultList)
 
@@ -72,12 +70,9 @@ class MDNCommand : RootCommand() {
                 val alertDescSB = StringBuilder()
 
                 documentArray.forEach {
-                    val docObject = it.asJsonObject
-                    val title: String = docObject.get("title").asString ?: return@forEach
-                    val url: String = "$baseUrl/${docObject.get("slug").asString ?: return@forEach}"
-
+                    val title: String = it["title"].asText() ?: return@forEach
+                    val url = "$baseUrl/${it["slug"].asText() ?: return@forEach}"
                     if (title.isEmpty()) return@forEach
-
                     val itemHyperlink = "[$title]($url)"
                     alertDescSB.append("**$itemHyperlink**\n")
                 }
@@ -86,20 +81,20 @@ class MDNCommand : RootCommand() {
 
                 val searchResultAlert = DocAlert()
                 searchResultAlert.setAuthor("MDN Documentation", null, iconUrl)
-                        .setTitle("Search Results:")
-                        .setDescription(alertDescSB.toString())
+                    .setTitle("Search Results:")
+                    .setDescription(alertDescSB.toString())
 
                 cache.putAlert(query, searchResultAlert)
                 return searchResultAlert
             }
 
-            val docObjectResult = resultList[0].asJsonObject
-            val resultUrl = "$baseUrl/${docObjectResult.get("slug").asString}"
+            val docObjectResult = resultList[0]
+            val resultUrl = "$baseUrl/${docObjectResult["slug"].asText()}"
 
             val resultDocument = Jsoup.connect(resultUrl)
-                    .ignoreContentType(true)
-                    .maxBodySize(0)
-                    .get()
+                .ignoreContentType(true)
+                .maxBodySize(0)
+                .get()
 
             val docAlert = DocAlert()
             docAlert.setAuthor("MDN Documentation", null, iconUrl)
@@ -112,7 +107,7 @@ class MDNCommand : RootCommand() {
 
             val description = hyperlinksToMarkdown(descriptionElement).toMarkdown().approxTruncate(600)
 
-            val anchorText = docObjectResult.get("title").asString.replace(".", "#")
+            val anchorText = docObjectResult["title"].asText().replace(".", "#")
 
             val itemHyperlink = MarkdownUtil.maskedLink(anchorText, resultUrl)
 

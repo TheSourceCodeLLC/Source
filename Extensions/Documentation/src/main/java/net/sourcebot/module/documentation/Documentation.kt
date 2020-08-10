@@ -7,9 +7,7 @@ import net.sourcebot.module.documentation.events.DocSelectorEvent
 
 class Documentation : SourceModule() {
 
-    override fun onEnable() {
-        val source = Source.instance
-        
+    override fun onEnable(source: Source) {
         registerCommands(
             JDACommand(),
             JavaCommand(),

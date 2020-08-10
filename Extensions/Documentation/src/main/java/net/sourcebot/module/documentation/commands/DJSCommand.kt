@@ -1,12 +1,12 @@
 package net.sourcebot.module.documentation.commands
 
-import com.google.gson.Gson
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.alert.Alert
 import net.sourcebot.api.alert.ErrorAlert
 import net.sourcebot.api.alert.InfoAlert
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.properties.JsonSerial
 import net.sourcebot.module.documentation.utility.DocAlert
 import org.jsoup.Connection
 import org.jsoup.Jsoup
@@ -62,7 +62,7 @@ class DJSCommand : RootCommand() {
                 .execute()
 
             val responseBody: String = response.body().replace("\"icon_url\":", "\"iconUrl\":")
-            Gson().fromJson(responseBody, DocAlert::class.java)
+            JsonSerial.mapper.readValue(responseBody, DocAlert::class.java)
         } catch (ex: Exception) {
             ex.printStackTrace()
             val errDesc = "Unable to find `$query` in the DJS Documentation!"
