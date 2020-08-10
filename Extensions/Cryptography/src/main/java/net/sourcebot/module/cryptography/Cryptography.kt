@@ -1,12 +1,13 @@
 package net.sourcebot.module.cryptography
 
+import net.sourcebot.Source
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.cryptography.commands.Base64Command
 import net.sourcebot.module.cryptography.commands.OngCommand
 import net.sourcebot.module.cryptography.commands.digest.*
 
 class Cryptography : SourceModule() {
-    override fun onEnable() {
+    override fun onEnable(source: Source) {
         registerCommands(
             Base64Command(),
             OngCommand(),

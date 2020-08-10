@@ -20,6 +20,7 @@
         <module>Tags</module>
         <module>Cryptography</module>
         <module>Documentation</module>
+        <module>Counting</module>
     </modules>
 
     <dependencies>

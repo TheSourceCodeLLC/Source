@@ -1,7 +1,5 @@
 package net.sourcebot
 
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
@@ -17,7 +15,10 @@ import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.module.*
-import net.sourcebot.api.permission.*
+import net.sourcebot.api.permission.PermissionHandler
+import net.sourcebot.api.permission.SourcePermission
+import net.sourcebot.api.permission.SourceRole
+import net.sourcebot.api.permission.SourceUser
 import net.sourcebot.api.properties.JsonSerial
 import net.sourcebot.api.properties.Properties
 import net.sourcebot.impl.command.GuildInfoCommand
@@ -28,8 +29,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J
 import java.io.File
-import java.io.FileReader
-import java.io.InputStreamReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZoneId
@@ -87,7 +86,7 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
         }
         descriptor = this.javaClass.getResourceAsStream("/module.json").use {
             if (it == null) throw InvalidModuleException("Could not find module.json!")
-            else JsonParser.parseReader(InputStreamReader(it)) as JsonObject
+            else JsonSerial.mapper.readTree(it)
         }.let(::ModuleDescriptor)
 
         registerSerial()
@@ -114,7 +113,7 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
         logger.info("All modules have been enabled!")
     }
 
-    override fun onEnable() {
+    override fun onEnable(source: Source) {
         registerCommands(
             HelpCommand(moduleHandler, commandHandler),
             GuildInfoCommand(),
@@ -131,7 +130,7 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
         @JvmField val TIME_ZONE: ZoneId = ZoneId.of("America/New_York")
         @JvmField val logger: Logger = LoggerFactory.getLogger(Source::class.java)
 
-        @JvmStatic lateinit var instance: Source
+        @JvmStatic internal lateinit var instance: Source
         var enabled = false
             internal set
 
@@ -142,17 +141,16 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
 
         @JvmStatic fun start(): Source {
             if (enabled) throw IllegalStateException("Source is already enabled!")
+            JsonSerial.registerSerial(Properties.Serial())
 
-            JsonSerial.register(Properties.Serial())
             val configFile = File("config.json")
             if (!configFile.exists()) {
                 Source::class.java.getResourceAsStream("/config.example.json").use {
                     Files.copy(it, Path.of("config.json"))
                 }
             }
-            return FileReader(configFile).use {
-                JsonParser.parseReader(it) as JsonObject
-            }.let(::Properties).let(::Source)
+            val properties = JsonSerial.mapper.readValue(configFile, Properties::class.java)
+            return Source(properties)
         }
     }
 }

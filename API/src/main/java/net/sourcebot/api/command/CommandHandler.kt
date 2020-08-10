@@ -15,7 +15,7 @@ import net.sourcebot.api.permission.PermissionHandler
 import java.util.concurrent.TimeUnit
 
 class CommandHandler(
-    private val prefix: String,
+    val prefix: String,
     private val deleteSeconds: Long,
     private val globalAdmins: Set<String>,
     private val permissionHandler: PermissionHandler

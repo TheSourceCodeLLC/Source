@@ -1,19 +1,17 @@
 package net.sourcebot.api.module
 
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
+import net.sourcebot.api.properties.JsonSerial
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileFilter
-import java.io.InputStreamReader
 import java.util.concurrent.ConcurrentHashMap
 import java.util.jar.JarFile
 
 class ModuleHandler : ClassLoader() {
     private val logger: Logger = LoggerFactory.getLogger(ModuleHandler::class.java)
     private val classes = ConcurrentHashMap<String, Class<*>>()
-    internal val moduleIndex = HashMap<String, SourceModule>()
+    private val moduleIndex = HashMap<String, SourceModule>()
 
     public override fun findClass(
         name: String
@@ -35,7 +33,7 @@ class ModuleHandler : ClassLoader() {
 
     fun loadDescriptor(file: File): ModuleDescriptor = JarFile(file).use { jar ->
         jar.getJarEntry("module.json")?.let(jar::getInputStream)?.use {
-            JsonParser.parseReader(InputStreamReader(it)) as JsonObject
+            JsonSerial.mapper.readTree(it)
         }
     }?.let(::ModuleDescriptor) ?: throw InvalidModuleException("JAR does not contain module.json!")
 
@@ -109,24 +107,9 @@ class ModuleHandler : ClassLoader() {
         }
     }
 
-    fun loadModule(module: SourceModule) {
-        val (name, version, _, author) = module.descriptor
-        module.onLoad()
-        moduleIndex[name] = module
-        logger.info("Loaded $name v$version by $author.")
-    }
-
-    fun enableModule(module: SourceModule) {
-        module.onEnable()
-        module.enabled = true
-        logger.info("Enabled ${module.name} v${module.version}.")
-    }
-
-    fun disableModule(module: SourceModule) {
-        module.onDisable()
-        module.enabled = false
-        logger.info("Disabled ${module.name} v${module.version}.")
-    }
+    fun loadModule(module: SourceModule) = module.load { moduleIndex[module.name] = module }
+    fun enableModule(module: SourceModule) = module.enable { module.enabled = true }
+    fun disableModule(module: SourceModule) = module.disable { module.enabled = false }
 
     fun findModule(name: String): SourceModule? = moduleIndex.values.find {
         it.name.startsWith(name, true)

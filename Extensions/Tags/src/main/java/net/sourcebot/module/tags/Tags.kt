@@ -8,8 +8,7 @@ import net.sourcebot.module.tags.data.Tag
 import net.sourcebot.module.tags.data.TagHandler
 
 class Tags : SourceModule() {
-    override fun onEnable() {
-        val source = Source.instance
+    override fun onEnable(source: Source) {
         MongoSerial.register(Tag.Serial())
 
         val tagHandler = TagHandler(source.mongodb, config.required("prefix"))

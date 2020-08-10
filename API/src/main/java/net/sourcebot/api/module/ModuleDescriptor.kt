@@ -1,9 +1,9 @@
 package net.sourcebot.api.module
 
-import com.google.gson.JsonObject
+import com.fasterxml.jackson.databind.JsonNode
 import net.sourcebot.api.properties.Properties
 
-class ModuleDescriptor(json: JsonObject) : Properties(json) {
+class ModuleDescriptor(json: JsonNode) : Properties(json) {
     val main: String = required("main")
 
     val name: String = required("name")

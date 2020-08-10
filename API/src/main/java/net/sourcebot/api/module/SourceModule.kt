@@ -1,14 +1,12 @@
 package net.sourcebot.api.module
 
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
+import net.sourcebot.api.properties.JsonSerial
 import net.sourcebot.api.properties.Properties
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.FileReader
 import java.nio.file.Files
 
 abstract class SourceModule {
@@ -29,15 +27,15 @@ abstract class SourceModule {
         internal set
 
     val dataFolder: File by lazy {
-        File("modules", descriptor.name)
+        File("modules", descriptor.name).apply {
+            if (!exists()) mkdirs()
+        }
     }
 
     val config: Properties by lazy {
         val file = File(dataFolder, "config.json")
         if (!file.exists()) saveResource("/config.json")
-        return@lazy FileReader(file).use {
-            JsonParser.parseReader(it) as JsonObject
-        }.let(::Properties)
+        return@lazy file.let { JsonSerial.mapper.readValue(it, Properties::class.java) }
     }
 
     fun saveResource(absPath: String): File {
@@ -52,21 +50,39 @@ abstract class SourceModule {
         }
     }
 
+    fun load(postLoad: () -> Unit) {
+        onLoad(Source.instance)
+        postLoad()
+        logger.info("Loaded $name v$version by $author.")
+    }
+
     /**
      * Fired when this Module is being loaded; before it is enabled.
      * Methods in this scope should not utilize API from other Modules.
      */
-    open fun onLoad() = Unit
+    open fun onLoad(source: Source) = Unit
+
+    fun enable(postEnable: () -> Unit) {
+        onEnable(Source.instance)
+        postEnable()
+        logger.info("Enabled $name v${version}.")
+    }
 
     /**
      * Fired when this Module is being enabled, after it is loaded.
      */
-    open fun onEnable() = Unit
+    open fun onEnable(source: Source) = Unit
+
+    fun disable(postDisable: () -> Unit) {
+        onDisable(Source.instance)
+        postDisable()
+        logger.info("Disabled $name v${version}.")
+    }
 
     /**
      * Fired when this Module is being disabled, before it is unloaded.
      */
-    open fun onDisable() = Unit
+    open fun onDisable(source: Source) = Unit
 
     fun registerCommands(vararg command: RootCommand) {
         command.forEach {

@@ -1,19 +1,21 @@
 package net.sourcebot.api.properties
 
-import com.google.gson.JsonDeserializationContext
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.google.gson.JsonSerializationContext
-import java.lang.reflect.Type
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.ser.std.StdSerializer
 
-open class Properties(private val json: JsonObject) {
+open class Properties(private val json: JsonNode) {
     fun <T> optional(path: String, type: Class<T>): T? {
         val levels = path.split(".").iterator()
-        var lastElem: JsonElement = json[levels.next()] ?: return null
+        var lastElem: JsonNode = json[levels.next()] ?: return null
         while (levels.hasNext()) {
-            lastElem = lastElem.asJsonObject[levels.next()]
+            lastElem = lastElem[levels.next()]
         }
-        return JsonSerial.gson.fromJson(lastElem, type)
+        return JsonSerial.fromJson(lastElem, type)
     }
 
     inline fun <reified T> optional(path: String) = optional(path, T::class.java)
@@ -24,16 +26,24 @@ open class Properties(private val json: JsonObject) {
     inline fun <reified T> required(path: String) = required(path, T::class.java)
 
     class Serial : JsonSerial<Properties> {
-        override fun serialize(
-            obj: Properties,
-            type: Type,
-            context: JsonSerializationContext
-        ) = obj.json
-
-        override fun deserialize(
-            element: JsonElement,
-            type: Type,
-            context: JsonDeserializationContext
-        ) = Properties(element as JsonObject)
+        override val serializer = object : StdSerializer<Properties>(
+            Properties::class.java
+        ) {
+            override fun serialize(
+                value: Properties,
+                gen: JsonGenerator,
+                provider: SerializerProvider
+            ) {
+                gen.writeTree(value.json)
+            }
+        }
+        override val deserializer = object : StdDeserializer<Properties>(
+            Properties::class.java
+        ) {
+            override fun deserialize(
+                p: JsonParser,
+                ctxt: DeserializationContext
+            ) = Properties(p.readValueAsTree())
+        }
     }
 }
