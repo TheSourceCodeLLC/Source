@@ -65,9 +65,7 @@ class DJSCommand : RootCommand() {
             JsonSerial.mapper.readValue(responseBody, DocAlert::class.java)
         } catch (ex: Exception) {
             ex.printStackTrace()
-            val errDesc = "Unable to find `$query` in the DJS Documentation!"
-            ErrorAlert(user.name, errDesc)
+            ErrorAlert(user.name, "Unable to find `$query` in the DJS Documentation!")
         }
     }
-
 }
