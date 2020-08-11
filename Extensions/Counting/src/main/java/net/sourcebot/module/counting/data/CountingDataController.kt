@@ -1,5 +1,7 @@
 package net.sourcebot.module.counting.data
 
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.type.TypeReference
@@ -19,15 +21,13 @@ class CountingDataController(
     private val data = HashMap<String, CountingData>()
 
     init {
-        try {
-            data.putAll(JsonSerial.mapper.readValue(dataFile, typeRef))
-        } catch (ignored: Exception) {
-        }
+        val read = JsonSerial.mapper.readValue(dataFile, typeRef)
+        data.putAll(read)
     }
 
-    class CountingData(
-        var channel: String?,
-        var record: Long
+    class CountingData @JsonCreator constructor(
+        @JsonProperty("channel") var channel: String?,
+        @JsonProperty("record") var record: Long
     ) {
         class Serial : JsonSerial<CountingData> {
             override val serializer = object : StdSerializer<CountingData>(
