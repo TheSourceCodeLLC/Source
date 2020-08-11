@@ -3,6 +3,7 @@ package net.sourcebot.module.counting.data
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.sourcebot.Source
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.counting.data.CountingDataController.CountingData
@@ -13,7 +14,10 @@ class CountingListener(
 ) {
     fun listen(
         module: SourceModule
-    ) = source.jdaEventSystem.listen(module, this::onReceive)
+    ) {
+        source.jdaEventSystem.listen(module, this::onReceive)
+        source.jdaEventSystem.listen(module, this::onEdit)
+    }
 
     private val lastMessages = HashMap<String, CountingMessage>()
     private val records = HashMap<String, Long>()
@@ -52,7 +56,6 @@ class CountingListener(
             return
         }
         if (nextNumber != lastNumber + 1) {
-            next.delete().queue()
             channel.sendMessage(
                 "${next.author.asMention} is bad at counting."
             ).queue()
@@ -61,6 +64,18 @@ class CountingListener(
         }
         lastMessages[channel.id] = CountingMessage(next)
         records[channel.id] = nextNumber
+    }
+
+    private fun onEdit(event: GuildMessageUpdateEvent) {
+        val data = dataController.getData(event.guild)
+        val channel = data.channel?.let {
+            event.guild.getTextChannelById(it)
+        } ?: return
+        if (event.channel != channel) return
+        channel.sendMessage(
+            "${event.author.asMention}, editing messages is not allowed!"
+        ).queue()
+        lastMessages[channel.id] = restart(channel, data)
     }
 
     private fun checkRecord(
