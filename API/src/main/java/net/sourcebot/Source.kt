@@ -25,15 +25,15 @@ import net.sourcebot.impl.command.GuildInfoCommand
 import net.sourcebot.impl.command.HelpCommand
 import net.sourcebot.impl.command.PermissionsCommand
 import net.sourcebot.impl.command.TimingsCommand
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import net.sourcebot.impl.command.lifecycle.RestartCommand
+import net.sourcebot.impl.command.lifecycle.StopCommand
+import net.sourcebot.impl.command.lifecycle.UpdateCommand
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeFormatter.ofPattern
 import java.util.*
 
 class Source internal constructor(val properties: Properties) : SourceModule() {
@@ -118,17 +118,25 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
             HelpCommand(moduleHandler, commandHandler),
             GuildInfoCommand(),
             TimingsCommand(),
-            PermissionsCommand(permissionHandler)
+            PermissionsCommand(permissionHandler),
+
+            RestartCommand(properties.required("lifecycle.restart")),
+            StopCommand(properties.required("lifecycle.stop")),
+            UpdateCommand(properties.required("lifecycle.update"))
         )
     }
 
     companion object {
-        @JvmField val DATE_TIME_FORMAT: DateTimeFormatter = ofPattern("MM/dd/yyyy hh:mm:ss a z")
-        @JvmField val TIME_FORMAT: DateTimeFormatter = ofPattern("hh:mm:ss a z")
-        @JvmField val DATE_FORMAT: DateTimeFormatter = ofPattern("MM/dd/yyyy")
-
         @JvmField val TIME_ZONE: ZoneId = ZoneId.of("America/New_York")
-        @JvmField val logger: Logger = LoggerFactory.getLogger(Source::class.java)
+        @JvmField val DATE_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
+            "MM/dd/yyyy hh:mm:ss a z"
+        ).withZone(TIME_ZONE)
+        @JvmField val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
+            "hh:mm:ss a z"
+        ).withZone(TIME_ZONE)
+        @JvmField val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
+            "MM/dd/yyyy"
+        ).withZone(TIME_ZONE)
 
         @JvmStatic internal lateinit var instance: Source
         var enabled = false
@@ -141,6 +149,7 @@ class Source internal constructor(val properties: Properties) : SourceModule() {
 
         @JvmStatic fun start(): Source {
             if (enabled) throw IllegalStateException("Source is already enabled!")
+            enabled = true
             JsonSerial.registerSerial(Properties.Serial())
 
             val configFile = File("config.json")

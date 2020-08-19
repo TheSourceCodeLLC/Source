@@ -21,6 +21,7 @@
         <module>Cryptography</module>
         <module>Documentation</module>
         <module>Counting</module>
+        <module>Moderation</module>
     </modules>
 
     <dependencies>

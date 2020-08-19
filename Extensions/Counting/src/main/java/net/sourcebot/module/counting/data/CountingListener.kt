@@ -21,8 +21,10 @@ class CountingListener(
 
     private val lastMessages = HashMap<String, CountingMessage>()
     private val records = HashMap<String, Long>()
+    private var listening = true
 
     private fun onReceive(event: GuildMessageReceivedEvent) {
+        if (!listening) return
         if (event.author.isBot) return
         if (event.message.contentRaw.startsWith(source.commandHandler.prefix)) return
         val data = dataController.getData(event.guild)
@@ -33,7 +35,10 @@ class CountingListener(
         val last = lastMessages[channel.id]
         if (last == null) {
             event.message.delete().queue()
-            lastMessages[channel.id] = restart(channel, data)
+            lastMessages[channel.id] = restart(
+                "Could not determine last number!",
+                channel, data
+            )
             return
         }
         val lastNumber = last.number
@@ -41,25 +46,25 @@ class CountingListener(
         val nextNumber = event.message.contentRaw.toLongOrNull()
         if (next.author.id == last.author) {
             next.delete().queue()
-            channel.sendMessage(
-                "Sorry, ${next.author.asMention}, you may not count twice in a row!"
-            ).queue()
-            lastMessages[channel.id] = restart(channel, data)
+            lastMessages[channel.id] = restart(
+                "Sorry, ${next.author.asMention}, you may not count twice in a row!",
+                channel, data
+            )
             return
         }
         if (nextNumber == null) {
             next.delete().queue()
-            channel.sendMessage(
-                "Sorry, ${next.author.asMention}, messages may only be numbers!"
-            ).queue()
-            lastMessages[channel.id] = restart(channel, data)
+            lastMessages[channel.id] = restart(
+                "Sorry, ${next.author.asMention}, messages may only be numbers!",
+                channel, data
+            )
             return
         }
         if (nextNumber != lastNumber + 1) {
-            channel.sendMessage(
-                "${next.author.asMention} is bad at counting."
-            ).queue()
-            lastMessages[channel.id] = restart(channel, data)
+            lastMessages[channel.id] = restart(
+                "${next.author.asMention} is bad at counting.",
+                channel, data
+            )
             return
         }
         lastMessages[channel.id] = CountingMessage(next)
@@ -72,39 +77,43 @@ class CountingListener(
             event.guild.getTextChannelById(it)
         } ?: return
         if (event.channel != channel) return
-        channel.sendMessage(
-            "${event.author.asMention}, editing messages is not allowed!"
-        ).queue()
-        lastMessages[channel.id] = restart(channel, data)
-    }
-
-    private fun checkRecord(
-        channel: TextChannel,
-        data: CountingData
-    ): Boolean {
-        val current = records[channel.id] ?: 1
-        return if (current > data.record) {
-            channel.sendMessage(
-                "New Record! New: $current. Old: ${data.record}."
-            ).queue()
-            data.record = current
-            true
-        } else false
+        lastMessages[channel.id] = restart(
+            "${event.author.asMention}, editing messages is not allowed!",
+            channel, data
+        )
     }
 
     private fun restart(
+        failMessage: String,
         channel: TextChannel,
         data: CountingData
     ): CountingMessage {
-        if (checkRecord(channel, data)) dataController.save()
+        listening = false
+        var toSend = failMessage
+        val current = records[channel.id] ?: 1
+        if (current > data.record) {
+            toSend += "\nNew Record! New: $current. Old: ${data.record}."
+            data.record = current
+            dataController.save()
+        }
         channel.sendMessage(
-            "Restarting... Current record: ${data.record}"
-        ).queue()
-        return channel.sendMessage("1").complete().let(::CountingMessage)
+            toSend + "\nRestarting... Current record: ${data.record}\n1"
+        ).complete()
+        return CountingMessage(1, channel.jda.selfUser.id).also { listening = true }
     }
 }
 
-class CountingMessage(message: Message) {
-    val number = message.contentRaw.toLong()
-    val author = message.author.id
+class CountingMessage {
+    val number: Long
+    val author: String
+
+    constructor(message: Message) {
+        this.number = message.contentRaw.toLong()
+        this.author = message.author.id
+    }
+
+    constructor(number: Long, author: String) {
+        this.number = number
+        this.author = author
+    }
 }

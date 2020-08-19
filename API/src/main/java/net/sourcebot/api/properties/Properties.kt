@@ -33,9 +33,7 @@ open class Properties(private val json: JsonNode) {
                 value: Properties,
                 gen: JsonGenerator,
                 provider: SerializerProvider
-            ) {
-                gen.writeTree(value.json)
-            }
+            ) = gen.writeTree(value.json)
         }
         override val deserializer = object : StdDeserializer<Properties>(
             Properties::class.java
