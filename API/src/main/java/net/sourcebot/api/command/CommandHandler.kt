@@ -40,8 +40,8 @@ class CommandHandler(
         }
         val arguments = Arguments(args)
         var command: Command = rootCommand
+        val hasGlobal = author.id in globalAdmins
         do {
-            val hasGlobal = author.id in globalAdmins
             if (!hasGlobal && command.requiresGlobal) {
                 return respond(
                     command,
@@ -88,7 +88,7 @@ class CommandHandler(
                 }
             }
             val nextId = arguments.next() ?: break
-            val nextCommand = command.getChild(nextId)
+            val nextCommand = command[nextId]
             if (nextCommand == null) {
                 arguments.backtrack()
                 break
@@ -97,8 +97,15 @@ class CommandHandler(
         } while (true)
         val response = try {
             command.execute(message, arguments)
-        } catch (ex: Exception) {
-            handleException(command, ex)
+        } catch (exception: Exception) {
+            exception.printStackTrace()
+            if (exception is InvalidSyntaxException) {
+                ErrorAlert(
+                    "Invalid Syntax!",
+                    "${exception.message!!}\n" +
+                        "**Syntax:** ${getSyntax(command)}"
+                )
+            } else ExceptionAlert(exception)
         }
         return respond(command, message, response, command.cleanupResponse)
     }
@@ -114,25 +121,20 @@ class CommandHandler(
         }
     }
 
-    private fun handleException(command: Command, exception: Exception) =
-        if (exception is InvalidSyntaxException) {
-            ErrorAlert(
-                "Invalid Syntax!",
-                "${exception.message!!}\n" +
-                "**Syntax:** ${getSyntax(command)}"
-            )
-        } else ExceptionAlert(exception)
-
     fun getSyntax(command: Command) = "$prefix${command.usage}".trim()
 
-    fun getCommands(module: SourceModule) =
-        commandMap.getCommands().filter { it.module == module }
+    fun getCommands(
+        module: SourceModule
+    ) = commandMap.getCommands().filter { it.module == module }
 
     fun getCommand(name: String) = commandMap[name.toLowerCase()]
 
-    fun registerCommand(module: SourceModule, command: RootCommand) {
-        command.module = module
-        commandMap.register(command)
+    fun registerCommands(
+        module: SourceModule,
+        vararg command: RootCommand
+    ) = command.forEach {
+        it.module = module
+        commandMap.register(it)
     }
 
     fun unregister(module: SourceModule) = commandMap.removeIf { it.module == module }

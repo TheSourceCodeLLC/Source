@@ -14,6 +14,6 @@ class Tags : SourceModule() {
         val tagHandler = TagHandler(source.mongodb, config.required("prefix"))
 
         source.jdaEventSystem.listen(this, tagHandler::onMessageReceived)
-        registerCommands(TagsCommand(tagHandler))
+        source.commandHandler.registerCommands(this, TagsCommand(tagHandler))
     }
 }

@@ -23,9 +23,7 @@ interface JsonSerial<T> {
             serial: JsonSerial<T>
         ) = registerSerial(T::class.java, serial)
 
-        @JvmStatic fun <T> toJson(
-            obj: T
-        ): JsonNode = mapper.valueToTree(obj)
+        @JvmStatic fun <T> toJson(obj: T): JsonNode = mapper.valueToTree(obj)
 
         @JvmStatic fun <T> fromJson(
             element: JsonNode,

@@ -41,18 +41,20 @@ abstract class Command {
         "$parentStr ${argumentInfo.asList()}"
     }
 
-    fun getChild(identifier: String) = children[identifier]
+    operator fun get(identifier: String) = children[identifier]
 
-    open fun execute(message: Message, args: Arguments): Alert =
-        throw InvalidSyntaxException("Invalid Subcommand!")
+    open fun execute(
+        message: Message,
+        args: Arguments
+    ): Alert = throw InvalidSyntaxException("Invalid Subcommand!")
 
     open fun postResponse(response: Message) = Unit
 
-    protected fun addChild(command: Command): Boolean {
-        children.register(command)
-        command.parent = this
-        return true
+    protected fun addChildren(vararg command: Command) = command.forEach(::addChild)
+    protected fun addChild(
+        command: Command
+    ) = command.let {
+        it.parent = this
+        children.register(it)
     }
-
-    protected fun addChildren(vararg command: Command) = command.all(::addChild)
 }

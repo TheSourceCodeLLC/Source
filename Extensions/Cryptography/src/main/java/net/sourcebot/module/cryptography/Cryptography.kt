@@ -8,7 +8,8 @@ import net.sourcebot.module.cryptography.commands.digest.*
 
 class Cryptography : SourceModule() {
     override fun onEnable(source: Source) {
-        registerCommands(
+        source.commandHandler.registerCommands(
+            this,
             Base64Command(),
             OngCommand(),
             MD2Command(),

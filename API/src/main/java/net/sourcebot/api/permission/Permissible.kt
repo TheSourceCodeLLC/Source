@@ -19,8 +19,8 @@ interface Permissible {
     fun getPermissions(): Collection<SourcePermission>
     fun getContexts(node: String): Set<String>
 
-    fun update(): UpdateResult
-    fun delete(): DeleteResult
+    fun update(data: PermissionData): UpdateResult
+    fun delete(data: PermissionData): DeleteResult
 
     fun asMention(): String
 }

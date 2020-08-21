@@ -37,7 +37,7 @@ class HelpCommand(
                 var command: Command = asCommand
                 do {
                     val nextArg = args.next() ?: break
-                    val nextCommand = asCommand.getChild(nextArg)
+                    val nextCommand = asCommand.get(nextArg)
                     if (nextCommand == null) {
                         args.backtrack()
                         break

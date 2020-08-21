@@ -1,5 +1,6 @@
 package net.sourcebot.api.module
 
+import net.sourcebot.Source
 import net.sourcebot.api.properties.JsonSerial
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -8,7 +9,9 @@ import java.io.FileFilter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.jar.JarFile
 
-class ModuleHandler : ClassLoader() {
+class ModuleHandler(
+    private val source: Source
+) : ClassLoader() {
     private val logger: Logger = LoggerFactory.getLogger(ModuleHandler::class.java)
     private val classes = ConcurrentHashMap<String, Class<*>>()
     private val moduleIndex = HashMap<String, SourceModule>()
@@ -107,9 +110,17 @@ class ModuleHandler : ClassLoader() {
         }
     }
 
-    fun loadModule(module: SourceModule) = module.load { moduleIndex[module.name] = module }
-    fun enableModule(module: SourceModule) = module.enable { module.enabled = true }
-    fun disableModule(module: SourceModule) = module.disable { module.enabled = false }
+    fun loadModule(
+        module: SourceModule
+    ) = module.load(source) { moduleIndex[module.name] = module }
+
+    fun enableModule(
+        module: SourceModule
+    ) = module.enable(source) { module.enabled = true }
+
+    fun disableModule(
+        module: SourceModule
+    ) = module.disable(source) { module.enabled = false }
 
     fun findModule(name: String): SourceModule? = moduleIndex.values.find {
         it.name.startsWith(name, true)
@@ -118,3 +129,14 @@ class ModuleHandler : ClassLoader() {
     fun getModule(name: String): SourceModule? = moduleIndex[name]
     fun getModules() = moduleIndex.values
 }
+
+class InvalidModuleException(message: String) : Exception(message)
+class UnknownDependencyException(
+    dependencies: Set<String>
+) : RuntimeException("Unknown Dependencies: ${dependencies.joinToString()}")
+
+class AmbiguousModuleException(
+    name: String,
+    firstIndexed: File,
+    lastIndexed: File
+) : RuntimeException("Module '$name' from ${firstIndexed.path} is duplicated by ${lastIndexed.path}!")

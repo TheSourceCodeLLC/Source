@@ -118,7 +118,7 @@ class PermissionsCommand(
                 "Valid operations: `set`,`unset`,`info`,`check`,`clear`"
             )
         }
-        permissible.update()
+        permissible.update(permissionData)
         return toSend
     }
 }

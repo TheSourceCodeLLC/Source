@@ -10,8 +10,7 @@ import org.bson.Document
 import java.util.*
 
 class PermissionData(
-    mongodb: MongoDatabase,
-    private val guild: String
+    mongodb: MongoDatabase
 ) {
     private val users = mongodb.getCollection("user-permissions")
     private val roles = mongodb.getCollection("role-permissions")
@@ -22,26 +21,20 @@ class PermissionData(
     fun getUser(member: Member): SourceUser = userCache.computeIfAbsent(member.id) {
         users.find(Document("id", member.id)).first()?.let {
             MongoSerial.fromDocument<SourceUser>(it)
-        } ?: SourceUser(this, member.id, guild).also {
-            insert(it, users)
-        }
+        } ?: SourceUser(member.id).also { insert(it, users) }
     }
 
     internal fun updateUser(sourceUser: SourceUser) = update(sourceUser, users)
-    internal fun deleteUser(sourceUser: SourceUser) =
-        delete(sourceUser, users, userCache)
+    internal fun deleteUser(sourceUser: SourceUser) = delete(sourceUser, users, userCache)
 
     fun getRole(role: Role): SourceRole = roleCache.computeIfAbsent(role.id) {
         roles.find(Document("id", role.id)).first()?.let {
             MongoSerial.fromDocument<SourceRole>(it)
-        } ?: SourceRole(this, role.id, guild).also {
-            insert(it, roles)
-        }
+        } ?: SourceRole(role.id).also { insert(it, roles) }
     }
 
     internal fun updateRole(sourceRole: SourceRole) = update(sourceRole, roles)
-    internal fun deleteRole(sourceRole: SourceRole) =
-        delete(sourceRole, roles, roleCache)
+    internal fun deleteRole(sourceRole: SourceRole) = delete(sourceRole, roles, roleCache)
 
     private fun <T> insert(
         obj: T,
@@ -77,10 +70,4 @@ class PermissionData(
         collection: MongoCollection<Document>,
         cache: HashMap<String, T>
     ) = delete(obj, T::class.java, collection, cache)
-
-    internal fun getPermissions(
-        document: Document
-    ): MutableList<SourcePermission> = document.getList("permissions", Document::class.java)
-        .map { MongoSerial.fromDocument<SourcePermission>(it) }
-        .toMutableList()
 }

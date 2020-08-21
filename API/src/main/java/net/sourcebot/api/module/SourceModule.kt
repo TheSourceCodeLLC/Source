@@ -1,7 +1,6 @@
 package net.sourcebot.api.module
 
 import net.sourcebot.Source
-import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.properties.JsonSerial
 import net.sourcebot.api.properties.Properties
 import org.slf4j.Logger
@@ -50,8 +49,8 @@ abstract class SourceModule {
         }
     }
 
-    fun load(postLoad: () -> Unit) {
-        onLoad(Source.instance)
+    fun load(source: Source, postLoad: () -> Unit) {
+        onLoad(source)
         postLoad()
         logger.info("Loaded $name v$version by $author.")
     }
@@ -62,8 +61,8 @@ abstract class SourceModule {
      */
     open fun onLoad(source: Source) = Unit
 
-    fun enable(postEnable: () -> Unit) {
-        onEnable(Source.instance)
+    fun enable(source: Source, postEnable: () -> Unit) {
+        onEnable(source)
         postEnable()
         logger.info("Enabled $name v${version}.")
     }
@@ -73,8 +72,8 @@ abstract class SourceModule {
      */
     open fun onEnable(source: Source) = Unit
 
-    fun disable(postDisable: () -> Unit) {
-        onDisable(Source.instance)
+    fun disable(source: Source, postDisable: () -> Unit) {
+        onDisable(source)
         postDisable()
         logger.info("Disabled $name v${version}.")
     }
@@ -83,10 +82,4 @@ abstract class SourceModule {
      * Fired when this Module is being disabled, before it is unloaded.
      */
     open fun onDisable(source: Source) = Unit
-
-    fun registerCommands(vararg command: RootCommand) {
-        command.forEach {
-            Source.instance.commandHandler.registerCommand(this, it)
-        }
-    }
 }

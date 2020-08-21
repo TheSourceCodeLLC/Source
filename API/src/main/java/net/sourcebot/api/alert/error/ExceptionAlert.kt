@@ -7,8 +7,7 @@ import net.sourcebot.api.alert.ErrorAlert
  *
  * @param[throwable] The [Throwable] that was caught to fire this alert.
  */
-class ExceptionAlert(throwable: Throwable) : ErrorAlert("Exception!", throwable.toString()) {
-    init {
-        throwable.printStackTrace()
-    }
-}
+class ExceptionAlert(throwable: Throwable) : ErrorAlert(
+    "Exception!",
+    throwable.toString()
+)

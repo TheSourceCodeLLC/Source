@@ -9,6 +9,8 @@ import net.sourcebot.api.alert.error.InvalidChannelAlert
 import net.sourcebot.api.alert.error.NoPermissionAlert
 import net.sourcebot.api.alert.error.NoPermissionDMAllowedAlert
 import net.sourcebot.api.database.MongoDB
+import net.sourcebot.api.database.MongoSerial
+import org.bson.Document
 
 class PermissionHandler(
     private val mongodb: MongoDB,
@@ -25,16 +27,21 @@ class PermissionHandler(
         }
     }
 
-    private fun hasPermission(permissible: Permissible, node: String, context: Set<String>): Boolean =
+    private fun hasPermission(
+        permissible: Permissible,
+        node: String,
+        context: Set<String>
+    ): Boolean = getEffectiveNodes(node).any {
         if (permissible is SourceUser && permissible.id in globalAdmins) true
         else if (context.any { permissible.hasPermission(node, it) }) true
         else permissible.hasPermission(node)
-
-    fun hasPermission(permissible: Permissible, node: String, channel: MessageChannel): Boolean {
-        val effective = getEffectiveNodes(node)
-        val contexts = computeContext(channel)
-        return effective.any { hasPermission(permissible, it, contexts) }
     }
+
+    fun hasPermission(
+        permissible: Permissible,
+        node: String,
+        channel: MessageChannel
+    ): Boolean = hasPermission(permissible, node, computeContext(channel))
 
     fun checkPermission(
         permissible: Permissible,
@@ -52,8 +59,10 @@ class PermissionHandler(
             }.filterNotNull().toMutableSet()).apply { add("*") }
         }
 
-    fun getAllowedContexts(permissible: Permissible, node: String): Set<String> =
-        getEffectiveNodes(node).flatMap { permissible.getContexts(it) }.toSet()
+    private fun getAllowedContexts(
+        permissible: Permissible,
+        node: String
+    ): Set<String> = getEffectiveNodes(node).flatMap(permissible::getContexts).toSet()
 
     fun getPermissionAlert(
         guildOnly: Boolean, jda: JDA,
@@ -67,10 +76,15 @@ class PermissionHandler(
     }
 
 
-    fun getData(guild: String): PermissionData = dataCache.computeIfAbsent(guild) {
-        val database = mongodb.getDatabase(it)
-        PermissionData(database, it)
+    private fun getData(guild: String): PermissionData = dataCache.computeIfAbsent(guild) {
+        PermissionData(mongodb.getDatabase(it))
     }
 
     fun getData(guild: Guild) = getData(guild.id)
+
+    internal fun getPermissions(
+        document: Document
+    ): MutableList<SourcePermission> = document.getList("permissions", Document::class.java)
+        .map { MongoSerial.fromDocument<SourcePermission>(it) }
+        .toMutableList()
 }

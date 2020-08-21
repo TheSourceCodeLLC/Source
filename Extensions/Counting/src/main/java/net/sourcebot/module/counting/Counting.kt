@@ -19,7 +19,7 @@ class Counting : SourceModule() {
         }
         dataController = CountingDataController(dataFile)
         CountingListener(source, dataController).listen(this)
-        registerCommands(CountingCommand(dataController))
+        source.commandHandler.registerCommands(this, CountingCommand(dataController))
     }
 
     override fun onDisable(source: Source) {
