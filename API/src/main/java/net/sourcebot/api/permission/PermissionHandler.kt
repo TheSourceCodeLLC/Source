@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.alert.Alert
 import net.sourcebot.api.alert.error.InvalidChannelAlert
 import net.sourcebot.api.alert.error.NoPermissionAlert
@@ -32,10 +33,18 @@ class PermissionHandler(
         node: String,
         context: Set<String>
     ): Boolean = getEffectiveNodes(node).any {
-        if (permissible is SourceUser && permissible.id in globalAdmins) true
+        if (permissible is SourceUser && hasGlobalAccess(permissible.id)) true
         else if (context.any { permissible.hasPermission(node, it) }) true
         else permissible.hasPermission(node)
     }
+
+    private fun hasGlobalAccess(
+        id: String
+    ): Boolean = id in globalAdmins
+
+    fun hasGlobalAccess(
+        user: User
+    ): Boolean = hasGlobalAccess(user.id)
 
     fun hasPermission(
         permissible: Permissible,

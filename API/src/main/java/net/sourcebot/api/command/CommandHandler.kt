@@ -17,39 +17,26 @@ import java.util.concurrent.TimeUnit
 class CommandHandler(
     val prefix: String,
     private val deleteSeconds: Long,
-    private val globalAdmins: Set<String>,
     private val permissionHandler: PermissionHandler
 ) : AbstractMessageHandler(prefix) {
     private var commandMap = CommandMap<RootCommand>()
 
     override fun cascade(
-            message: Message, label: String, args: Array<String>
+        message: Message, label: String, args: Array<String>
     ) {
         val author = message.author
         if (author.isFake || author.isBot) return
         val rootCommand = commandMap[label] ?: return
         if (!rootCommand.module.enabled) return
         val inGuild = message.channelType == ChannelType.TEXT
-        if (rootCommand.guildOnly && !inGuild) {
-            return respond(
-                rootCommand,
-                message,
-                GuildOnlyCommandAlert(),
-                rootCommand.cleanupResponse
-            )
-        }
+        if (rootCommand.guildOnly && !inGuild) return respond(rootCommand, message, GuildOnlyCommandAlert())
         val arguments = Arguments(args)
         var command: Command = rootCommand
-        val hasGlobal = author.id in globalAdmins
+        val hasGlobal = permissionHandler.hasGlobalAccess(author)
         do {
-            if (!hasGlobal && command.requiresGlobal) {
-                return respond(
-                    command,
-                    message,
-                    GlobalAdminOnlyAlert(),
-                    command.cleanupResponse
-                )
-            }
+            if (!hasGlobal && command.requiresGlobal) return respond(
+                command, message, GlobalAdminOnlyAlert()
+            )
             if (!hasGlobal && command.permission != null) {
                 val permission = command.permission!!
                 if (inGuild) {
@@ -64,28 +51,16 @@ class CommandHandler(
                         val sourceRoles = roles.map(permissionData::getRole).toSet()
                         sourceUser.roles = sourceRoles
                         val channel = message.channel as TextChannel
-                        if (!permissionHandler.hasPermission(sourceUser, permission, channel)) {
-                            return respond(
-                                command,
-                                message,
-                                permissionHandler.getPermissionAlert(
-                                    command.guildOnly,
-                                    message.jda,
-                                    sourceUser,
-                                    permission
-                                ),
-                                command.cleanupResponse
-                            )
-                        }
+                        if (!permissionHandler.hasPermission(sourceUser, permission, channel)) return respond(
+                            command, message, permissionHandler.getPermissionAlert(
+                            command.guildOnly,
+                            message.jda,
+                            sourceUser,
+                            permission
+                        )
+                        )
                     }
-                } else if (command.guildOnly) {
-                    return respond(
-                        command,
-                        message,
-                        GuildOnlyCommandAlert(),
-                        command.cleanupResponse
-                    )
-                }
+                } else if (command.guildOnly) return respond(command, message, GuildOnlyCommandAlert())
             }
             val nextId = arguments.next() ?: break
             val nextCommand = command[nextId]
@@ -98,22 +73,24 @@ class CommandHandler(
         val response = try {
             command.execute(message, arguments)
         } catch (exception: Exception) {
-            exception.printStackTrace()
             if (exception is InvalidSyntaxException) {
                 ErrorAlert(
                     "Invalid Syntax!",
                     "${exception.message!!}\n" +
                         "**Syntax:** ${getSyntax(command)}"
                 )
-            } else ExceptionAlert(exception)
+            } else {
+                exception.printStackTrace()
+                ExceptionAlert(exception)
+            }
         }
-        return respond(command, message, response, command.cleanupResponse)
+        return respond(command, message, response)
     }
 
-    private fun respond(command: Command, message: Message, alert: Alert, cleanup: Boolean) {
+    private fun respond(command: Command, message: Message, alert: Alert) {
         message.channel.sendMessage(alert.asMessage(message.author)).queue {
             command.postResponse(it)
-            if (!cleanup) return@queue
+            if (!command.cleanupResponse) return@queue
             if (message.channelType == ChannelType.TEXT) {
                 message.delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)
             }

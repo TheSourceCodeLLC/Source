@@ -1,6 +1,6 @@
 {
   "mongodb": "mongodb://username:password@host:27017",
-  "token": "",
+  "global-admins": [],
   "commands": {
     "prefix": "!",
     "delete-seconds": 20
@@ -8,10 +8,10 @@
   "alert": {
     "footer": "SourceBot"
   },
-  "global-admins": [],
   "lifecycle": {
     "restart": "/bin/bash restart.sh",
     "stop": "/bin/bash stop.sh",
     "update": "/bin/bash update.sh"
-  }
+  },
+  "token": ""
 }

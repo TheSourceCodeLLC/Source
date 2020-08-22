@@ -38,19 +38,16 @@ class Source(val properties: Properties) {
         GUILD_MESSAGE_TYPING, DIRECT_MESSAGE_TYPING
     )
 
-    val globalAdmins: Set<String> = properties.required("global-admins")
-
     val sourceEventSystem = EventSystem<SourceEvent>()
     val jdaEventSystem = EventSystem<GenericEvent>()
 
     val mongodb = MongoDB(properties.required("mongodb"))
-    val permissionHandler = PermissionHandler(mongodb, globalAdmins)
+    val permissionHandler = PermissionHandler(mongodb, properties.required("global-admins"))
     val moduleHandler = ModuleHandler(this)
 
     val commandHandler = CommandHandler(
         properties.required("commands.prefix"),
         properties.required("commands.delete-seconds"),
-        globalAdmins,
         permissionHandler
     )
 
