@@ -1,0 +1,1 @@
+./gradlew shadowJar Extensions:Counting:jar Extensions:Cryptography:jar Extensions:Documentation:jar Extensions:Moderation:jar Extensions:Tags:jar
