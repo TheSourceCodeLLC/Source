@@ -6,4 +6,4 @@ config.json
 *.jar
 modules/
 */build/
-./gradle
+.gradle/
