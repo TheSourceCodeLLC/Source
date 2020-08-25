@@ -3,7 +3,7 @@
 # Build Instructions:
 1. You need Java 11 run Source. </br>
 2. You need Gradle to compile source. </br>
-  * If you do not have Gradle installed, it is recommended to compile using an IDE with support for Gradle projects.
+  - If you do not have Gradle installed, it is recommended to compile using an IDE with support for Gradle projects.
   
 * Compile Source on your local machine:
   - `git clone git@github.com:TheSourceCodeLLC/Source.git`
@@ -21,7 +21,7 @@ To do this, you will need to activate to the Discord Developers Portal, under th
 
 * Start the bot:
   * Windows: `java -DuseJansi=true -jar Source.jar`
-  * Unix: `java -jar Source.jar`
+  * Unix: `java -jar Source.jar` </br>
 If you need to configure the bot, the program will terminate after generating a default config.
 
 # Using Permissions
