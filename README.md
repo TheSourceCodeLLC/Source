@@ -1,21 +1,15 @@
 # Source V5
 
-Source V5 API and Official Modules are available via GitHub Packages.
-GitHub Packages may not be maintained! Use at your own risk!
-
 # Build Instructions:
-Note: You need Java 11 to compile and run Source.
-
+1. You need Java 11 run Source. </br>
+2. You need Gradle to compile source. </br>
+  * If you do not have Gradle installed, it is recommended to compile using an IDE with support for Gradle projects.
+  
 * Compile Source on your local machine:
   - `git clone git@github.com:TheSourceCodeLLC/Source.git`
   - `cd Source`
-  - `mvn install -DtargetRoot=/path/to/Source/target`
-* Create a folder somewhere for the bot to run in (runtime dir)
-* Copy `API.jar` from `target/bin/Source` to the runtime dir.
-* Create a folder named `modules` in the runtime dir (module dir)
-* Copy any modules you want to run into the module dir. 
-* Copy `config.example.json` to the runtime dir, and rename it to `config.json`, or start the bot to pregenerate it.
-* Configure the bot to your liking.
+  - `gradle install`
+* Binary files (Main JAR & Modules) are located in the `target/bin` folder
 
 NOTE: It is recommended to let Source have full reign over a separate mongodb instance! <br>
 Source needs the ability to create and delete databases at will as to separate guild data! <br>
@@ -28,6 +22,7 @@ To do this, you will need to activate to the Discord Developers Portal, under th
 * Start the bot:
   * Windows: `java -DuseJansi=true -jar API.jar`
   * Unix: `java -jar API.jar`
+If you need to configure the bot, the program will terminate after generating a default config.
 
 # Using Permissions
 Members that permissions do not apply to: <br>

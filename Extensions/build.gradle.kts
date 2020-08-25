@@ -1,16 +1,16 @@
-group = "net.sourcebot"
-version = "5.0.2"
-
-
 subprojects {
     dependencies {
         implementation(project(":API"))
     }
 
+    val targetFolder = File(rootProject.projectDir, "target")
     tasks {
-        jar {
-            destinationDirectory.set(file("${project.rootDir}/release/modules"))
-        }
+        jar { destinationDirectory.set(File(targetFolder, "/bin/modules")) }
+    }
+}
 
+tasks {
+    task("install") {
+        dependsOn(subprojects.map { "${it.name}:jar" })
     }
 }
