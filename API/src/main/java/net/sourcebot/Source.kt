@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent.GUILD_MESSAGE_TYPING
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.sourcebot.api.alert.EmbedAlert
 import net.sourcebot.api.command.CommandHandler
+import net.sourcebot.api.data.GuildDataManager
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.EventSystem
@@ -41,6 +42,7 @@ class Source(val properties: Properties) {
     val sourceEventSystem = EventSystem<SourceEvent>()
     val jdaEventSystem = EventSystem<GenericEvent>()
 
+    val guildDataManager = GuildDataManager(File("data"))
     val mongodb = MongoDB(properties.required("mongodb"))
     val permissionHandler = PermissionHandler(mongodb, properties.required("global-admins"))
     val moduleHandler = ModuleHandler(this)

@@ -2,7 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 subprojects {
     dependencies {
-        implementation(project(":API"))
+        compileOnly(project(":API"))
     }
 
     apply {

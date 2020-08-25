@@ -6,9 +6,10 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 
-open class Properties(private val json: JsonNode) {
+open class Properties(private val json: ObjectNode) {
     fun <T> optional(path: String, type: Class<T>): T? {
         val levels = path.split(".").iterator()
         var lastElem: JsonNode = json[levels.next()] ?: return null

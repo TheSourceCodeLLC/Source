@@ -1,5 +1,6 @@
 package net.sourcebot.api.module
 
+import com.fasterxml.jackson.databind.node.ObjectNode
 import net.sourcebot.Source
 import net.sourcebot.api.properties.JsonSerial
 import org.slf4j.Logger
@@ -36,7 +37,7 @@ class ModuleHandler(
 
     fun loadDescriptor(file: File): ModuleDescriptor = JarFile(file).use { jar ->
         jar.getJarEntry("module.json")?.let(jar::getInputStream)?.use {
-            JsonSerial.mapper.readTree(it)
+            JsonSerial.mapper.readTree(it) as ObjectNode
         }
     }?.let(::ModuleDescriptor) ?: throw InvalidModuleException("JAR does not contain module.json!")
 

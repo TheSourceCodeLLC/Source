@@ -1,5 +1,6 @@
 package net.sourcebot.impl
 
+import com.fasterxml.jackson.databind.node.ObjectNode
 import net.sourcebot.Source
 import net.sourcebot.api.module.InvalidModuleException
 import net.sourcebot.api.module.ModuleClassLoader
@@ -30,7 +31,7 @@ class BaseModule(
         }
         descriptor = this.javaClass.getResourceAsStream("/module.json").use {
             if (it == null) throw InvalidModuleException("Could not find module.json!")
-            else JsonSerial.mapper.readTree(it)
+            else JsonSerial.mapper.readTree(it) as ObjectNode
         }.let(::ModuleDescriptor)
     }
 
