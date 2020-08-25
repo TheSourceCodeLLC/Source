@@ -20,8 +20,8 @@ You will need to activate the two privileged Gateway Intents for Source to funct
 To do this, you will need to activate to the Discord Developers Portal, under the 'Bot' section. <br>
 
 * Start the bot:
-  * Windows: `java -DuseJansi=true -jar API.jar`
-  * Unix: `java -jar API.jar`
+  * Windows: `java -DuseJansi=true -jar Source.jar`
+  * Unix: `java -jar Source.jar`
 If you need to configure the bot, the program will terminate after generating a default config.
 
 # Using Permissions
