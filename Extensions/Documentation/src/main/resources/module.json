@@ -1,7 +1,7 @@
 {
-  "main": "${project.groupId}.${project.artifactId}",
-  "name": "${project.artifactId}",
-  "version": "${project.version}",
-  "description": "${project.description}",
-  "author": "${author}"
+  "main": "net.sourcebot.module.documentation.Documentation",
+  "name": "Documentation",
+  "version": "5.0.2",
+  "description": "Module responsible for the documentation commands.",
+  "author": "TheForbiddenAI#3797"
 }

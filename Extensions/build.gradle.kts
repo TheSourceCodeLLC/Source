@@ -1,16 +1,24 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 subprojects {
     dependencies {
         implementation(project(":API"))
     }
 
+    apply {
+        plugin("com.github.johnrengelman.shadow")
+    }
+
     val targetFolder = File(rootProject.projectDir, "target")
     tasks {
-        jar { destinationDirectory.set(File(targetFolder, "/bin/modules")) }
+        named<ShadowJar>("shadowJar") {
+            destinationDirectory.set(File(targetFolder, "/bin/modules"))
+        }
     }
 }
 
 tasks {
     task("install") {
-        dependsOn(subprojects.map { "${it.name}:jar" })
+        dependsOn(subprojects.map { "${it.name}:shadowJar" })
     }
 }
