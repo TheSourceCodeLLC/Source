@@ -7,7 +7,7 @@ import java.io.File
 open class JsonConfiguration(
     private val json: ObjectNode
 ) : Properties(json) {
-    fun <T> set(path: String, obj: T) {
+    fun <T> set(path: String, obj: T): T {
         if (path.isBlank()) throw IllegalArgumentException(
             "Argument 'path' may not be empty!"
         )
@@ -26,7 +26,7 @@ open class JsonConfiguration(
             }
             json.set<JsonNode>(parts[0], toStore)
         }
-
+        return obj
     }
 
     fun save(dest: File) = JsonSerial.toFile(dest, json)

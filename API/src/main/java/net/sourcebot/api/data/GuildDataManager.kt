@@ -20,9 +20,7 @@ class GuildDataManager(
 ) {
     private val dataCache = CacheBuilder.newBuilder().weakKeys()
         .expireAfterWrite(10, TimeUnit.MINUTES)
-        .removalListener<Guild, GuildData> {
-            it.value.save(File(dataFolder, "${it.key.id}.json"))
-        }
+        .removalListener<Guild, GuildData> { saveData(it.key, it.value) }
         .build(object : CacheLoader<Guild, GuildData>() {
             override fun load(
                 key: Guild
@@ -35,6 +33,15 @@ class GuildDataManager(
         if (!dataFolder.exists()) dataFolder.mkdirs()
         JsonSerial.registerSerial(GuildData.Serial())
     }
+
+    fun saveData(
+        guild: Guild,
+        guildData: GuildData
+    ) = JsonSerial.toFile(File(dataFolder, "${guild.id}.json"), guildData)
+
+    fun saveData(
+        guild: Guild
+    ) = saveData(guild, this[guild])
 }
 
 class GuildData(

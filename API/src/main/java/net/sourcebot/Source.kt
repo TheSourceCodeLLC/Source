@@ -42,7 +42,7 @@ class Source(val properties: Properties) {
     val sourceEventSystem = EventSystem<SourceEvent>()
     val jdaEventSystem = EventSystem<GenericEvent>()
 
-    val guildDataManager = GuildDataManager(File("data"))
+    val guildDataManager = GuildDataManager(File("storage"))
     val mongodb = MongoDB(properties.required("mongodb"))
     val permissionHandler = PermissionHandler(mongodb, properties.required("global-admins"))
     val moduleHandler = ModuleHandler(this)

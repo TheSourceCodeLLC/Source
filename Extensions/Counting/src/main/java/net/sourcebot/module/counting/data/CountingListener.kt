@@ -5,12 +5,12 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.sourcebot.Source
+import net.sourcebot.api.data.GuildDataManager
 import net.sourcebot.api.module.SourceModule
-import net.sourcebot.module.counting.data.CountingDataController.CountingData
 
 class CountingListener(
     private val source: Source,
-    private val dataController: CountingDataController
+    private val dataManager: GuildDataManager
 ) {
     fun listen(
         module: SourceModule
@@ -27,7 +27,8 @@ class CountingListener(
         if (!listening) return
         if (event.author.isBot) return
         if (event.message.contentRaw.startsWith(source.commandHandler.prefix)) return
-        val data = dataController.getData(event.guild)
+        val guildData = dataManager[event.guild]
+        val data: CountingData = guildData.optional("counting") ?: return
         val channel = data.channel?.let {
             event.guild.getTextChannelById(it)
         } ?: return
@@ -72,7 +73,7 @@ class CountingListener(
     }
 
     private fun onEdit(event: GuildMessageUpdateEvent) {
-        val data = dataController.getData(event.guild)
+        val data: CountingData = dataManager[event.guild].optional("counting") ?: return
         val channel = data.channel?.let {
             event.guild.getTextChannelById(it)
         } ?: return
@@ -94,7 +95,7 @@ class CountingListener(
         if (current > data.record) {
             toSend += "\nNew Record! New: $current. Old: ${data.record}."
             data.record = current
-            dataController.save()
+            dataManager.saveData(channel.guild)
         }
         channel.sendMessage(
             toSend + "\nRestarting... Current record: ${data.record}\n1"

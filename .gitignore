@@ -1,6 +1,7 @@
 .idea/
 .gradle/
 modules/
+storage/
 target/
 config.json
 *.iml
