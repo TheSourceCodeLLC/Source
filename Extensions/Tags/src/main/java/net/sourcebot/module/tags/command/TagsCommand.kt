@@ -43,7 +43,7 @@ class TagsCommand(
         )
 
         override fun execute(message: Message, args: Arguments): Alert {
-            val tagCache = tagHandler.getCache(message.guild)
+            val tagCache = tagHandler[message.guild]
             val name = args.next("You did not specify a name for the new tag!").toLowerCase()
             val existing = tagCache.getTag(name)
             if (existing != null) return ErrorAlert("Duplicate Tag!", "A tag named `$name` already exists!")
@@ -62,7 +62,7 @@ class TagsCommand(
         )
 
         override fun execute(message: Message, args: Arguments): Alert {
-            val tagCache = tagHandler.getCache(message.guild)
+            val tagCache = tagHandler[message.guild]
             val name = args.next("You did not specify a tag to delete!").toLowerCase()
             tagCache.getTag(name) ?: return NoSuchTagAlert(name)
             tagCache.deleteTag(name)
@@ -81,10 +81,10 @@ class TagsCommand(
         )
 
         override fun execute(message: Message, args: Arguments): Alert {
-            val tagCache = tagHandler.getCache(message.guild)
+            val tagCache = tagHandler[message.guild]
             val name = args.next("You did not specify a tag to edit!").toLowerCase()
             val tag = tagCache.getTag(name) ?: return NoSuchTagAlert(name)
-            return when (val property = args.next("You did not specify a property to edit!").toLowerCase()) {
+            val alert = when (val property = args.next("You did not specify a property to edit!").toLowerCase()) {
                 "category" -> {
                     tag.category = args.next("You did not specify a new tag category!")
                     SuccessAlert("Category Updated!", "The tag `$name` now belongs to category `${tag.category}`!")
@@ -102,6 +102,8 @@ class TagsCommand(
                 }
                 else -> throw InvalidSyntaxException("Invalid property `$property`!")
             }
+            tagCache.saveTag(tag)
+            return alert
         }
     }
 
@@ -114,7 +116,7 @@ class TagsCommand(
         )
 
         override fun execute(message: Message, args: Arguments): Alert {
-            val tagCache = tagHandler.getCache(message.guild)
+            val tagCache = tagHandler[message.guild]
             val name = args.next("You did not specify a tag to show info for!").toLowerCase()
             val tag = tagCache.getTag(name) ?: return NoSuchTagAlert(name)
             return TagInfoAlert(tag, message.jda)
@@ -126,7 +128,7 @@ class TagsCommand(
         "List all tags."
     ) {
         override fun execute(message: Message, args: Arguments): Alert {
-            val tagCache = tagHandler.getCache(message.guild)
+            val tagCache = tagHandler[message.guild]
             val tags = tagCache.getTags()
             if (tags.isEmpty()) return InfoAlert("Tag Listing", "There are currently no tags.")
             return TagListAlert(tags.groupBy { it.category })

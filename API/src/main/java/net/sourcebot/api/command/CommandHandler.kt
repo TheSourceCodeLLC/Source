@@ -25,7 +25,7 @@ class CommandHandler(
         message: Message, label: String, args: Array<String>
     ) {
         val author = message.author
-        if (author.isFake || author.isBot) return
+        if (author.isBot) return
         val rootCommand = commandMap[label] ?: return
         if (!rootCommand.module.enabled) return
         val inGuild = message.channelType == ChannelType.TEXT

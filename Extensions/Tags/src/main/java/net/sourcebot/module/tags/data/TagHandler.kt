@@ -1,5 +1,7 @@
 package net.sourcebot.module.tags.data
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
@@ -8,16 +10,21 @@ import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.AbstractMessageHandler
 import org.bson.Document
+import java.util.concurrent.TimeUnit
 
 class TagHandler(
     private val mongodb: MongoDB,
     prefix: String
 ) : AbstractMessageHandler(prefix) {
-    private val tags = HashMap<String, TagCache>()
+    private val tags = CacheBuilder.newBuilder().weakKeys()
+        .expireAfterWrite(10, TimeUnit.MINUTES)
+        .build(object : CacheLoader<Guild, TagCache>() {
+            override fun load(guild: Guild) = TagCache(mongodb.getCollection(guild.id, "tags"))
+        })
 
     override fun cascade(message: Message, label: String, args: Array<String>) {
         if (!message.isFromGuild) return
-        val tagCache = getCache(message.guild)
+        val tagCache = get(message.guild)
         val tag = tagCache.getTag(label.toLowerCase()) ?: return
         val content = tag.processArguments(args)
         when (tag.type) {
@@ -34,7 +41,5 @@ class TagHandler(
         tagCache.tags.updateOne(MongoSerial.getQueryDocument(tag), Document("\$set", MongoSerial.toDocument(tag)))
     }
 
-    fun getCache(guild: Guild) = tags.computeIfAbsent(guild.id) {
-        TagCache(mongodb.getCollection(it, "tags"))
-    }
+    operator fun get(guild: Guild): TagCache = tags[guild]
 }
