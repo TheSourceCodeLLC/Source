@@ -5,9 +5,7 @@ plugins {
     id("com.github.johnrengelman.shadow")
 }
 
-application {
-    mainClassName = "net.sourcebot.Source"
-}
+application { mainClassName = "net.sourcebot.Source" }
 
 dependencies {
     api(kotlin("stdlib", "1.4.0"))
