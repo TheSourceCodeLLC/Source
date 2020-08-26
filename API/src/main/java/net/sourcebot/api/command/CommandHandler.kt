@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.alert.Alert
+import net.sourcebot.api.alert.EmptyAlert
 import net.sourcebot.api.alert.ErrorAlert
 import net.sourcebot.api.alert.error.ExceptionAlert
 import net.sourcebot.api.alert.error.GlobalAdminOnlyAlert
@@ -84,7 +85,7 @@ class CommandHandler(
                 ExceptionAlert(exception)
             }
         }
-        return respond(command, message, response)
+        if (response !is EmptyAlert) return respond(command, message, response)
     }
 
     private fun respond(command: Command, message: Message, alert: Alert) {

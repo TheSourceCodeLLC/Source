@@ -17,12 +17,17 @@ interface Alert {
     fun asMessage(user: User): Message
 }
 
+class EmptyAlert : Alert {
+    override fun asMessage(user: User): Message = throw UnsupportedOperationException()
+}
+
 abstract class EmbedAlert @JvmOverloads internal constructor(
     protected var title: String,
     protected var description: String? = null
 ) : EmbedBuilder(), Alert {
     companion object {
-        @JvmStatic var footer: String? = null
+        @JvmStatic
+        var footer: String? = null
     }
 
     override fun asMessage(user: User): Message {

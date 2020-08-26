@@ -1,10 +1,7 @@
 package net.sourcebot.impl.command.lifecycle
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.EmbedAlert
-import net.sourcebot.api.alert.ErrorAlert
-import net.sourcebot.api.alert.SuccessAlert
+import net.sourcebot.api.alert.*
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
 
@@ -16,16 +13,18 @@ abstract class LifecycleCommand(
     final override val requiresGlobal = true
 
     final override fun execute(message: Message, args: Arguments): Alert {
-        return try {
+        message.channel.sendMessage(onQueued.asMessage(message.author)).queue()
+        try {
             Runtime.getRuntime().exec(script)
-            onSuccess
         } catch (ex: Throwable) {
-            onFailure.addField("Exception:", ex.message, false)
-        } as Alert
+            return onFailure.addField("Exception:", ex.message, false) as Alert
+        }
+        return EmptyAlert()
     }
 
-    abstract val onSuccess: EmbedAlert
+    abstract val onQueued: EmbedAlert
     abstract val onFailure: EmbedAlert
+
 }
 
 class RestartCommand(
@@ -33,13 +32,13 @@ class RestartCommand(
 ) : LifecycleCommand(
     "restart", "Restarts the bot.", script
 ) {
-    override val onSuccess = SuccessAlert(
-        "Restart Success",
+    override val onQueued = InfoAlert(
+        "Restart Scheduled",
         "The bot has been scheduled to restart."
     )
     override val onFailure = ErrorAlert(
         "Restart Failure",
-        "There was a problem scheduling the bot to restart."
+        "There was a problem restarting the bot."
     )
 }
 
@@ -48,13 +47,13 @@ class StopCommand(
 ) : LifecycleCommand(
     "stop", "Stops the bot.", script
 ) {
-    override val onSuccess = SuccessAlert(
-        "Stop Success",
+    override val onQueued = InfoAlert(
+        "Stop Scheduled",
         "The bot has been scheduled to stop."
     )
     override val onFailure = ErrorAlert(
         "Stop Failure",
-        "There was a problem scheduling the bot to stop."
+        "There was a problem stopping the bot."
     )
 }
 
@@ -63,12 +62,12 @@ class UpdateCommand(
 ) : LifecycleCommand(
     "update", "Updates the bot.", script
 ) {
-    override val onSuccess = SuccessAlert(
-        "Update Success",
+    override val onQueued = InfoAlert(
+        "Update Scheduled",
         "The bot has been scheduled to update."
     )
     override val onFailure = ErrorAlert(
         "Update Failure",
-        "There was a problem scheduling the bot to update."
+        "There was a problem updating the bot."
     )
 }

@@ -5,6 +5,12 @@ import net.sourcebot.api.module.SourceModule
 
 class Moderation : SourceModule() {
     override fun onEnable(source: Source) {
-
+        source.commandHandler.registerCommands(
+            this,
+            BanCommand(),
+            KickCommand(),
+            MuteCommand(),
+            TempbanCommand()
+        )
     }
 }
