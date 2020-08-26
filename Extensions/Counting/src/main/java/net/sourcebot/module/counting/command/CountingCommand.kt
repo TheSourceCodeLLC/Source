@@ -49,7 +49,7 @@ class CountingCommand(
             val data: CountingData = guildData.optional("counting") ?: return ErrorAlert(
                 "Counting Record Error", "Counting has not been configured for this Guild!"
             )
-            return InfoAlert("Counting Record", "The current record is: $${data.record}")
+            return InfoAlert("Counting Record", "The current record is: ${data.record}")
         }
     }
 

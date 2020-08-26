@@ -13,7 +13,7 @@ open class Properties(private val json: ObjectNode) {
     @JvmOverloads
     fun <T> optional(path: String, type: Class<T>, supplier: () -> T? = { null }): T? {
         val levels = path.split(".").iterator()
-        var lastElem: JsonNode = json[levels.next()] ?: return null
+        var lastElem: JsonNode = json[levels.next()] ?: return supplier()
         while (levels.hasNext()) {
             lastElem = lastElem[levels.next()]
         }

@@ -95,6 +95,7 @@ class CountingListener(
         if (current > data.record) {
             toSend += "\nNew Record! New: $current. Old: ${data.record}."
             data.record = current
+            dataManager[channel.guild]["counting"] = data
             dataManager.saveData(channel.guild)
         }
         channel.sendMessage(
