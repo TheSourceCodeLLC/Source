@@ -58,7 +58,9 @@ class CountingCommand(
     ) {
         override fun execute(message: Message, args: Arguments): Alert {
             val guildData = dataManager[message.guild]
-            val data: CountingData = guildData.optional("counting") ?: CountingData(message.channel.id, 0)
+            val data: CountingData = guildData.required("counting") {
+                guildData.set("counting", CountingData(message.channel.id, 0))
+            }
             data.channel = message.channel.id
             dataManager.saveData(message.guild, guildData)
             return SuccessAlert("Counting Channel Updated", "The current channel is now the counting channel!")

@@ -7,7 +7,7 @@ import java.io.File
 open class JsonConfiguration(
     private val json: ObjectNode
 ) : Properties(json) {
-    fun <T> set(path: String, obj: T): T {
+    operator fun <T> set(path: String, obj: T): T {
         if (path.isBlank()) throw IllegalArgumentException(
             "Argument 'path' may not be empty!"
         )

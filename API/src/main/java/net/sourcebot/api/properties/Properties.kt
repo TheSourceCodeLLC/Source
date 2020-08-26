@@ -10,21 +10,34 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 
 open class Properties(private val json: ObjectNode) {
-    fun <T> optional(path: String, type: Class<T>): T? {
+    @JvmOverloads
+    fun <T> optional(path: String, type: Class<T>, supplier: () -> T? = { null }): T? {
         val levels = path.split(".").iterator()
         var lastElem: JsonNode = json[levels.next()] ?: return null
         while (levels.hasNext()) {
             lastElem = lastElem[levels.next()]
         }
-        return JsonSerial.fromJson(lastElem, type)
+        return JsonSerial.fromJson(lastElem, type) ?: supplier()
     }
 
-    inline fun <reified T> optional(path: String) = optional(path, T::class.java)
+    @JvmOverloads
+    inline fun <reified T> optional(
+        path: String,
+        noinline supplier: () -> T? = { null }
+    ) = optional(path, T::class.java, supplier)
 
-    fun <T> required(path: String, type: Class<T>) =
-        optional(path, type) ?: throw IllegalArgumentException("Could not load value at '$path'!")
+    @JvmOverloads
+    fun <T> required(
+        path: String,
+        type: Class<T>,
+        supplier: () -> T? = { null }
+    ) = optional(path, type, supplier) ?: throw IllegalArgumentException("Could not load value at '$path'!")
 
-    inline fun <reified T> required(path: String) = required(path, T::class.java)
+    @JvmOverloads
+    inline fun <reified T> required(
+        path: String,
+        noinline supplier: () -> T? = { null }
+    ) = required(path, T::class.java, supplier)
 
     class Serial : JsonSerial<Properties> {
         override val serializer = object : StdSerializer<Properties>(
