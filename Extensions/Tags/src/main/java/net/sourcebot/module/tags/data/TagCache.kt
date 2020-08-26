@@ -26,7 +26,9 @@ class TagCache(
         null
     }
 
-    fun getTags(): Collection<Tag> = tagCache.asMap().values
+    fun getTags(): Collection<Tag> = tags.find().map {
+        MongoSerial.fromDocument<Tag>(it)
+    }.filterNotNull()
 
     fun createTag(name: String, content: String, creator: String) {
         val tag = Tag(name, content, creator)
@@ -40,6 +42,9 @@ class TagCache(
     }
 
     fun saveTag(tag: Tag) {
-        tags.updateOne(MongoSerial.getQueryDocument(tag), MongoSerial.toDocument(tag))
+        tags.updateOne(
+            MongoSerial.getQueryDocument(tag),
+            Document("\$set", MongoSerial.toDocument(tag))
+        )
     }
 }
