@@ -103,6 +103,7 @@ class StarboardListener(
     private fun onMessageEdit(event: GuildMessageUpdateEvent) {
         getLinkObject(event.guild, event.messageId) ?: return
         event.message.clearReactions(UNICODE_STAR).queue()
+        deleteStarredMessage(event.guild, event.messageId)
     }
 
     private fun deleteStarredMessage(guild: Guild, original: String) {
