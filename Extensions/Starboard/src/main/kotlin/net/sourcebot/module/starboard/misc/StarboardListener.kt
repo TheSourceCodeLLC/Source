@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.dv8tion.jda.api.events.message.guild.react.GenericGuildMessageReactionEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionRemoveEvent
@@ -29,6 +30,7 @@ class StarboardListener(
         jdaEvents.listen(module, this::onReactionAdd)
         jdaEvents.listen(module, this::onReactionRemove)
         jdaEvents.listen(module, this::onMessageDelete)
+        jdaEvents.listen(module, this::onMessageEdit)
     }
 
     private fun onReactionAdd(event: GuildMessageReactionAddEvent) {
@@ -98,6 +100,11 @@ class StarboardListener(
         } else deleteStarredMessage(event.guild, event.messageId)
     }
 
+    private fun onMessageEdit(event: GuildMessageUpdateEvent) {
+        getLinkObject(event.guild, event.messageId) ?: return
+        event.message.clearReactions(UNICODE_STAR).queue()
+    }
+
     private fun deleteStarredMessage(guild: Guild, original: String) {
         val collection = getCollection(guild)
         val deleted = collection.findOneAndDelete(Document("original", original))
@@ -124,7 +131,10 @@ class StarboardListener(
         original: Message
     ) : WarningAlert(
         "%#s".format(original.author),
-        "\"${original.contentRaw}\" [[Jump](${original.jumpUrl})]"
+        "${
+            if (original.contentRaw.isBlank()) "${original.attachments[0].fileName}:"
+            else "\"${original.contentRaw}\""
+        } [[Jump](${original.jumpUrl})]"
     ) {
         companion object {
             @JvmStatic
@@ -137,11 +147,11 @@ class StarboardListener(
         }
 
         init {
-            addField(
-                "Attached Files:",
-                original.attachments.joinToString(" ") { "[${it.fileName}](${it.proxyUrl})" },
-                false
-            )
+            val attachment = original.attachments.firstOrNull()
+            if (attachment != null) {
+                if (attachment.isImage) setImage(attachment.proxyUrl)
+                else addField("Attached File:", "[${attachment.fileName}](${attachment.proxyUrl})", false)
+            }
         }
     }
 }
