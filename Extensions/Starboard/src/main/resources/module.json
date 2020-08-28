@@ -1,0 +1,7 @@
+{
+  "main": "net.sourcebot.module.starboard.Starboard",
+  "name": "Starboard",
+  "version": "5.0.2",
+  "description": "Module responsible for Starboard functions.",
+  "author": "Hwiggy#0001"
+}
