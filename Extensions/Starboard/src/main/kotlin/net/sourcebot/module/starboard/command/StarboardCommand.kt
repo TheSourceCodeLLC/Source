@@ -28,7 +28,7 @@ class StarboardCommand(
         )
 
         override fun execute(message: Message, args: Arguments): Alert {
-            val threshold = args.next(Adapter.INTEGER, "You did not specify a star threshold!")
+            val threshold = args.next(Adapter.int(), "You did not specify a star threshold!")
             val data = dataManager[message.guild]
             if (data.threshold == threshold) return InfoAlert(
                 "Star Threshold", "The star threshold is already set to `$threshold`!"

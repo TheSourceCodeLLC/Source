@@ -33,11 +33,11 @@ class PermissionsCommand(
         val type = args.next("You did not specify a type to modify!").toLowerCase()
         val permissible = when (type) {
             "role" -> {
-                val role = args.nextRole(message.guild, "You did not specify a valid role!")
+                val role = args.next(Adapter.role(message.guild), "You did not specify a valid role!")
                 permissionData.getRole(role)
             }
             "user" -> {
-                val member = args.nextMember(message.guild, "You did not specify a valid member!")
+                val member = args.next(Adapter.member(message.guild), "You did not specify a valid member!")
                 permissionData.getUser(member)
             }
             else -> throw InvalidSyntaxException("You did not specify a valid type!")
@@ -50,7 +50,7 @@ class PermissionsCommand(
             "set" -> {
                 permissionHandler.checkPermission(user, "permissions.$type.set", message.channel) {
                     val node = args.next("You did not specify a node to set!")
-                    val flag = args.next(Adapter.BOOLEAN, "You did not specify a flag for the node!")
+                    val flag = args.next(Adapter.boolean(), "You did not specify a flag for the node!")
                     val context = args.next()
                     val description = if (context != null) {
                         permissible.setPermission(node, flag, context)
