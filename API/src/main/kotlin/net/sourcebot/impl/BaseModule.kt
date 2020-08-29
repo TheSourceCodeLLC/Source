@@ -19,7 +19,7 @@ class BaseModule(
     private val source: Source
 ) : SourceModule() {
     init {
-        classLoader = object : ModuleClassLoader() {
+        classLoader = object : ModuleClassLoader(source.moduleHandler) {
             override fun findClass(name: String, searchParent: Boolean): Class<*> {
                 return try {
                     if (searchParent) source.moduleHandler.findClass(name)

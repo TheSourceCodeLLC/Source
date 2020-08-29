@@ -13,7 +13,7 @@ data class Tag(
     var type: Type = Type.TEXT,
     var uses: Int = 0
 ) {
-    //TODO: Argument expansions
+    //TODO: Process Arguments
     fun processArguments(args: Array<String>): String = content
 
     class Serial : MongoSerial<Tag> {

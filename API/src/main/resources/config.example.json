@@ -5,7 +5,7 @@
     "prefix": "!",
     "delete-seconds": 20
   },
-  "alert": {
+  "embed-response": {
     "footer": "SourceBot"
   },
   "activity": {
