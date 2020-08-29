@@ -7,10 +7,10 @@ import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.MessageBuilder
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.SourceColor
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.SourceColor
 
-class DocAlert : EmbedBuilder(), Alert {
+class DocResponse : EmbedBuilder(), Response {
     override fun asMessage(user: User): Message {
         setColor(SourceColor.INFO.color)
         setFooter("Ran By: ${user.asTag}", user.effectiveAvatarUrl)

@@ -3,8 +3,8 @@ package net.sourcebot.impl.command
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.Source
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.InfoAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
 
@@ -14,7 +14,7 @@ class GuildInfoCommand : RootCommand() {
     override val guildOnly = true
     override val aliases = arrayOf("info", "online", "boosts")
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         val guild = message.guild
         val name = guild.name
         val icon = guild.iconUrl
@@ -33,7 +33,7 @@ class GuildInfoCommand : RootCommand() {
         val boosters = guild.boosters.count()
 
 
-        return InfoAlert(
+        return InfoResponse(
             "$name Guild Information:",
             "**Creation Date**: $created\n" +
             "**Owner**: ${owner.asMention}\n"
@@ -49,6 +49,6 @@ class GuildInfoCommand : RootCommand() {
             "**Boosters**: $boosters\n" +
             "**Boost Tier**: $boostTier",
             false
-        ).setThumbnail(icon) as Alert
+        ).setThumbnail(icon) as Response
     }
 }

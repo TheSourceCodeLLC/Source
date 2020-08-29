@@ -1,9 +1,9 @@
 package net.sourcebot.impl.command
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.InfoAlert
-import net.sourcebot.api.alert.SuccessAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.SuccessResponse
 import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Adapter
@@ -27,7 +27,7 @@ class PermissionsCommand(
     override val aliases = arrayOf("permission", "perms", "perm")
     override val permission = name
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         val permissionData = permissionHandler.getData(message.guild)
         val user = permissionData.getUser(message.member!!)
         val type = args.next("You did not specify a type to modify!").toLowerCase()
@@ -59,7 +59,7 @@ class PermissionsCommand(
                         permissible.setPermission(node, flag)
                         "Set permission for $asMention: `$node` = `$flag`"
                     }
-                    SuccessAlert("Permission Set!", description)
+                    SuccessResponse("Permission Set!", description)
                 }
             }
             "unset" -> {
@@ -73,7 +73,7 @@ class PermissionsCommand(
                         permissible.unsetPermission(node)
                         "Unset `$node` for $asMention"
                     }
-                    SuccessAlert("Permission Unset!", description)
+                    SuccessResponse("Permission Unset!", description)
                 }
             }
             "info" -> {
@@ -83,7 +83,7 @@ class PermissionsCommand(
                         if (it.context != null) "${it.node}: ${it.flag} @ ${it.context}"
                         else "${it.node}: ${it.flag}"
                     }.ifEmpty { "No permissions set." }
-                    InfoAlert("Permission Information", "Permissions for $asMention:\n$infoOutput")
+                    InfoResponse("Permission Information", "Permissions for $asMention:\n$infoOutput")
                 }
             }
             "check" -> {
@@ -97,7 +97,7 @@ class PermissionsCommand(
                         val has = permissible.hasPermission(node)
                         "Permission check for $asMention; `$node`: `$has`"
                     }
-                    InfoAlert("Permission Check", description)
+                    InfoResponse("Permission Check", description)
                 }
             }
             "clear" -> {
@@ -110,7 +110,7 @@ class PermissionsCommand(
                         permissible.clearPermissions()
                         "Permissions cleared for $asMention"
                     }
-                    SuccessAlert("Permissions Cleared!", description)
+                    SuccessResponse("Permissions Cleared!", description)
                 }
             }
             else -> throw InvalidSyntaxException(

@@ -5,13 +5,13 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import net.dv8tion.jda.api.utils.MarkdownUtil
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.ErrorAlert
-import net.sourcebot.api.alert.InfoAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.properties.JsonSerial
-import net.sourcebot.module.documentation.utility.DocAlert
+import net.sourcebot.module.documentation.utility.DocResponse
 import net.sourcebot.module.documentation.utility.approxTruncate
 import net.sourcebot.module.documentation.utility.toMarkdown
 import org.jsoup.Jsoup
@@ -26,13 +26,13 @@ class MDNCommand : RootCommand() {
     private val baseUrl = "https://developer.mozilla.org"
     private val cache = MDNDocCache()
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         val user = message.author
         val iconUrl = "https://developer.mozilla.org/static/img/opengraph-logo.72382e605ce3.png"
 
         if (!args.hasNext()) {
             val description = "You can find the MDN Documentation at [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/)"
-            return InfoAlert(user.name, description)
+            return InfoResponse(user.name, description)
         }
 
         val query = args.next("Unable to find query!").replace("#", ".").removeSuffix("()")
@@ -49,7 +49,7 @@ class MDNCommand : RootCommand() {
                 .maxBodySize(0)
                 .get()
 
-            val notFoundAlert = ErrorAlert(user.name, "Unable to find `$query` in the MDN Documentation!")
+            val notFoundAlert = ErrorResponse(user.name, "Unable to find `$query` in the MDN Documentation!")
 
 
             val jsonObject = JsonSerial.mapper.readTree(searchDocument.body().text())
@@ -79,7 +79,7 @@ class MDNCommand : RootCommand() {
 
                 if (alertDescSB.isEmpty()) return notFoundAlert
 
-                val searchResultAlert = DocAlert()
+                val searchResultAlert = DocResponse()
                 searchResultAlert.setAuthor("MDN Documentation", null, iconUrl)
                     .setTitle("Search Results:")
                     .setDescription(alertDescSB.toString())
@@ -96,14 +96,14 @@ class MDNCommand : RootCommand() {
                 .maxBodySize(0)
                 .get()
 
-            val docAlert = DocAlert()
+            val docAlert = DocResponse()
             docAlert.setAuthor("MDN Documentation", null, iconUrl)
 
             val wikiElement = resultDocument.selectFirst("article#wikiArticle")
             wikiElement.html(wikiElement.html().replace("<p></p>", ""))
 
             val descriptionElement = wikiElement.selectFirst("article > p")
-                    ?: return ErrorAlert(user.name, "Unable to find article description!")
+                    ?: return ErrorResponse(user.name, "Unable to find article description!")
 
             val description = hyperlinksToMarkdown(descriptionElement).toMarkdown().approxTruncate(600)
 
@@ -138,7 +138,7 @@ class MDNCommand : RootCommand() {
             return docAlert
         } catch (ex: Exception) {
             ex.printStackTrace()
-            return ErrorAlert(user.name, "Something went wrong, please try again!")
+            return ErrorResponse(user.name, "Something went wrong, please try again!")
         }
 
     }
@@ -236,17 +236,17 @@ class MDNCommand : RootCommand() {
     }
 
     private class MDNDocCache {
-        val mdnCache: MutableMap<String, Alert> = mutableMapOf()
+        val mdnCache: MutableMap<String, Response> = mutableMapOf()
 
         fun hasAlert(query: String): Boolean {
             return mdnCache.containsKey(query)
         }
 
-        fun putAlert(query: String, alert: Alert) {
-            mdnCache[query.toLowerCase()] = alert
+        fun putAlert(query: String, response: Response) {
+            mdnCache[query.toLowerCase()] = response
         }
 
-        fun getAlert(query: String): Alert? {
+        fun getAlert(query: String): Response? {
             return mdnCache[query.toLowerCase()]
         }
     }

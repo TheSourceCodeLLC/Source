@@ -1,13 +1,13 @@
 package net.sourcebot.module.documentation.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.ErrorAlert
-import net.sourcebot.api.alert.InfoAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.properties.JsonSerial
-import net.sourcebot.module.documentation.utility.DocAlert
+import net.sourcebot.module.documentation.utility.DocResponse
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 
@@ -20,12 +20,12 @@ class DJSCommand : RootCommand() {
         "stable", "master", "rpc", "commando", "akairo", "akairo-master", "collection"
     )
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         val user = message.author
 
         if (!args.hasNext()) {
             val description = "You can find the Discord.JS Documentation at [discord.js.org](https://discord.js.org/)"
-            return InfoAlert(user.name, description)
+            return InfoResponse(user.name, description)
         }
 
         var query = args.next("Unable to find query w/o version!")
@@ -62,10 +62,10 @@ class DJSCommand : RootCommand() {
                 .execute()
 
             val responseBody: String = response.body().replace("\"icon_url\":", "\"iconUrl\":")
-            JsonSerial.mapper.readValue(responseBody, DocAlert::class.java)
+            JsonSerial.mapper.readValue(responseBody, DocResponse::class.java)
         } catch (ex: Exception) {
             ex.printStackTrace()
-            ErrorAlert(user.name, "Unable to find `$query` in the DJS Documentation!")
+            ErrorResponse(user.name, "Unable to find `$query` in the DJS Documentation!")
         }
     }
 }

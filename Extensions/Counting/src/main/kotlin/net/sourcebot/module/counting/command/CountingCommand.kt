@@ -1,10 +1,10 @@
 package net.sourcebot.module.counting.command
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.ErrorAlert
-import net.sourcebot.api.alert.InfoAlert
-import net.sourcebot.api.alert.SuccessAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.SuccessResponse
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
@@ -33,7 +33,7 @@ class CountingCommand(
         override fun execute(
             message: Message,
             args: Arguments
-        ) = InfoAlert(
+        ) = InfoResponse(
             "Counting Rules",
             "**1.** Players may not increment multiple times in a row.\n" +
                     "**2.** Players may only send numbers.\n" +
@@ -44,26 +44,26 @@ class CountingCommand(
     private inner class CountingRecordCommand : CommandBootstrap(
         "record", "Show the current counting record."
     ) {
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val guildData = dataManager[message.guild]
-            val data: CountingData = guildData.optional("counting") ?: return ErrorAlert(
+            val data: CountingData = guildData.optional("counting") ?: return ErrorResponse(
                 "Counting Record Error", "Counting has not been configured for this Guild!"
             )
-            return InfoAlert("Counting Record", "The current record is: ${data.record}")
+            return InfoResponse("Counting Record", "The current record is: ${data.record}")
         }
     }
 
     private inner class CountingChannelCommand : CommandBootstrap(
         "channel", "Sets the counting channel to the current channel."
     ) {
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val guildData = dataManager[message.guild]
             val data: CountingData = guildData.required("counting") {
                 guildData.set("counting", CountingData(message.channel.id, 0))
             }
             data.channel = message.channel.id
             dataManager.saveData(message.guild, guildData)
-            return SuccessAlert("Counting Channel Updated", "The current channel is now the counting channel!")
+            return SuccessResponse("Counting Channel Updated", "The current channel is now the counting channel!")
         }
     }
 

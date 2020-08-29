@@ -1,8 +1,8 @@
 package net.sourcebot.module.cryptography.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.InfoAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
@@ -30,10 +30,10 @@ class Base64Command : RootCommand() {
             Argument("input", "The text to encode in Base64.")
         )
 
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val input = args.slurp(" ", "You did not specify text to encode!")
             val encoded = encoder.encodeToString(input.toByteArray())
-            return InfoAlert("Base64 Encode Result", encoded)
+            return InfoResponse("Base64 Encode Result", encoded)
         }
     }
 
@@ -45,10 +45,10 @@ class Base64Command : RootCommand() {
             Argument("input", "The text to decode from Base64.")
         )
 
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val input = args.slurp(" ", "You did not specify text to decode!")
             val decoded = String(decoder.decode(input))
-            return InfoAlert("Base64 Decode Result", decoded)
+            return InfoResponse("Base64 Decode Result", decoded)
         }
     }
 }

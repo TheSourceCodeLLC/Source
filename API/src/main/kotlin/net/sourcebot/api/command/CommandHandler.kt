@@ -4,11 +4,11 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.EmptyAlert
-import net.sourcebot.api.alert.ErrorAlert
-import net.sourcebot.api.alert.error.ExceptionAlert
-import net.sourcebot.api.alert.error.GlobalAdminOnlyAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.EmptyResponse
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.error.ExceptionResponse
+import net.sourcebot.api.response.error.GlobalAdminOnlyResponse
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.module.SourceModule
@@ -30,13 +30,13 @@ class CommandHandler(
         val rootCommand = commandMap[label] ?: return
         if (!rootCommand.module.enabled) return
         val inGuild = message.channelType == ChannelType.TEXT
-        if (rootCommand.guildOnly && !inGuild) return respond(rootCommand, message, GuildOnlyCommandAlert())
+        if (rootCommand.guildOnly && !inGuild) return respond(rootCommand, message, GuildOnlyCommandResponse())
         val arguments = Arguments(args)
         var command: Command = rootCommand
         val hasGlobal = permissionHandler.hasGlobalAccess(author)
         do {
             if (!hasGlobal && command.requiresGlobal) return respond(
-                command, message, GlobalAdminOnlyAlert()
+                command, message, GlobalAdminOnlyResponse()
             )
             if (!hasGlobal && command.permission != null) {
                 val permission = command.permission!!
@@ -61,7 +61,7 @@ class CommandHandler(
                         )
                         )
                     }
-                } else if (command.guildOnly) return respond(command, message, GuildOnlyCommandAlert())
+                } else if (command.guildOnly) return respond(command, message, GuildOnlyCommandResponse())
             }
             val nextId = arguments.next() ?: break
             val nextCommand = command[nextId]
@@ -75,21 +75,21 @@ class CommandHandler(
             command.execute(message, arguments)
         } catch (exception: Exception) {
             if (exception is InvalidSyntaxException) {
-                ErrorAlert(
+                ErrorResponse(
                     "Invalid Syntax!",
                     "${exception.message!!}\n" +
                         "**Syntax:** ${getSyntax(command)}"
                 )
             } else {
                 exception.printStackTrace()
-                ExceptionAlert(exception)
+                ExceptionResponse(exception)
             }
         }
-        if (response !is EmptyAlert) return respond(command, message, response)
+        if (response !is EmptyResponse) return respond(command, message, response)
     }
 
-    private fun respond(command: Command, message: Message, alert: Alert) {
-        message.channel.sendMessage(alert.asMessage(message.author)).queue {
+    private fun respond(command: Command, message: Message, response: Response) {
+        message.channel.sendMessage(response.asMessage(message.author)).queue {
             command.postResponse(it)
             if (!command.cleanupResponse) return@queue
             if (message.channelType == ChannelType.TEXT) {
@@ -120,7 +120,7 @@ class CommandHandler(
     /**
      * Called when a user uses a command marked as guildOnly outside of a Guild (i.e Direct Message)
      */
-    private class GuildOnlyCommandAlert : ErrorAlert(
+    private class GuildOnlyCommandResponse : ErrorResponse(
         "Guild Only Command!", "This command may not be used outside of a guild!"
     )
 }

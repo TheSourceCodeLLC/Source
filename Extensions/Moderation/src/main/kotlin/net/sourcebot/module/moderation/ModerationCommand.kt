@@ -1,9 +1,9 @@
 package net.sourcebot.module.moderation
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.ErrorAlert
-import net.sourcebot.api.alert.SuccessAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.SuccessResponse
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.*
 
@@ -24,13 +24,13 @@ class BanCommand : ModerationCommand(
         Argument("reason", "Why this user should be banned.")
     )
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid user to ban!")
         val delDays = args.next(Adapter.int()) ?: 7
         val reason = args.slurp(" ", "You did not specify a ban reason!")
         target.ban(delDays, reason).queue()
         //TODO: Case ID, success
-        return SuccessAlert(
+        return SuccessResponse(
             "Ban Success",
             "Banned ${String.format("%#s", target.user)}: $reason"
         )
@@ -45,12 +45,12 @@ class KickCommand : ModerationCommand(
         Argument("reason", "Why this user should be kicked.")
     )
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid member to kick!")
         val reason = args.slurp(" ", "You did not specify a kick reason!")
         target.kick(reason).queue()
         // TODO: Form Case ID & return alert
-        return SuccessAlert(
+        return SuccessResponse(
             "Kick Success",
             "Kicked ${String.format("%#s", target.user)}: $reason"
         )
@@ -66,13 +66,13 @@ class MuteCommand : ModerationCommand(
         Argument("reason", "Why this user should be muted.")
     )
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid user to mute!")
         val duration = args.next("You did not specify a valid mute duration!")
         // Try to parse duration string
         val reason = args.slurp(" ", "You did not specify a mute reason!")
         //TODO: Mute user
-        return SuccessAlert(
+        return SuccessResponse(
             "Mute Success",
             "Muted ${String.format("%#s", target.user)} for $duration: $reason"
         )
@@ -89,13 +89,13 @@ class TempbanCommand : ModerationCommand(
         Argument("reason", "Why this user should be tempbanned.")
     )
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid user to tempban!")
         val delDays = args.next(Adapter.int()) ?: 7
         val duration = args.next("You did not specify a valid tempban duration!")
         val reason = args.slurp(" ", "You did not specify a tempban reason!")
         //TODO: Tempban, Case ID
-        return SuccessAlert(
+        return SuccessResponse(
             "Tempban Success",
             "Tempbanned ${String.format("%#s", target.user)} for $duration: $reason"
         )
@@ -110,19 +110,19 @@ class UnbanCommand : ModerationCommand(
         Argument("reason", "Why this user should be unbanned.")
     )
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         val target = args.next("You did not specify a user ID to unban!")
         val reason = args.slurp(" ", "You did not specify an unban reason!")
         val user = try {
             message.guild.retrieveBanById(target).complete()
         } catch (ex: Exception) {
-            return ErrorAlert(
+            return ErrorResponse(
                 "Unban Failure",
                 "I couldn't find a banned user with that ID!"
             )
         }.user
         //TODO: Case ID
-        return SuccessAlert(
+        return SuccessResponse(
             "Unban Success",
             "Unbanned ${"%#s".format(user)}: $reason"
         )

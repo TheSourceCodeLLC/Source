@@ -7,8 +7,8 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import net.dv8tion.jda.api.utils.MarkdownUtil
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.ErrorAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.ErrorResponse
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.util.stream.Collectors
@@ -24,15 +24,15 @@ class JenkinsHandler(
         url.substring(0, url.lastIndexOf("/") + 1).trim()
     }
 
-    fun retrieveDocAlert(cmdMessage: Message, user: User, query: String): Alert {
+    fun retrieveDocAlert(cmdMessage: Message, user: User, query: String): Response {
         DocSelectorStorage.removeAndDeleteSelector(user)
 
         try {
             val infoList: List<Information> = jenkins.search(query)
 
-            if (infoList.isEmpty()) return ErrorAlert(user.name, "Unable to find `$query` in the $embedTitle!")
+            if (infoList.isEmpty()) return ErrorResponse(user.name, "Unable to find `$query` in the $embedTitle!")
 
-            val docAlert = DocAlert()
+            val docAlert = DocResponse()
             docAlert.setAuthor(embedTitle, null, iconUrl)
 
             return if (infoList.size == 1) {
@@ -47,11 +47,11 @@ class JenkinsHandler(
 
         } catch (ex: Exception) {
             val errDesc = "Unable to find `$query` in the $embedTitle!"
-            return ErrorAlert(user.name, errDesc)
+            return ErrorResponse(user.name, errDesc)
         }
     }
 
-    fun createDocumentationEmbed(docAlert: DocAlert, information: Information): DocAlert {
+    fun createDocumentationEmbed(docAlert: DocResponse, information: Information): DocResponse {
         var infoName: String = MarkdownSanitizer.sanitize(information.name)
         val infoRawDescription: String = information.rawDescription
         val infoUrl: String = MarkdownSanitizer.sanitize(information.url)
@@ -119,7 +119,7 @@ class JenkinsHandler(
         return docAlert
     }
 
-    private fun createSelectionEmbed(docAlert: DocAlert, infoList: List<Information>): DocAlert {
+    private fun createSelectionEmbed(docAlert: DocResponse, infoList: List<Information>): DocResponse {
         docAlert.setTitle("Type the id of the option you would like to select in chat:")
         docAlert.setFooter("Type cancel to delete this message.")
 

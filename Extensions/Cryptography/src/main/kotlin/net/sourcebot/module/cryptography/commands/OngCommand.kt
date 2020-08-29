@@ -1,8 +1,8 @@
 package net.sourcebot.module.cryptography.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.InfoAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
@@ -28,10 +28,10 @@ class OngCommand : RootCommand() {
             Argument("input", "The text to encode into Ong.")
         )
 
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val input = args.slurp(" ", "You did not specify text to encode!")
             val encoded = input.replace("([^aeiou\\W\\d])".toRegex(), "$1ong")
-            return InfoAlert("Ong Encode Result", encoded)
+            return InfoResponse("Ong Encode Result", encoded)
         }
     }
 
@@ -42,10 +42,10 @@ class OngCommand : RootCommand() {
             Argument("input", "The text to decode from Ong.")
         )
 
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val input = args.slurp(" ", "You did not specify text to decode!")
             val decoded = input.replace("ong", "")
-            return InfoAlert("Ong Decode Result", decoded)
+            return InfoResponse("Ong Decode Result", decoded)
         }
     }
 }

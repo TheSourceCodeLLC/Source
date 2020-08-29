@@ -1,9 +1,9 @@
 package net.sourcebot.module.starboard.command
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.InfoAlert
-import net.sourcebot.api.alert.SuccessAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.SuccessResponse
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Adapter
@@ -27,15 +27,15 @@ class StarboardCommand(
             Argument("threshold", "The desired star threshold")
         )
 
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val threshold = args.next(Adapter.int(), "You did not specify a star threshold!")
             val data = dataManager[message.guild]
-            if (data.threshold == threshold) return InfoAlert(
+            if (data.threshold == threshold) return InfoResponse(
                 "Star Threshold", "The star threshold is already set to `$threshold`!"
             )
             data.threshold = threshold
             dataManager.save(message.guild, data)
-            return SuccessAlert(
+            return SuccessResponse(
                 "Star Threshold", "The star threshold has been set to `$threshold`!"
             )
         }
@@ -44,14 +44,14 @@ class StarboardCommand(
     private inner class StarboardChannelCommand : CommandBootstrap(
         "channel", "Set the Starboard channel."
     ) {
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val data = dataManager[message.guild]
-            if (data.channel == message.channel.id) return InfoAlert(
+            if (data.channel == message.channel.id) return InfoResponse(
                 "Starboard Channel", "This channel is already the Starboard channel!"
             )
             data.channel = message.channel.id
             dataManager.save(message.guild, data)
-            return SuccessAlert(
+            return SuccessResponse(
                 "Starboard Channel", "This channel is now the Starboard channel!"
             )
         }

@@ -1,4 +1,4 @@
-package net.sourcebot.api.alert
+package net.sourcebot.api.response
 
 import java.awt.Color
 

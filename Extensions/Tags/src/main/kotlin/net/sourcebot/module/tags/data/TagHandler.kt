@@ -5,7 +5,7 @@ import com.google.common.cache.CacheLoader
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.SourceColor
+import net.sourcebot.api.response.SourceColor
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.AbstractMessageHandler

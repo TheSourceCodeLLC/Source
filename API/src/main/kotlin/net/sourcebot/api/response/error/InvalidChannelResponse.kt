@@ -1,13 +1,13 @@
-package net.sourcebot.api.alert.error
+package net.sourcebot.api.response.error
 
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.TextChannel
-import net.sourcebot.api.alert.ErrorAlert
+import net.sourcebot.api.response.ErrorResponse
 
 /**
  * Called when a user has permission to use a command, but not in the current channel.
  */
-class InvalidChannelAlert(jda: JDA, contexts: Set<String>) : ErrorAlert("Invalid Channel!") {
+class InvalidChannelResponse(jda: JDA, contexts: Set<String>) : ErrorResponse("Invalid Channel!") {
     init {
         val validChannels = mutableSetOf<TextChannel>()
         contexts.forEach {
