@@ -1,9 +1,9 @@
 package net.sourcebot.module.documentation.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.ErrorAlert
-import net.sourcebot.api.alert.InfoAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
@@ -24,7 +24,7 @@ class JavaCommand : RootCommand() {
 
     private val javadocCache: MutableMap<Int, JenkinsHandler> = mutableMapOf()
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         var jenkinsHandler = javadocCache[13]
 
         if (jenkinsHandler == null) {
@@ -55,14 +55,14 @@ class JavaCommand : RootCommand() {
             }
 
             if (jenkinsHandler == null) {
-                return ErrorAlert(message.author.name, "Uh Oh, something went wrong! Please try again.")
+                return ErrorResponse(message.author.name, "Uh Oh, something went wrong! Please try again.")
             }
 
             return jenkinsHandler.retrieveDocAlert(message, message.author, query)
         } else {
             val authorName = message.author.name
             val description = "You can find the Java Documentation at [docs.oracle.com](https://docs.oracle.com/javase/13/docs/)"
-            return InfoAlert(authorName, description)
+            return InfoResponse(authorName, description)
         }
 
 

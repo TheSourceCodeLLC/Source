@@ -5,8 +5,8 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
-import net.sourcebot.api.alert.ErrorAlert
-import net.sourcebot.module.documentation.utility.DocAlert
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.module.documentation.utility.DocResponse
 import net.sourcebot.module.documentation.utility.DocSelectorStorage
 import java.util.concurrent.TimeUnit
 
@@ -46,7 +46,7 @@ class DocSelectorEvent(private val deleteSeconds: Long) : ListenerAdapter() {
                 return
             }
 
-            var docAlert = DocAlert()
+            var docAlert = DocResponse()
             docAlert.setAuthor(jenkinsHandler.embedTitle, null, jenkinsHandler.iconUrl)
 
             docAlert = jenkinsHandler.createDocumentationEmbed(docAlert, infoList[selectedId])
@@ -62,7 +62,7 @@ class DocSelectorEvent(private val deleteSeconds: Long) : ListenerAdapter() {
     private fun sendInvalidIdAlert(user: User, channelType: ChannelType, docMessage: Message, cmdMessage: Message) {
         DocSelectorStorage.removeSelector(user)
 
-        val invalidIdAlert = ErrorAlert(user.name, "You entered an invalid selection id!")
+        val invalidIdAlert = ErrorResponse(user.name, "You entered an invalid selection id!")
 
         docMessage.editMessage(invalidIdAlert.asMessage(user)).complete()
             .delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)

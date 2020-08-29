@@ -1,7 +1,7 @@
 package net.sourcebot.api.command
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
+import net.sourcebot.api.response.Response
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
@@ -46,7 +46,7 @@ abstract class Command {
     open fun execute(
         message: Message,
         args: Arguments
-    ): Alert = throw InvalidSyntaxException("Invalid Subcommand!")
+    ): Response = throw InvalidSyntaxException("Invalid Subcommand!")
 
     open fun postResponse(response: Message) = Unit
 

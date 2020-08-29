@@ -3,10 +3,10 @@ package net.sourcebot.module.tags.command
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.Source
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.ErrorAlert
-import net.sourcebot.api.alert.InfoAlert
-import net.sourcebot.api.alert.SuccessAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.SuccessResponse
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.RootCommand
@@ -42,14 +42,14 @@ class TagsCommand(
             Argument("content", "The content of the created tag.")
         )
 
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val tagCache = tagHandler[message.guild]
             val name = args.next("You did not specify a name for the new tag!").toLowerCase()
             val existing = tagCache.getTag(name)
-            if (existing != null) return ErrorAlert("Duplicate Tag!", "A tag named `$name` already exists!")
+            if (existing != null) return ErrorResponse("Duplicate Tag!", "A tag named `$name` already exists!")
             val content = args.slurp(" ", "You did not specify content for the new tag!")
             tagCache.createTag(name, content, message.author.id)
-            return SuccessAlert("Tag Created!", "The tag named `$name` has been created!")
+            return SuccessResponse("Tag Created!", "The tag named `$name` has been created!")
         }
     }
 
@@ -61,12 +61,12 @@ class TagsCommand(
             Argument("name", "The name of the tag you wish to delete.")
         )
 
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val tagCache = tagHandler[message.guild]
             val name = args.next("You did not specify a tag to delete!").toLowerCase()
-            tagCache.getTag(name) ?: return NoSuchTagAlert(name)
+            tagCache.getTag(name) ?: return NoSuchTagResponse(name)
             tagCache.deleteTag(name)
-            return SuccessAlert("Tag Deleted!", "The tag named `$name` has been deleted!")
+            return SuccessResponse("Tag Deleted!", "The tag named `$name` has been deleted!")
         }
     }
 
@@ -80,25 +80,25 @@ class TagsCommand(
             Argument("value", "The new value of the property.")
         )
 
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val tagCache = tagHandler[message.guild]
             val name = args.next("You did not specify a tag to edit!").toLowerCase()
-            val tag = tagCache.getTag(name) ?: return NoSuchTagAlert(name)
+            val tag = tagCache.getTag(name) ?: return NoSuchTagResponse(name)
             val alert = when (val property = args.next("You did not specify a property to edit!").toLowerCase()) {
                 "category" -> {
                     tag.category = args.next("You did not specify a new tag category!")
-                    SuccessAlert("Category Updated!", "The tag `$name` now belongs to category `${tag.category}`!")
+                    SuccessResponse("Category Updated!", "The tag `$name` now belongs to category `${tag.category}`!")
                 }
                 "content" -> {
                     tag.content = args.slurp(" ", "You did not specify new tag content!")
-                    SuccessAlert("Content Updated!", "Successfully changed the content for tag `$name`!")
+                    SuccessResponse("Content Updated!", "Successfully changed the content for tag `$name`!")
                 }
                 "type" -> {
                     when (args.next("You did not specify a new tag type!").toLowerCase()) {
                         "embed" -> tag.type = Tag.Type.EMBED
                         else -> tag.type = Tag.Type.TEXT
                     }
-                    SuccessAlert("Type Updated!", "The type of tag `$name` is now: ${tag.type.name.toLowerCase()}!")
+                    SuccessResponse("Type Updated!", "The type of tag `$name` is now: ${tag.type.name.toLowerCase()}!")
                 }
                 else -> throw InvalidSyntaxException("Invalid property `$property`!")
             }
@@ -115,11 +115,11 @@ class TagsCommand(
             Argument("name", "The name of the tag you wish to view info for.")
         )
 
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val tagCache = tagHandler[message.guild]
             val name = args.next("You did not specify a tag to show info for!").toLowerCase()
-            val tag = tagCache.getTag(name) ?: return NoSuchTagAlert(name)
-            return TagInfoAlert(tag, message.jda)
+            val tag = tagCache.getTag(name) ?: return NoSuchTagResponse(name)
+            return TagInfoResponse(tag, message.jda)
         }
     }
 
@@ -127,19 +127,19 @@ class TagsCommand(
         "list",
         "List all tags."
     ) {
-        override fun execute(message: Message, args: Arguments): Alert {
+        override fun execute(message: Message, args: Arguments): Response {
             val tagCache = tagHandler[message.guild]
             val tags = tagCache.getTags()
-            if (tags.isEmpty()) return InfoAlert("Tag Listing", "There are currently no tags.")
-            return TagListAlert(tags.groupBy { it.category })
+            if (tags.isEmpty()) return InfoResponse("Tag Listing", "There are currently no tags.")
+            return TagListResponse(tags.groupBy { it.category })
         }
     }
 
-    private class NoSuchTagAlert(name: String) : ErrorAlert("Invalid Tag!", "There is no tag named `$name`!")
-    private class TagInfoAlert(
+    private class NoSuchTagResponse(name: String) : ErrorResponse("Invalid Tag!", "There is no tag named `$name`!")
+    private class TagInfoResponse(
         tag: Tag,
         jda: JDA
-    ) : InfoAlert("Tag Information", "Information for tag `${tag.name}`:") {
+    ) : InfoResponse("Tag Information", "Information for tag `${tag.name}`:") {
         init {
             val creatorUser = jda.getUserById(tag.creator)
             val creator = if (creatorUser == null) "Unknown" else String.format("%#s", creatorUser)
@@ -152,7 +152,7 @@ class TagsCommand(
         }
     }
 
-    private class TagListAlert(grouped: Map<String, List<Tag>>) : InfoAlert("Tag Listing") {
+    private class TagListResponse(grouped: Map<String, List<Tag>>) : InfoResponse("Tag Listing") {
         init {
             grouped.forEach { (k, v) ->
                 val list = v.joinToString(",") { "`${it.name}`" }

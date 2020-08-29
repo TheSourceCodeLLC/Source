@@ -5,10 +5,10 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.error.InvalidChannelAlert
-import net.sourcebot.api.alert.error.NoPermissionAlert
-import net.sourcebot.api.alert.error.NoPermissionDMAllowedAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.error.InvalidChannelResponse
+import net.sourcebot.api.response.error.NoPermissionResponse
+import net.sourcebot.api.response.error.NoPermissionDMAllowedResponse
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import org.bson.Document
@@ -56,8 +56,8 @@ class PermissionHandler(
         permissible: Permissible,
         node: String,
         channel: MessageChannel,
-        ifPresent: () -> Alert
-    ): Alert =
+        ifPresent: () -> Response
+    ): Response =
         if (hasPermission(permissible, node, channel)) ifPresent()
         else getPermissionAlert(true, channel.jda, permissible, node)
 
@@ -76,12 +76,12 @@ class PermissionHandler(
     fun getPermissionAlert(
         guildOnly: Boolean, jda: JDA,
         permissible: Permissible, node: String
-    ): Alert {
+    ): Response {
         val availableIn = getAllowedContexts(permissible, node)
         return if (availableIn.isEmpty()) {
-            if (guildOnly) NoPermissionAlert()
-            else NoPermissionDMAllowedAlert()
-        } else InvalidChannelAlert(jda, availableIn)
+            if (guildOnly) NoPermissionResponse()
+            else NoPermissionDMAllowedResponse()
+        } else InvalidChannelResponse(jda, availableIn)
     }
 
 

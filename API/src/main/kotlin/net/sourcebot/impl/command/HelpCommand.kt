@@ -1,9 +1,9 @@
 package net.sourcebot.impl.command
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.ErrorAlert
-import net.sourcebot.api.alert.InfoAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.CommandHandler
 import net.sourcebot.api.command.RootCommand
@@ -29,7 +29,7 @@ class HelpCommand(
         )
     )
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         val topic = args.next()
         return if (topic != null) {
             val asCommand = commandHandler.getCommand(topic)
@@ -44,7 +44,7 @@ class HelpCommand(
                     }
                     command = nextCommand
                 } while (true)
-                object : InfoAlert(
+                object : InfoResponse(
                     "Command Information:",
                     "Arguments surrounded by <> are required, those surrounded by () are optional."
                 ) {
@@ -64,7 +64,7 @@ class HelpCommand(
             } else {
                 val asModule = moduleHandler.findModule(topic)
                 if (asModule != null) {
-                    object : InfoAlert(
+                    object : InfoResponse(
                         "${asModule.name} Module Assistance",
                         "Below are a list of commands provided by this module."
                     ) {
@@ -82,14 +82,14 @@ class HelpCommand(
                         }
                     }
                 } else {
-                    ErrorAlert(
+                    ErrorResponse(
                         "Invalid Topic!",
                         "There is no such module or command named `$topic` !"
                     )
                 }
             }
         } else {
-            object : InfoAlert(
+            object : InfoResponse(
                 "Module Listing",
                 "Below are valid module names and descriptions.\n" +
                 "Module names may be passed into this command for more detail.\n" +

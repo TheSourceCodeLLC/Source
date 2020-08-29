@@ -2,8 +2,8 @@ package net.sourcebot.module.cryptography.commands.digest
 
 import com.mongodb.internal.HexUtils
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.InfoAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
@@ -20,10 +20,10 @@ abstract class HashCommand(
     )
     final override val permission by lazy { "cryptography.$name" }
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         val input = args.slurp(" ", "You did not provide text to hash!")
         val digested = digest.digest(input.toByteArray())
         val hexStr = HexUtils.toHex(digested)
-        return InfoAlert("$algorithm Hash Result", hexStr)
+        return InfoResponse("$algorithm Hash Result", hexStr)
     }
 }

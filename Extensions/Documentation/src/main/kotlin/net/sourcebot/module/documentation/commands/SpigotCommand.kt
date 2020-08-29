@@ -1,8 +1,8 @@
 package net.sourcebot.module.documentation.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.alert.Alert
-import net.sourcebot.api.alert.InfoAlert
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
@@ -22,7 +22,7 @@ class SpigotCommand : RootCommand() {
         "https://avatars0.githubusercontent.com/u/4350249?s=200&v=4",
         "Spigot Javadocs")
 
-    override fun execute(message: Message, args: Arguments): Alert {
+    override fun execute(message: Message, args: Arguments): Response {
         return if (args.hasNext()) {
             val query = args.next("Unable to find query w/o version!")
 
@@ -30,7 +30,7 @@ class SpigotCommand : RootCommand() {
         } else {
             val authorName = message.author.name
             val description = "You can find the Spigot Documentation at [hub.spigotmc.org](https://hub.spigotmc.org/javadocs/spigot/)"
-            InfoAlert(authorName, description)
+            InfoResponse(authorName, description)
         }
 
 

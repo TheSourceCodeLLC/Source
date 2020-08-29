@@ -12,7 +12,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.requests.GatewayIntent.DIRECT_MESSAGE_TYPING
 import net.dv8tion.jda.api.requests.GatewayIntent.GUILD_MESSAGE_TYPING
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
-import net.sourcebot.api.alert.EmbedAlert
+import net.sourcebot.api.response.EmbedResponse
 import net.sourcebot.api.command.CommandHandler
 import net.sourcebot.api.data.GuildDataManager
 import net.sourcebot.api.database.MongoDB
@@ -73,7 +73,7 @@ class Source(val properties: Properties) {
     }
 
     init {
-        EmbedAlert.footer = properties.required("alert.footer")
+        EmbedResponse.footer = properties.required("alert.footer")
         registerSerial()
         loadModules()
         logger.info("Source is now online!")

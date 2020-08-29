@@ -10,8 +10,8 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.dv8tion.jda.api.events.message.guild.react.GenericGuildMessageReactionEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionRemoveEvent
-import net.sourcebot.api.alert.ErrorAlert
-import net.sourcebot.api.alert.WarningAlert
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.WarningResponse
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.module.SourceModule
@@ -42,15 +42,15 @@ class StarboardListener(
         val channel = data.channel?.let {
             event.guild.getTextChannelById(it)
         } ?: return event.channel.sendMessage(
-            NoChannelAlert().asMessage(event.jda.selfUser)
+            NoChannelResponse().asMessage(event.jda.selfUser)
         ).queue()
         val linkObject = getLinkObject(event.guild, message.id)
         if (linkObject != null) {
             val starredId = linkObject["starred"] as String
             val starred = channel.retrieveMessageById(starredId).complete()
-            starred.editMessage(StarboardAlert.fromMessage(message, count)).queue()
+            starred.editMessage(StarboardResponse.fromMessage(message, count)).queue()
         } else {
-            channel.sendMessage(StarboardAlert.fromMessage(message, count)).queue {
+            channel.sendMessage(StarboardResponse.fromMessage(message, count)).queue {
                 getCollection(event.guild).insertOne(
                     Document(
                         mapOf(
@@ -72,14 +72,14 @@ class StarboardListener(
         val channel = data.channel?.let {
             event.guild.getTextChannelById(it)
         } ?: return event.channel.sendMessage(
-            NoChannelAlert().asMessage(event.jda.selfUser)
+            NoChannelResponse().asMessage(event.jda.selfUser)
         ).queue()
         if (count < data.threshold) {
             channel.deleteMessageById(starredId).queue({}, {})
             getCollection(event.guild).deleteOne(linkObject!!)
         } else {
             val starred = channel.retrieveMessageById(starredId).complete()
-            starred.editMessage(StarboardAlert.fromMessage(message, count)).queue()
+            starred.editMessage(StarboardResponse.fromMessage(message, count)).queue()
         }
     }
 
@@ -124,13 +124,13 @@ class StarboardListener(
 
     private fun getCollection(guild: Guild) = mongo.getCollection(guild.id, "starboard")
 
-    private class NoChannelAlert : ErrorAlert(
+    private class NoChannelResponse : ErrorResponse(
         "Starboard Error", "There is no valid Starboard channel!"
     )
 
-    private class StarboardAlert(
+    private class StarboardResponse(
         original: Message
-    ) : WarningAlert(
+    ) : WarningResponse(
         "%#s".format(original.author),
         "${
             if (original.contentRaw.isBlank()) "${original.attachments[0].fileName}:"
@@ -142,7 +142,7 @@ class StarboardListener(
             fun fromMessage(original: Message, count: Int): Message {
                 val builder = MessageBuilder()
                 builder.append("$UNICODE_STAR $count: ${(original.channel as TextChannel).asMention}")
-                builder.setEmbed(StarboardAlert(original).asEmbed(original.author))
+                builder.setEmbed(StarboardResponse(original).asEmbed(original.author))
                 return builder.build()
             }
         }
