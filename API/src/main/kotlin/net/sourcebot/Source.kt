@@ -1,6 +1,10 @@
 package net.sourcebot
 
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonProperty
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Activity
+import net.dv8tion.jda.api.entities.Activity.ActivityType
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.EventListener
@@ -53,6 +57,7 @@ class Source(val properties: Properties) {
         permissionHandler
     )
 
+    private val activityProvider = properties.required<ActivityProvider>("activity")
     val shardManager = DefaultShardManagerBuilder.create(
         properties.required("token"),
         EnumSet.complementOf(ignoredIntents)
@@ -63,9 +68,9 @@ class Source(val properties: Properties) {
                 event: MessageReceivedEvent
             ) = commandHandler.onMessageReceived(event)
         }
-    ).setActivityProvider {
-        Activity.watching("TSC. Shard $it")
-    }.build().also { mgr -> mgr.shards.forEach { it.awaitReady() } }
+    ).setActivityProvider(activityProvider::asActivity).build().also {
+        it.shards.forEach(JDA::awaitReady)
+    }
 
     init {
         EmbedAlert.footer = properties.required("alert.footer")
@@ -127,5 +132,12 @@ class Source(val properties: Properties) {
                 JsonSerial.mapper.readValue(it, Properties::class.java)
             }.let { Source(it) }
         }
+    }
+
+    class ActivityProvider @JsonCreator constructor(
+        @JsonProperty("type") private val type: ActivityType,
+        @JsonProperty("value") private val value: String
+    ) {
+        fun asActivity(shards: Int) = Activity.of(type, value.format(shards))
     }
 }

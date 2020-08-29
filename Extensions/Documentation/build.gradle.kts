@@ -1,3 +1,4 @@
+description = "Module responsible for the documentation commands."
 repositories {
     maven(url = "https://jitpack.io")
 }

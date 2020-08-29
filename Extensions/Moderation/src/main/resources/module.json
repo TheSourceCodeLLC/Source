@@ -1,7 +1,7 @@
 {
   "main": "net.sourcebot.module.moderation.Moderation",
-  "name": "Moderation",
-  "version": "5.0.2",
-  "description": "Module responsible for moderation functions.",
+  "name": "${project.name}",
+  "version": "${project.version}",
+  "description": "${project.description}",
   "author": "Hwiggy#0001"
 }

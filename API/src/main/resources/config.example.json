@@ -8,6 +8,10 @@
   "alert": {
     "footer": "SourceBot"
   },
+  "activity": {
+    "type": "DEFAULT",
+    "value": "Source - Shard %d"
+  },
   "lifecycle": {
     "restart": "/bin/bash restart.sh",
     "stop": "/bin/bash stop.sh",

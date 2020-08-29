@@ -1,7 +1,7 @@
 {
   "main": "net.sourcebot.module.documentation.Documentation",
-  "name": "Documentation",
-  "version": "5.0.2",
-  "description": "Module responsible for the documentation commands.",
+  "name": "${project.name}",
+  "version": "${project.version}",
+  "description": "${project.description}",
   "author": "TheForbiddenAI#3797"
 }

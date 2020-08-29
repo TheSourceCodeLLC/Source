@@ -3,5 +3,5 @@
 modules/
 storage/
 target/
-config.json
+/config.json
 *.iml

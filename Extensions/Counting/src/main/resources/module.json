@@ -1,7 +1,7 @@
 {
   "main": "net.sourcebot.module.counting.Counting",
-  "name": "Counting",
-  "version": "5.0.2",
-  "description": "Performs counting-related activities.",
+  "name": "${project.name}",
+  "version": "${project.version}",
+  "description": "${project.description}",
   "author": "Hwiggy#0001"
 }
