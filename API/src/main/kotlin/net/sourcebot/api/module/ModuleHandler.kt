@@ -83,10 +83,16 @@ class ModuleHandler(
         hardDependencies.forEach { (module, deps) ->
             logger.error("Could not load module '$module!'", UnknownDependencyException(deps))
         }
-        return loadOrder.map { loadModule(it) }
+        return loadOrder.mapNotNull {
+            try {
+                loadModule(it)
+            } catch (ex: Exception) {
+                ex.printStackTrace(); null
+            }
+        }
     }
 
-    fun loadModule(file: File): SourceModule {
+    fun loadModule(file: File): SourceModule = try {
         val descriptor = loadDescriptor(file)
         val name = descriptor.name
         moduleIndex[name]?.let {
@@ -104,11 +110,13 @@ class ModuleHandler(
         val loader = JarModuleClassLoader(this, file)
         val mainClass = findClass(descriptor.main, loader)
         val module = mainClass.newInstance() as SourceModule
-        return module.apply {
+        module.apply {
             this.classLoader = loader
             this.descriptor = descriptor
             loadModule(this)
         }
+    } catch (err: Throwable) {
+        throw ModuleLoadException(file, err)
     }
 
     fun loadModule(
@@ -141,3 +149,8 @@ class AmbiguousModuleException(
     firstIndexed: File,
     lastIndexed: File
 ) : RuntimeException("Module '$name' from ${firstIndexed.path} is duplicated by ${lastIndexed.path}!")
+
+class ModuleLoadException(
+    file: File,
+    err: Throwable
+) : RuntimeException("Could not load module '${file.path}'", err)
