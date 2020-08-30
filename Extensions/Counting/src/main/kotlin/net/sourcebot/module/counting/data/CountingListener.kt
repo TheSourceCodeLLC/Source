@@ -5,12 +5,12 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.sourcebot.Source
-import net.sourcebot.api.data.GuildDataManager
+import net.sourcebot.api.configuration.GuildConfigurationManager
 import net.sourcebot.api.module.SourceModule
 
 class CountingListener(
     private val source: Source,
-    private val dataManager: GuildDataManager
+    private val configurationManager: GuildConfigurationManager
 ) {
     fun listen(
         module: SourceModule
@@ -21,26 +21,26 @@ class CountingListener(
 
     private val lastMessages = HashMap<String, CountingMessage>()
     private val records = HashMap<String, Long>()
-    private var listening = true
 
     private fun onReceive(event: GuildMessageReceivedEvent) {
-        if (!listening) return
         if (event.author.isBot) return
-        if (event.message.contentRaw.startsWith(source.commandHandler.prefix)) return
-        val guildData = dataManager[event.guild]
+        val guildData = configurationManager[event.guild]
         val data: CountingData = guildData.optional("counting") ?: return
         val channel = data.channel?.let {
             event.guild.getTextChannelById(it)
         } ?: return
         if (event.channel != channel) return
-        val last = lastMessages[channel.id]
-        if (last == null) {
+        val message = event.message
+        if (source.commandHandler.isValidCommand(message.contentRaw) == false) {
             event.message.delete().queue()
             lastMessages[channel.id] = restart(
-                "Could not determine last number!",
+                "Sorry, ${message.author.asMention}, that was not a valid command!",
                 channel, data
             )
             return
+        }
+        val last = lastMessages.computeIfAbsent(channel.id) {
+            CountingMessage(data.lastNumber, event.jda.selfUser.id)
         }
         val lastNumber = last.number
         val next = event.message
@@ -70,10 +70,11 @@ class CountingListener(
         }
         lastMessages[channel.id] = CountingMessage(next)
         records[channel.id] = nextNumber
+        configurationManager[channel.guild]["counting.lastNumber"] = nextNumber
     }
 
     private fun onEdit(event: GuildMessageUpdateEvent) {
-        val data: CountingData = dataManager[event.guild].optional("counting") ?: return
+        val data: CountingData = configurationManager[event.guild].optional("counting") ?: return
         val channel = data.channel?.let {
             event.guild.getTextChannelById(it)
         } ?: return
@@ -89,19 +90,19 @@ class CountingListener(
         channel: TextChannel,
         data: CountingData
     ): CountingMessage {
-        listening = false
         var toSend = failMessage
         val current = records[channel.id] ?: 1
         if (current > data.record) {
             toSend += "\nNew Record! New: $current. Old: ${data.record}."
             data.record = current
-            dataManager[channel.guild]["counting"] = data
-            dataManager.saveData(channel.guild)
+            data.lastNumber = 1
+            configurationManager[channel.guild]["counting"] = data
+            configurationManager.saveData(channel.guild)
         }
         channel.sendMessage(
             toSend + "\nRestarting... Current record: ${data.record}\n1"
         ).complete()
-        return CountingMessage(1, channel.jda.selfUser.id).also { listening = true }
+        return CountingMessage(1, channel.jda.selfUser.id)
     }
 }
 

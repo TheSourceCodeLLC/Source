@@ -4,8 +4,8 @@ import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 
 interface Permissible {
-    fun hasPermission(node: String): Boolean
-    fun hasPermission(node: String, context: String): Boolean
+    fun hasPermission(node: String): Boolean?
+    fun hasPermission(node: String, context: String): Boolean?
 
     fun setPermission(node: String, flag: Boolean)
     fun setPermission(node: String, flag: Boolean, context: String)

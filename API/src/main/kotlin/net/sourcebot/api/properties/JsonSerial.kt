@@ -10,7 +10,6 @@ interface JsonSerial<T> {
     val serializer: JsonSerializer<T>
     val deserializer: JsonDeserializer<T>
 
-
     companion object {
         @JvmStatic val mapper: ObjectMapper = ObjectMapper().enable(
             SerializationFeature.INDENT_OUTPUT

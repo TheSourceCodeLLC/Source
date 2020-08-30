@@ -1,10 +1,10 @@
 package net.sourcebot.api.command
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.response.Response
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.response.Response
 
 /**
  * Represents a command to be executed via tha [CommandHandler]

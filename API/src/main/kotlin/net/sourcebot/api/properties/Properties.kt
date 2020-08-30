@@ -1,5 +1,6 @@
 package net.sourcebot.api.properties
 
+import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
@@ -9,7 +10,9 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 
-open class Properties(private val json: ObjectNode) {
+open class Properties @JsonCreator constructor(
+    private val json: ObjectNode
+) {
     @JvmOverloads
     fun <T> optional(path: String, type: Class<T>, supplier: () -> T? = { null }): T? {
         val levels = path.split(".").iterator()
@@ -40,22 +43,18 @@ open class Properties(private val json: ObjectNode) {
     ) = required(path, T::class.java, supplier)
 
     class Serial : JsonSerial<Properties> {
-        override val serializer = object : StdSerializer<Properties>(
-            Properties::class.java
-        ) {
+        override val serializer = object : StdSerializer<Properties>(Properties::class.java) {
             override fun serialize(
                 value: Properties,
                 gen: JsonGenerator,
                 provider: SerializerProvider
             ) = gen.writeTree(value.json)
         }
-        override val deserializer = object : StdDeserializer<Properties>(
-            Properties::class.java
-        ) {
+        override val deserializer = object : StdDeserializer<Properties>(Properties::class.java) {
             override fun deserialize(
                 p: JsonParser,
                 ctxt: DeserializationContext
-            ) = Properties(p.readValueAsTree())
+            ): Properties = Properties(p.readValueAsTree())
         }
     }
 }

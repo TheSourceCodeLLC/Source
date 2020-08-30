@@ -8,7 +8,7 @@ import net.sourcebot.module.starboard.misc.StarboardListener
 
 class Starboard : SourceModule() {
     override fun onEnable(source: Source) {
-        val dataManager = StarboardDataManager(source.guildDataManager)
+        val dataManager = StarboardDataManager(source.guildConfigurationManager)
         source.commandHandler.registerCommands(
             this,
             StarboardCommand(dataManager)

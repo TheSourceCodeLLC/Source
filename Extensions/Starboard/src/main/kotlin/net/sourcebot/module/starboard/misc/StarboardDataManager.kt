@@ -1,20 +1,20 @@
 package net.sourcebot.module.starboard.misc
 
 import net.dv8tion.jda.api.entities.Guild
-import net.sourcebot.api.data.GuildDataManager
+import net.sourcebot.api.configuration.GuildConfigurationManager
 
 class StarboardDataManager(
-    private val dataManager: GuildDataManager
+    private val configurationManager: GuildConfigurationManager
 ) {
     operator fun get(
         guild: Guild
-    ): StarboardData = dataManager[guild].run {
+    ): StarboardData = configurationManager[guild].run {
         required("starboard") { set("starboard", StarboardData()) }
     }
 
     fun save(guild: Guild, data: StarboardData) {
-        val guildData = dataManager[guild]
+        val guildData = configurationManager[guild]
         guildData["starboard"] = data
-        dataManager.saveData(guild, guildData)
+        configurationManager.saveData(guild, guildData)
     }
 }

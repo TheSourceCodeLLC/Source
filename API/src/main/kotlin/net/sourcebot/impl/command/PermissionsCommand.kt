@@ -1,9 +1,6 @@
 package net.sourcebot.impl.command
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.InfoResponse
-import net.sourcebot.api.response.SuccessResponse
 import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Adapter
@@ -11,6 +8,9 @@ import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.permission.PermissionHandler
+import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.SuccessResponse
 
 class PermissionsCommand(
     private val permissionHandler: PermissionHandler
@@ -80,8 +80,8 @@ class PermissionsCommand(
                 permissionHandler.checkPermission(user, "permissions.info", message.channel) {
                     val permissions = permissible.getPermissions()
                     val infoOutput = permissions.joinToString("\n") {
-                        if (it.context != null) "${it.node}: ${it.flag} @ ${it.context}"
-                        else "${it.node}: ${it.flag}"
+                        if (it.context != null) "`${it.node}`: `${it.flag}` @ `${it.context}`"
+                        else "`${it.node}`: `${it.flag}`"
                     }.ifEmpty { "No permissions set." }
                     InfoResponse("Permission Information", "Permissions for $asMention:\n$infoOutput")
                 }

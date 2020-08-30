@@ -5,12 +5,12 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
-import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.error.InvalidChannelResponse
-import net.sourcebot.api.response.error.NoPermissionResponse
-import net.sourcebot.api.response.error.NoPermissionDMAllowedResponse
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.error.InvalidChannelResponse
+import net.sourcebot.api.response.error.NoPermissionDMAllowedResponse
+import net.sourcebot.api.response.error.NoPermissionResponse
 import org.bson.Document
 
 class PermissionHandler(
@@ -31,11 +31,17 @@ class PermissionHandler(
     private fun hasPermission(
         permissible: Permissible,
         node: String,
-        context: Set<String>
-    ): Boolean = getEffectiveNodes(node).any {
-        if (permissible is SourceUser && hasGlobalAccess(permissible.id)) true
-        else if (context.any { permissible.hasPermission(node, it) }) true
-        else permissible.hasPermission(node)
+        context: Set<String> = emptySet()
+    ): Boolean {
+        if (permissible is SourceUser && hasGlobalAccess(permissible.id)) return true
+        getEffectiveNodes(node).forEach { eff ->
+            when (permissible.hasPermission(eff)) {
+                true -> return true
+                false -> return false
+            }
+            for (ctx in context) return permissible.hasPermission(eff, ctx) ?: continue
+        }
+        return false
     }
 
     private fun hasGlobalAccess(
@@ -71,7 +77,14 @@ class PermissionHandler(
     private fun getAllowedContexts(
         permissible: Permissible,
         node: String
-    ): Set<String> = getEffectiveNodes(node).flatMap(permissible::getContexts).toSet()
+    ): Set<String> {
+        val allowed = mutableSetOf<String>()
+        getEffectiveNodes(node).forEach {
+            if (permissible.hasPermission(it) == false) return allowed
+            allowed.addAll(permissible.getContexts(it))
+        }
+        return allowed
+    }
 
     fun getPermissionAlert(
         guildOnly: Boolean, jda: JDA,

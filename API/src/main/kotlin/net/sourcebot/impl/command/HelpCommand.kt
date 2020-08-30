@@ -1,9 +1,6 @@
 package net.sourcebot.impl.command
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.CommandHandler
 import net.sourcebot.api.command.RootCommand
@@ -11,6 +8,9 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.module.ModuleHandler
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.Response
 
 class HelpCommand(
     private val moduleHandler: ModuleHandler,
@@ -75,7 +75,7 @@ class HelpCommand(
                                 "This module does not have any commands."
                             } else {
                                 commands.joinToString("\n") {
-                                    "**${commandHandler.getSyntax(it)}**: ${it.description}"
+                                    "**${it.name}**: ${it.description}"
                                 }
                             }
                             addField("Commands:", listing, false)

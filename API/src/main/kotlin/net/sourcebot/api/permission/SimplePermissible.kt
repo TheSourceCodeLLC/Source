@@ -3,13 +3,14 @@ package net.sourcebot.api.permission
 abstract class SimplePermissible(
     private val permissions: MutableList<SourcePermission> = ArrayList()
 ) : Permissible {
-    override fun hasPermission(node: String): Boolean {
-        return permissions.find { it.node == node && it.context == null }?.flag ?: false
-    }
+    override fun hasPermission(
+        node: String
+    ) = permissions.find { it.node == node && it.context == null }?.flag
 
-    override fun hasPermission(node: String, context: String): Boolean {
-        return permissions.find { it.node == node && it.context == context }?.flag ?: false
-    }
+    override fun hasPermission(
+        node: String,
+        context: String
+    ) = permissions.find { it.node == node && it.context == context }?.flag
 
     override fun setPermission(node: String, flag: Boolean) {
         unsetPermission(node)
@@ -42,7 +43,7 @@ abstract class SimplePermissible(
     override fun getContexts(node: String): Set<String> {
         val contexts = mutableSetOf<String>()
         permissions.forEach {
-            if (it.node == node && it.context != null) contexts.add(it.context)
+            if (it.node == node && it.context != null && it.flag) contexts.add(it.context)
         }
         return contexts
     }

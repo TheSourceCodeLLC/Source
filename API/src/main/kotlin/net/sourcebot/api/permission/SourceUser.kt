@@ -28,14 +28,22 @@ class SourceUser internal constructor(
         }
     }
 
-    override fun hasPermission(node: String): Boolean {
-        if (roles.any { it.hasPermission(node) }) return true
-        return super.hasPermission(node)
+    override fun hasPermission(node: String): Boolean? {
+        when (super.hasPermission(node)) {
+            true -> return true
+            false -> return false
+        }
+        for (it in roles) return it.hasPermission(node) ?: continue
+        return null
     }
 
-    override fun hasPermission(node: String, context: String): Boolean {
-        if (roles.any { it.hasPermission(node, context) }) return true
-        return super.hasPermission(node, context)
+    override fun hasPermission(node: String, context: String): Boolean? {
+        when (super.hasPermission(node, context)) {
+            true -> return true
+            false -> return false
+        }
+        for (it in roles) return it.hasPermission(node, context) ?: continue
+        return null
     }
 
     override fun getContexts(node: String): Set<String> {

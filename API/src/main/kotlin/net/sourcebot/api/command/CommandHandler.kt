@@ -4,15 +4,15 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
-import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.EmptyResponse
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.error.ExceptionResponse
-import net.sourcebot.api.response.error.GlobalAdminOnlyResponse
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.permission.PermissionHandler
+import net.sourcebot.api.response.EmptyResponse
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.error.ExceptionResponse
+import net.sourcebot.api.response.error.GlobalAdminOnlyResponse
 import java.util.concurrent.TimeUnit
 
 class CommandHandler(
@@ -38,7 +38,7 @@ class CommandHandler(
             if (!hasGlobal && command.requiresGlobal) return respond(
                 command, message, GlobalAdminOnlyResponse()
             )
-            if (!hasGlobal && command.permission != null) {
+            if (command.permission != null) {
                 val permission = command.permission!!
                 if (inGuild) {
                     val permissionData = permissionHandler.getData(message.guild)
@@ -54,11 +54,11 @@ class CommandHandler(
                         val channel = message.channel as TextChannel
                         if (!permissionHandler.hasPermission(sourceUser, permission, channel)) return respond(
                             command, message, permissionHandler.getPermissionAlert(
-                            command.guildOnly,
-                            message.jda,
-                            sourceUser,
-                            permission
-                        )
+                                command.guildOnly,
+                                message.jda,
+                                sourceUser,
+                                permission
+                            )
                         )
                     }
                 } else if (command.guildOnly) return respond(command, message, GuildOnlyCommandResponse())
@@ -113,6 +113,12 @@ class CommandHandler(
     ) = command.forEach {
         it.module = module
         commandMap.register(it)
+    }
+
+    fun isValidCommand(input: String): Boolean? {
+        if (!input.startsWith(prefix)) return null
+        val identifier = input.substring(0, prefix.length).split(" ")[0]
+        return getCommand(identifier) != null
     }
 
     fun unregister(module: SourceModule) = commandMap.removeIf { it.module == module }

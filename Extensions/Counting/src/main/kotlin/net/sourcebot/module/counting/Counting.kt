@@ -7,7 +7,7 @@ import net.sourcebot.module.counting.data.CountingListener
 
 class Counting : SourceModule() {
     override fun onEnable(source: Source) {
-        CountingListener(source, source.guildDataManager).listen(this)
-        source.commandHandler.registerCommands(this, CountingCommand(source.guildDataManager))
+        CountingListener(source, source.guildConfigurationManager).listen(this)
+        source.commandHandler.registerCommands(this, CountingCommand(source.guildConfigurationManager))
     }
 }
