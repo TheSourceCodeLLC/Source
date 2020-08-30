@@ -1,8 +1,8 @@
 package net.sourcebot.api.module
 
 import net.sourcebot.Source
-import net.sourcebot.api.properties.JsonSerial
-import net.sourcebot.api.properties.Properties
+import net.sourcebot.api.configuration.JsonSerial
+import net.sourcebot.api.configuration.Properties
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File

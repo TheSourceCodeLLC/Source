@@ -31,13 +31,16 @@ class CountingListener(
         } ?: return
         if (event.channel != channel) return
         val message = event.message
-        if (source.commandHandler.isValidCommand(message.contentRaw) == false) {
-            event.message.delete().queue()
-            lastMessages[channel.id] = restart(
-                "Sorry, ${message.author.asMention}, that was not a valid command!",
-                channel, data
-            )
-            return
+        when (source.commandHandler.isValidCommand(message.contentRaw)) {
+            false -> {
+                event.message.delete().queue()
+                lastMessages[channel.id] = restart(
+                    "Sorry, ${message.author.asMention}, that was not a valid command!",
+                    channel, data
+                )
+                return
+            }
+            true -> return
         }
         val last = lastMessages.computeIfAbsent(channel.id) {
             CountingMessage(data.lastNumber, event.jda.selfUser.id)
@@ -70,7 +73,7 @@ class CountingListener(
         }
         lastMessages[channel.id] = CountingMessage(next)
         records[channel.id] = nextNumber
-        configurationManager[channel.guild]["counting.lastNumber"] = nextNumber
+        data.lastNumber = nextNumber
     }
 
     private fun onEdit(event: GuildMessageUpdateEvent) {

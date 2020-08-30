@@ -5,12 +5,12 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import net.dv8tion.jda.api.utils.MarkdownUtil
-import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.properties.JsonSerial
+import net.sourcebot.api.configuration.JsonSerial
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.Response
 import net.sourcebot.module.documentation.utility.DocResponse
 import net.sourcebot.module.documentation.utility.approxTruncate
 import net.sourcebot.module.documentation.utility.toMarkdown

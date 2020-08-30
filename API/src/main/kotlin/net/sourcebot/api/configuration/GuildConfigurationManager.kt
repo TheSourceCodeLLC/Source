@@ -6,9 +6,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import net.dv8tion.jda.api.entities.Guild
-import net.sourcebot.api.properties.JsonConfiguration
-import net.sourcebot.api.properties.JsonSerial
-import net.sourcebot.api.properties.Properties
 import java.io.File
 import java.util.concurrent.TimeUnit
 

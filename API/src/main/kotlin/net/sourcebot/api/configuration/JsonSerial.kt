@@ -1,4 +1,4 @@
-package net.sourcebot.api.properties
+package net.sourcebot.api.configuration
 
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.module.SimpleModule

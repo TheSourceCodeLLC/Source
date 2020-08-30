@@ -117,7 +117,7 @@ class CommandHandler(
 
     fun isValidCommand(input: String): Boolean? {
         if (!input.startsWith(prefix)) return null
-        val identifier = input.substring(0, prefix.length).split(" ")[0]
+        val identifier = input.substring(prefix.length, input.length).split(" ")[0]
         return getCommand(identifier) != null
     }
 

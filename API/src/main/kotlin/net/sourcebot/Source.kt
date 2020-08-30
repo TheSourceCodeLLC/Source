@@ -14,6 +14,8 @@ import net.dv8tion.jda.api.requests.GatewayIntent.GUILD_MESSAGE_TYPING
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.sourcebot.api.command.CommandHandler
 import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.JsonSerial
+import net.sourcebot.api.configuration.Properties
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.EventSystem
@@ -23,8 +25,6 @@ import net.sourcebot.api.permission.PermissionHandler
 import net.sourcebot.api.permission.SourcePermission
 import net.sourcebot.api.permission.SourceRole
 import net.sourcebot.api.permission.SourceUser
-import net.sourcebot.api.properties.JsonSerial
-import net.sourcebot.api.properties.Properties
 import net.sourcebot.api.response.EmbedResponse
 import net.sourcebot.impl.BaseModule
 import org.slf4j.Logger

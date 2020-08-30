@@ -1,12 +1,12 @@
 package net.sourcebot.module.documentation.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.properties.JsonSerial
+import net.sourcebot.api.configuration.JsonSerial
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.Response
 import net.sourcebot.module.documentation.utility.DocResponse
 import org.jsoup.Connection
 import org.jsoup.Jsoup

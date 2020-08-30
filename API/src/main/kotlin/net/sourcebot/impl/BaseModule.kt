@@ -2,11 +2,11 @@ package net.sourcebot.impl
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import net.sourcebot.Source
+import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.module.InvalidModuleException
 import net.sourcebot.api.module.ModuleClassLoader
 import net.sourcebot.api.module.ModuleDescriptor
 import net.sourcebot.api.module.SourceModule
-import net.sourcebot.api.properties.JsonSerial
 import net.sourcebot.impl.command.GuildInfoCommand
 import net.sourcebot.impl.command.HelpCommand
 import net.sourcebot.impl.command.PermissionsCommand
