@@ -1,18 +1,19 @@
 package net.sourcebot.module.tags.command
 
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.MessageBuilder
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.Source
-import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.InfoResponse
-import net.sourcebot.api.response.SuccessResponse
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.SuccessResponse
 import net.sourcebot.module.tags.data.Tag
 import net.sourcebot.module.tags.data.TagHandler
 import java.time.Instant
@@ -26,11 +27,14 @@ class TagsCommand(
     override val aliases = arrayOf("tag")
 
     init {
-        addChild(TagsCreateCommand())
-        addChild(TagsDeleteCommand())
-        addChild(TagsEditCommand())
-        addChild(TagsInfoCommand())
-        addChild(TagsListCommand())
+        addChildren(
+            TagsCreateCommand(),
+            TagsDeleteCommand(),
+            TagsEditCommand(),
+            TagsInfoCommand(),
+            TagsListCommand(),
+            TagsRawCommand()
+        )
     }
 
     private inner class TagsCreateCommand : CommandBootstrap(
@@ -38,7 +42,7 @@ class TagsCommand(
         "Create a tag."
     ) {
         override val argumentInfo = ArgumentInfo(
-            Argument("name", "The name of the tag you wish to create."),
+            Argument("name", "The name of the created tag."),
             Argument("content", "The content of the created tag.")
         )
 
@@ -58,7 +62,7 @@ class TagsCommand(
         "Delete a tag."
     ) {
         override val argumentInfo = ArgumentInfo(
-            Argument("name", "The name of the tag you wish to delete.")
+            Argument("name", "The name of the tag to delete.")
         )
 
         override fun execute(message: Message, args: Arguments): Response {
@@ -112,7 +116,7 @@ class TagsCommand(
         "Show tag information."
     ) {
         override val argumentInfo = ArgumentInfo(
-            Argument("name", "The name of the tag you wish to view info for.")
+            Argument("name", "The name of the tag to view info for.")
         )
 
         override fun execute(message: Message, args: Arguments): Response {
@@ -132,6 +136,23 @@ class TagsCommand(
             val tags = tagCache.getTags()
             if (tags.isEmpty()) return InfoResponse("Tag Listing", "There are currently no tags.")
             return TagListResponse(tags.groupBy { it.category })
+        }
+    }
+
+    private inner class TagsRawCommand : CommandBootstrap(
+        "raw", "Show the raw content of a tag."
+    ) {
+        override val argumentInfo = ArgumentInfo(
+            Argument("tag", "The name of the tag to view content of.")
+        )
+        override val aliases = arrayOf("source")
+
+        override fun execute(message: Message, args: Arguments): Response {
+            val tagName = args.next("You did not specify a tag to view content of!").toLowerCase()
+            val tagCache = tagHandler[message.guild]
+            val tag = tagCache.getTag(tagName) ?: return NoSuchTagResponse(tagName)
+            val content = tag.content.replace("```", "`\u200b``")
+            return Response { MessageBuilder("```markdown\n$content\n```").build() }
         }
     }
 

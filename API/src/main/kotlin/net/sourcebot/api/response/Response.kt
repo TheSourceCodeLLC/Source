@@ -14,7 +14,7 @@ import java.time.Instant
  * Resultant embeds will be personalized for a [User] by rendering their profile photo as the author thumbnail.
  * Alerts also have a timestamp and footer.
  */
-interface Response {
+fun interface Response {
     fun asMessage(user: User): Message
 }
 
