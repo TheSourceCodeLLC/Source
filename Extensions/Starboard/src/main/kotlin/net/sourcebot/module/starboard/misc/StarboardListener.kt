@@ -10,11 +10,11 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.dv8tion.jda.api.events.message.guild.react.GenericGuildMessageReactionEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionRemoveEvent
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.WarningResponse
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.module.SourceModule
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.WarningResponse
 import org.bson.Document
 
 class StarboardListener(
@@ -35,6 +35,7 @@ class StarboardListener(
 
     private fun onReactionAdd(event: GuildMessageReactionAddEvent) {
         val message = listenReaction(event) ?: return
+        if (event.user == message.author) return event.reaction.removeReaction(message.author).queue()
         val data = dataManager[event.guild]
         val threshold = data.threshold
         val count = message.reactions.find { it.reactionEmote.name == UNICODE_STAR }?.count ?: 0
