@@ -38,7 +38,7 @@ class CommandHandler(
             if (!hasGlobal && command.requiresGlobal) return respond(
                 command, message, GlobalAdminOnlyResponse()
             )
-            if (command.permission != null) {
+            if (!hasGlobal && command.permission != null) {
                 val permission = command.permission!!
                 if (inGuild) {
                     val permissionData = permissionHandler.getData(message.guild)
