@@ -1,0 +1,7 @@
+{
+  "main": "net.sourcebot.module.trivia.Trivia",
+  "name": "${project.name}",
+  "version": "${project.version}",
+  "description": "${project.description}",
+  "author": "Sevant#9990"
+}
