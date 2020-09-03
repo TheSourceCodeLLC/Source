@@ -1,140 +1,120 @@
 package net.sourcebot.module.trivia.data
 
-import com.google.gson.Gson
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.MessageChannel
-import net.dv8tion.jda.api.entities.User
-import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent
+import net.dv8tion.jda.api.requests.RestAction
 import net.sourcebot.Source
+import net.sourcebot.api.response.EmbedResponse
 import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.SuccessResponse
 import net.sourcebot.module.trivia.Trivia
-import org.apache.commons.text.StringEscapeUtils
-
-import org.jsoup.Jsoup
 import java.util.*
+import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class TriviaGame(
-    val gameOptions: GameOptions,
-    val channel: MessageChannel,
-    val source: Source,
-    val trivia: Trivia,
-    val gameManager: TriviaGameManager
-) {
-    private lateinit var questionMessage: Message
-    private var questions: Queue<Question> = LinkedList()
-    private val scores = hashMapOf<User, Int>()
-    private var questionCount = 0
-    private var currentQuestion: Question? = null
-    private val currentAnswers = hashMapOf<User, Int>()
+class Game(amount: Int, category: Int?) {
+    private val triviaListener = Trivia.triviaListener
+    private val questions = LinkedList(
+        OpenTDB.requestQuestions(amount, category)
+    )
+    private val totalRounds = questions.size
+    private val answers = LinkedHashMap<String, Int>()
+    private val scores = HashMap<String, Int>()
 
-    fun setup() {
-        fetchQuestions()
-        questions.forEach {
-            it.generateResponseList()
-        }
-        start()
+    private lateinit var postGame: () -> Unit
+    private lateinit var tickFuture: ScheduledFuture<out Any>
+    private lateinit var message: Message
+    private lateinit var current: OpenTDB.Question
+    private var currentRound = 1
+
+    internal fun setMessage(message: Message) {
+        this.message = message
+        triviaListener.link(message.id, answers)
     }
 
-    private fun start() {
-        channel.sendMessage("This Rounds Question").queue {
-            this.questionMessage = it
-            nextQuestion()
-        }
+    fun getJumpUrl() = message.jumpUrl
 
-        source.jdaEventSystem.listen(trivia, MessageReactionAddEvent::class.java) {
-            if (it.messageId == questionMessage.id && !it.user!!.isBot) {
-                currentAnswers[it.user!!] = when (it.reactionEmote.emoji) {
+    fun start(postGame: () -> Unit): Response {
+        this.postGame = postGame
+        tickFuture = Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(
+            this::gameTick, 10, 15, TimeUnit.SECONDS
+        )
+        return TriviaStartResponse()
+    }
 
-                    "\uD83C\uDDE6" -> 0
-                    "\uD83C\uDDE7" -> 1
-                    "\uD83C\uDDE8" -> 2
-                    "\uD83C\uDDE9" -> 3
-                    else -> 99
+    class TriviaStartResponse : InfoResponse(
+        "Trivia Game Starting!",
+        "A new game of Trivia will begin in 10 seconds."
+    )
 
+    var firstTick = true
+    private fun gameTick() {
+        var firstBonus = true
+        answers.forEach { (user, answer) ->
+            val score = scores.computeIfAbsent(user) { 0 }
+            if (current.answers[answer].correct) {
+                var toIncrement = 1
+                if (firstBonus) {
+                    toIncrement += 1
+                    firstBonus = false
                 }
-                it.reaction.removeReaction().complete()
+                scores[user] = score + toIncrement
             }
         }
-
-    }
-
-    private fun nextQuestion() {
-        questionCount++
-        currentQuestion = questions.poll()
-        currentAnswers.clear()
-        if (currentQuestion == null) {
-            finishGame()
-            return
-        }
-        this.questionMessage.editMessage(QuestionResponse().asEmbed(channel.jda.selfUser)).queue {
-            it.clearReactions().queue()
-            it.addReaction("\uD83C\uDDE6").queue()
-            it.addReaction("\uD83C\uDDE7").queue()
-            it.addReaction("\uD83C\uDDE8").queue()
-            it.addReaction("\uD83C\uDDE9").queue()
-        }
-        Trivia.scheduledExecutorService.schedule(Runnable {
-            evaluateAnswers()
-            nextQuestion()
-        }, trivia.config.required("question change time"), TimeUnit.SECONDS)
-
-    }
-
-    private fun evaluateAnswers() {
-        currentAnswers.forEach { (user, answer) ->
-            if (currentQuestion!!.answers[answer].isCorrect) {
-                scores[user] = scores[user]?.plus(5) ?: 5
-            }
-        }
-    }
-
-    private fun finishGame() {
-        questionMessage.delete().queue()
-        channel.sendMessage(
-            ScoreResponse(scores.toList().sortedBy { (_, score) -> score }.take(5).toMap()).asEmbed(
-                channel.jda.selfUser
-            )
+        answers.clear()
+        current = questions.poll() ?: return stop()
+        message.editMessage(
+            QuestionResponse(
+                currentRound++,
+                totalRounds,
+                current
+            ).asEmbed(message.author)
         ).queue()
-        gameManager.finishGame(questionMessage.guild.idLong)
-    }
-
-
-    private fun fetchQuestions() {
-        val json =
-            Jsoup.connect("https://opentdb.com/api.php?amount=${gameOptions.amount}&category=${gameOptions.category.id}&difficulty=${gameOptions.difficulty}&type=multiple")
-                .ignoreContentType(true).execute().body()
-        val response = Gson().fromJson(json, QuestionFetchResponse::class.java)
-        response.results.forEach {
-            questions.add(
-                Question(
-                    StringEscapeUtils.UNESCAPE_HTML4.translate(it.question),
-                    StringEscapeUtils.unescapeHtml4(it.correct_answer),
-                    it.incorrect_answers.map { answer -> StringEscapeUtils.unescapeHtml4(answer) }.toList()
-                )
-            )
+        if (firstTick) {
+            validEmotes.map(message::addReaction).forEach(RestAction<Void>::queue)
+            firstTick = false
         }
     }
 
+    fun stop() {
+        message.editMessage(
+            ScoreResponse(
+                scores.entries.sortedByDescending { (_, v) -> v }.take(5)
+            ).asEmbed(message.author)
+        ).queue { it.clearReactions().queue() }
+        triviaListener.unlink(message.id)
+        postGame()
+        tickFuture.cancel(true)
+    }
 
-    private inner class QuestionResponse : InfoResponse("Next Question", currentQuestion?.question) {
+    class ScoreResponse(
+        topFive: List<Map.Entry<String, Int>>
+    ) : SuccessResponse(
+        "Trivia Over!"
+    ) {
         init {
-            addField("", "\uD83C\uDDE6 **${currentQuestion!!.answers.component1().answer}**", false)
-            addField("", "\uD83C\uDDE7 **${currentQuestion!!.answers.component1().answer}**", false)
-            addField("", "\uD83C\uDDE8 **${currentQuestion!!.answers.component1().answer}**", false)
-            addField("", "\uD83C\uDDE9 **${currentQuestion!!.answers.component1().answer}**", false)
+            description = if (topFive.isEmpty()) "Nobody played this game of Trivia!"
+            else topFive.joinToString("\n") { (id, score) -> "<@$id>: $score" }
         }
     }
 
-    private inner class ScoreResponse(scores: Map<User, Int>) : SuccessResponse("The game has finished!", "Here are the winners!") {
+    class QuestionResponse(
+        round: Int,
+        totalRounds: Int,
+        question: OpenTDB.Question
+    ) : EmbedResponse(
+        "Round $round of $totalRounds",
+        """
+            [${question.category}] [${question.difficulty}]
+            ${question.text}
+        """.trimIndent()
+    ) {
         init {
-            scores.forEach { (user, score) ->
-                addField(user.name, score.toString(), false)
-            }
+            val (q1, q2, q3, q4) = question.answers
+            addField("", "\uD83C\uDDE6 **${q1.text}**", false)
+            addField("", "\uD83C\uDDE7 **${q2.text}**", false)
+            addField("", "\uD83C\uDDE8 **${q3.text}**", false)
+            addField("", "\uD83C\uDDE9 **${q4.text}**", false)
         }
     }
-
 }
-
-class QuestionFetchResponse(val response_code: Int, val results: List<Question>)

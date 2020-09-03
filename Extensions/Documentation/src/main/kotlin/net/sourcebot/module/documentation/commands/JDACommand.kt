@@ -1,12 +1,12 @@
 package net.sourcebot.module.documentation.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.Response
 import net.sourcebot.module.documentation.utility.DocSelectorStorage
 import net.sourcebot.module.documentation.utility.JenkinsHandler
 
@@ -29,14 +29,15 @@ class JDACommand : RootCommand() {
             jenkinsHandler.retrieveDocAlert(message, message.author, query)
         } else {
             val authorName = message.author.name
-            val description = "You can find the JDA Documentation at [ci.dv8tion.net](https://ci.dv8tion.net/job/JDA/javadoc/index.html)"
+            val description =
+                "You can find the JDA Documentation at [ci.dv8tion.net](https://ci.dv8tion.net/job/JDA/javadoc/index.html)"
             InfoResponse(authorName, description)
         }
 
 
     }
 
-    override fun postResponse(response: Message) {
-        DocSelectorStorage.updateSelector(response)
+    override fun postResponse(response: Response, message: Message) {
+        DocSelectorStorage.updateSelector(message)
     }
 }

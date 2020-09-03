@@ -48,7 +48,7 @@ abstract class Command {
         args: Arguments
     ): Response = throw InvalidSyntaxException("Invalid Subcommand!")
 
-    open fun postResponse(response: Message) = Unit
+    open fun postResponse(response: Response, message: Message) = Unit
 
     protected fun addChildren(vararg command: Command) = command.forEach(::addChild)
     protected fun addChild(

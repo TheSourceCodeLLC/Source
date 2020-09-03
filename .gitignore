@@ -6,4 +6,4 @@ target/
 /config.json
 *.iml
 /gradle
-/gradlew.*
+/gradlew*

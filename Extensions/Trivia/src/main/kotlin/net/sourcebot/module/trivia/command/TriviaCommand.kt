@@ -2,68 +2,101 @@ package net.sourcebot.module.trivia.command
 
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.Command
+import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.RootCommand
-import net.sourcebot.api.command.argument.Argument
+import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.SuccessResponse
-import net.sourcebot.module.trivia.data.TriviaGameManager
+import net.sourcebot.api.command.argument.OptionalArgument
+import net.sourcebot.api.response.*
+import net.sourcebot.api.urlDecoded
+import net.sourcebot.module.trivia.data.Game
+import net.sourcebot.module.trivia.data.OpenTDB
+import java.util.*
 
-class TriviaCommand(val gameManager: TriviaGameManager) : RootCommand() {
+class TriviaCommand : RootCommand() {
     override val name: String = "trivia"
     override val description: String = "Manage active trivia game, or start a new one."
     override val guildOnly: Boolean = true
     override val aliases: Array<String> = arrayOf("triv")
 
+    private val activeGames = HashMap<String, Game>()
 
     init {
         addChildren(
             TriviaStartCommand(),
+            TriviaStopCommand(),
+            TriviaCategoriesCommand()
         )
     }
 
-    private inner class TriviaStartCommand : Command() {
-        override val name: String = "start"
-        override val description: String = "Starts a game of trivia"
-        override val guildOnly: Boolean = true
-        override val permission: String? = "trivia.manage"
+    private inner class TriviaStartCommand : Bootstrap(
+        "start", "Starts a game of trivia"
+    ) {
+        override var cleanupResponse = false
         override val argumentInfo: ArgumentInfo = ArgumentInfo(
-            Argument("category", "Which category you wish to play."),
-            Argument("amount", "Amount of questions you wish to ask. 1-1000"),
-            Argument("difficulty", "The difficulty of the questions you wish to ask. easy | medium | hard")
+            OptionalArgument("amount", "Amount of questions to ask. 1-50", 5),
+            OptionalArgument("category", "The category to pull questions from.")
         )
 
         override fun execute(message: Message, args: Arguments): Response {
-            val categoryArg = args.next("You did not specify a category!")
-            val category = gameManager.categories.trivia_categories.firstOrNull { it.id == categoryArg.toInt() }
-                ?: return CategoryNotFoundResponse(categoryArg)
-            val amount = args.next("You did not specify an amount!").toInt().coerceAtMost(1000)
-            val difficulty = when (args.next("You did not specify a difficulty!").toLowerCase()) {
-                "1", "easy" -> "easy"
-                "2", "medium" -> "medium"
-                "3", "hard" -> "hard"
-                else -> return ErrorResponse("Difficulty not accepted", "Difficulty must be easy|medium|hard or 1|2|3")
+            val amount = args.next(Adapter.int()) ?: 5
+            if (amount < 1 || amount > 50) throw InvalidSyntaxException(
+                "Amount of questions must be between 1 and 50!"
+            )
+            val category = args.next(Adapter.int())
+            if (category != null && !OpenTDB.isValidCategory(category)) {
+                return ErrorResponse(
+                    "Unknown Trivia Category ID '$category'",
+                    "Available Categories:\n" + OpenTDB.categories.joinToString("\n") { "**${it.id}**: ${it.name.urlDecoded()}" }
+                )
             }
-
-            gameManager.prepareGame(category, amount, difficulty, message)
-
-            return SuccessResponse("I have started preparing your game!")
-
+            val activeGame = activeGames[message.guild.id]
+            if (activeGame != null) return WarningResponse(
+                "Trivia In Progress!",
+                "There is already an active game! [[Jump](${activeGame.getJumpUrl()})]"
+            )
+            val game = Game(amount, category)
+            activeGames[message.guild.id] = game
+            return game.start { activeGames.remove(message.guild.id) }
         }
 
-    }
-
-    private inner class CategoryNotFoundResponse(input: String) :
-        ErrorResponse(
-            "Category $input was not found",
-            "Please use the identifier given for the category you wish to use!"
-        ) {
-        init {
-            gameManager.categories.trivia_categories.forEach {
-                addField(it.id.toString(), it.name, true)
-            }
+        override fun postResponse(response: Response, message: Message) {
+            if (response !is Game.TriviaStartResponse) return
+            activeGames[message.guild.id]?.setMessage(message)
         }
     }
+
+    private inner class TriviaStopCommand : Bootstrap(
+        "stop", "Stop the active Trivia game."
+    ) {
+        override fun execute(message: Message, args: Arguments): Response {
+            val activeGame = activeGames.remove(message.guild.id) ?: return ErrorResponse(
+                "Trivia Stop", "There is no active Trivia game!"
+            )
+            activeGame.stop()
+            //The response will be available as an edit to the original message
+            return EmptyResponse()
+        }
+    }
+
+    private class TriviaCategoriesCommand : Bootstrap(
+        "categories", "List the available Trivia Categories."
+    ) {
+        override fun execute(
+            message: Message,
+            args: Arguments
+        ) = InfoResponse(
+            "Trivia Categories",
+            OpenTDB.categories.joinToString("\n") { "**${it.id}**: ${it.name.urlDecoded()}" }
+        )
+    }
+}
+
+abstract class Bootstrap(
+    final override val name: String,
+    final override val description: String
+) : Command() {
+    final override val guildOnly = true
+    final override val permission by lazy { "trivia.$name" }
 }

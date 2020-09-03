@@ -1,12 +1,12 @@
 package net.sourcebot.module.documentation.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.Response
 import net.sourcebot.module.documentation.utility.DocSelectorStorage
 import net.sourcebot.module.documentation.utility.JenkinsHandler
 
@@ -29,14 +29,15 @@ class SpigotCommand : RootCommand() {
             jenkinsHandler.retrieveDocAlert(message, message.author, query)
         } else {
             val authorName = message.author.name
-            val description = "You can find the Spigot Documentation at [hub.spigotmc.org](https://hub.spigotmc.org/javadocs/spigot/)"
+            val description =
+                "You can find the Spigot Documentation at [hub.spigotmc.org](https://hub.spigotmc.org/javadocs/spigot/)"
             InfoResponse(authorName, description)
         }
 
 
     }
 
-    override fun postResponse(response: Message) {
-        DocSelectorStorage.updateSelector(response)
+    override fun postResponse(response: Response, message: Message) {
+        DocSelectorStorage.updateSelector(message)
     }
 }
