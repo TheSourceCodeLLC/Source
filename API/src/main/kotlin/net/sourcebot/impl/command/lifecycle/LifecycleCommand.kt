@@ -13,7 +13,7 @@ abstract class LifecycleCommand(
     final override val requiresGlobal = true
 
     final override fun execute(message: Message, args: Arguments): Response {
-        message.channel.sendMessage(onQueued.asMessage(message.author)).queue()
+        message.channel.sendMessage(onQueued.asMessage(message.author)).complete()
         try {
             Runtime.getRuntime().exec(script)
         } catch (ex: Throwable) {
