@@ -37,7 +37,7 @@ class Game(amount: Int, category: Int?) {
     fun start(postGame: () -> Unit): Response {
         this.postGame = postGame
         tickFuture = Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(
-            this::gameTick, 10, 15, TimeUnit.SECONDS
+            this::gameTick, 10, 30, TimeUnit.SECONDS
         )
         return TriviaStartResponse()
     }
