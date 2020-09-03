@@ -9,7 +9,6 @@ import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.SuccessResponse
 import net.sourcebot.module.trivia.Trivia
 import java.util.*
-import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 class Game(amount: Int, category: Int?) {
@@ -22,7 +21,6 @@ class Game(amount: Int, category: Int?) {
     private val scores = HashMap<String, Int>()
 
     private lateinit var postGame: () -> Unit
-    private lateinit var tickFuture: ScheduledFuture<out Any>
     private lateinit var message: Message
     private lateinit var current: OpenTDB.Question
     private var currentRound = 1
@@ -36,9 +34,8 @@ class Game(amount: Int, category: Int?) {
 
     fun start(postGame: () -> Unit): Response {
         this.postGame = postGame
-        tickFuture = Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(
-            this::gameTick, 10, 30, TimeUnit.SECONDS
-        )
+        //Dispatch initial tick after 10 seconds
+        Source.SCHEDULED_EXECUTOR_SERVICE.schedule(this::gameTick, 10, TimeUnit.SECONDS)
         return TriviaStartResponse()
     }
 
@@ -49,6 +46,7 @@ class Game(amount: Int, category: Int?) {
 
     var firstTick = true
     private fun gameTick() {
+        //TODO: Show scores & correct answer after each round
         var firstBonus = true
         answers.forEach { (user, answer) ->
             val score = scores.computeIfAbsent(user) { 0 }
@@ -62,6 +60,7 @@ class Game(amount: Int, category: Int?) {
             }
         }
         answers.clear()
+        //If there are no more questions, do not re-tick
         current = questions.poll() ?: return stop()
         message.editMessage(
             QuestionResponse(
@@ -74,6 +73,8 @@ class Game(amount: Int, category: Int?) {
             validEmotes.map(message::addReaction).forEach(RestAction<Void>::queue)
             firstTick = false
         }
+        //Re-tick every 30 seconds
+        Source.SCHEDULED_EXECUTOR_SERVICE.schedule(this::gameTick, 30, TimeUnit.SECONDS)
     }
 
     fun stop() {
@@ -84,7 +85,6 @@ class Game(amount: Int, category: Int?) {
         ).queue { it.clearReactions().queue() }
         triviaListener.unlink(message.id)
         postGame()
-        tickFuture.cancel(true)
     }
 
     class ScoreResponse(
