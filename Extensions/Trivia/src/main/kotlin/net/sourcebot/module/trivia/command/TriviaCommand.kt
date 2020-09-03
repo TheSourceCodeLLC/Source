@@ -83,6 +83,7 @@ class TriviaCommand : RootCommand() {
     private class TriviaCategoriesCommand : Bootstrap(
         "categories", "List the available Trivia Categories."
     ) {
+        override var cleanupResponse: Boolean = false
         override fun execute(
             message: Message,
             args: Arguments

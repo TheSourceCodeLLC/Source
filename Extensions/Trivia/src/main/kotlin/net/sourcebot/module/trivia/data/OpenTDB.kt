@@ -49,6 +49,7 @@ object OpenTDB {
         val type: String = type.urlDecoded().capitalize()
         val difficulty: String = difficulty.urlDecoded().capitalize()
         val text: String = question.urlDecoded()
+        val correct: String = correct.urlDecoded()
         val answers = listOf(
             Answer(correct, true),
             *incorrect.map { Answer(it, false) }.toTypedArray()
