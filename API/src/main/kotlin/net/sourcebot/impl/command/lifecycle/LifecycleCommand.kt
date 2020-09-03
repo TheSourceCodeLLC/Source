@@ -1,9 +1,9 @@
 package net.sourcebot.impl.command.lifecycle
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.response.*
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.response.*
 
 abstract class LifecycleCommand(
     override val name: String,
@@ -39,35 +39,5 @@ class RestartCommand(
     override val onFailure = ErrorResponse(
         "Restart Failure",
         "There was a problem restarting the bot."
-    )
-}
-
-class StopCommand(
-    script: String
-) : LifecycleCommand(
-    "stop", "Stops the bot.", script
-) {
-    override val onQueued = InfoResponse(
-        "Stop Scheduled",
-        "The bot has been scheduled to stop."
-    )
-    override val onFailure = ErrorResponse(
-        "Stop Failure",
-        "There was a problem stopping the bot."
-    )
-}
-
-class UpdateCommand(
-    script: String
-) : LifecycleCommand(
-    "update", "Updates the bot.", script
-) {
-    override val onQueued = InfoResponse(
-        "Update Scheduled",
-        "The bot has been scheduled to update."
-    )
-    override val onFailure = ErrorResponse(
-        "Update Failure",
-        "There was a problem updating the bot."
     )
 }

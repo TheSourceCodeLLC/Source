@@ -12,8 +12,6 @@ import net.sourcebot.impl.command.HelpCommand
 import net.sourcebot.impl.command.PermissionsCommand
 import net.sourcebot.impl.command.TimingsCommand
 import net.sourcebot.impl.command.lifecycle.RestartCommand
-import net.sourcebot.impl.command.lifecycle.StopCommand
-import net.sourcebot.impl.command.lifecycle.UpdateCommand
 
 class BaseModule(
     private val source: Source
@@ -43,9 +41,7 @@ class BaseModule(
             TimingsCommand(),
             PermissionsCommand(source.permissionHandler),
 
-            RestartCommand(source.properties.required("lifecycle.restart")),
-            StopCommand(source.properties.required("lifecycle.stop")),
-            UpdateCommand(source.properties.required("lifecycle.update"))
+            RestartCommand(source.properties.required("restart-script")),
         )
     }
 }
