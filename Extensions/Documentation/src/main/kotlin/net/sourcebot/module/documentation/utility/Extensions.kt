@@ -14,37 +14,36 @@ fun String.toMarkdown(): String {
     return remark.convertFragment(rawHtml).replace("\\", "")
 }
 
-// Truncates a string while preserving remaining hyperlinks
-fun String.approxTruncate(approxLimit: Int): String {
-    if (this.length <= approxLimit) return this
+fun String.truncate(limit: Int): String {
+    if (this.length <= limit) return this
 
-    var returnString: String = this
+    var returnStr: String = this
+    val sbReturn: StringBuilder = StringBuilder(returnStr)
+    val ellipsis = "..."
+
     val matcher: Matcher = hyperlinkPattern.matcher(this)
+    val hyperlinkMap: MutableMap<Int, Int> = mutableMapOf()
 
-    val hyperlinkArray: ArrayList<String> = ArrayList()
     while (matcher.find()) {
         val hyperlink: String = matcher.group(0)
 
-        returnString = returnString.replaceFirst(hyperlink, "$${hyperlinkArray.size}")
-        hyperlinkArray.add(hyperlink)
+        val beginning = returnStr.indexOf(hyperlink)
+        val end = beginning + hyperlink.length
+        hyperlinkMap[beginning] = end
+
+        // This is to preserve the indices of hyperlinks
+        returnStr = returnStr.replaceFirst(hyperlink, " ".repeat(hyperlink.length))
     }
 
-    val sbReturn: StringBuilder = StringBuilder(returnString)
-    if (sbReturn.length > approxLimit) {
-        sbReturn.setLength(approxLimit)
-        sbReturn.append("...")
-    }
-    returnString = sbReturn.toString()
+    sbReturn.setLength(limit - ellipsis.length)
+    sbReturn.append(ellipsis)
 
-    if (hyperlinkArray.isNotEmpty()) {
-        for (i in 0 until hyperlinkArray.size) {
-            if (returnString.contains("$$i")) {
-                returnString = returnString.replace("$$i", hyperlinkArray[i])
-            } else {
-                break
-            }
+    returnStr = sbReturn.toString()
+    hyperlinkMap.forEach { (beginning, end) ->
+        if (limit in (beginning + 1) until end) {
+            returnStr = returnStr.replaceRange(beginning, limit, "").trim() + ellipsis
         }
     }
 
-    return returnString
+    return returnStr
 }

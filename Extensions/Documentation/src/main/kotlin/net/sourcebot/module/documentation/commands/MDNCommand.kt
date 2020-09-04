@@ -12,7 +12,7 @@ import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.module.documentation.utility.DocResponse
-import net.sourcebot.module.documentation.utility.approxTruncate
+import net.sourcebot.module.documentation.utility.truncate
 import net.sourcebot.module.documentation.utility.toMarkdown
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -105,7 +105,7 @@ class MDNCommand : RootCommand() {
             val descriptionElement = wikiElement.selectFirst("article > p")
                     ?: return ErrorResponse(user.name, "Unable to find article description!")
 
-            val description = hyperlinksToMarkdown(descriptionElement).toMarkdown().approxTruncate(600)
+            val description = hyperlinksToMarkdown(descriptionElement).toMarkdown().truncate(600)
 
             val anchorText = docObjectResult["title"].asText().replace(".", "#")
 
@@ -207,7 +207,7 @@ class MDNCommand : RootCommand() {
                     // Removes remnants of list elements (i.e. "This can either be:")
                     descElement = descElement.html(descElement.html().replace("(\\.)(.*)[:]".toRegex(), "$1"))
 
-                    val itemDesc = hyperlinksToMarkdown(descElement).toMarkdown().approxTruncate(128)
+                    val itemDesc = hyperlinksToMarkdown(descElement).toMarkdown().truncate(128)
 
                     val appendFormat = "$itemName - $itemDesc\n"
                     val appendString = if (count == 3 && descTagList.size > 4) "$appendFormat..." else "$appendFormat\n"
