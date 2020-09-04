@@ -15,9 +15,9 @@ import java.time.format.DateTimeFormatter;
 
 public abstract class SourceIncident {
 
-    protected static final TextChannel incidentLog = SourceChannel.INCIDENTS.resolve(jda);
     private static final Source source = Source.getInstance();
     protected static final JDA jda = source.getJda();
+    protected static final TextChannel incidentLog = SourceChannel.INCIDENTS.resolve(jda);
     protected static final Guild guild = source.getGuild();
     protected static final DatabaseManager dbManager = source.getDatabaseManager();
     private static final MongoCollection<Document> incidentCollection = dbManager.getCollection("IncidentReports");
