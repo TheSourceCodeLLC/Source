@@ -2,12 +2,23 @@
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <target>System.out</target>
         <encoder>
-            <pattern>%d{hh:mm:ss a z} %highlight(%-5level %logger) - %msg%n</pattern>
+            <pattern>[%highlight(%d{hh:mm:ss a z} %-5level)] [%highlight(%logger)] %msg%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>"logs/%d{yyyy-MM-dd}.log.gz"</fileNamePattern>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>[%d{hh:mm:ss a z} %-5level] [%logger] %msg%n</pattern>
         </encoder>
     </appender>
 
     <root level="debug">
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE"/>
     </root>
     <logger name="org.mongodb.driver" level="ERROR"/>
     <logger name="net.dv8tion.jda" level="INFO"/>
