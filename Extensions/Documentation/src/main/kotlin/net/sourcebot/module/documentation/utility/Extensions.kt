@@ -14,12 +14,11 @@ fun String.toMarkdown(): String {
     return remark.convertFragment(rawHtml).replace("\\", "")
 }
 
-fun String.truncate(limit: Int): String {
+fun String.truncate(limit: Int, ellipsis: String = "..."): String {
     if (this.length <= limit) return this
 
     var returnStr: String = this
     val sbReturn: StringBuilder = StringBuilder(returnStr)
-    val ellipsis = "..."
 
     val matcher: Matcher = hyperlinkPattern.matcher(this)
     val hyperlinkMap: MutableMap<Int, Int> = mutableMapOf()

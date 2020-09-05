@@ -46,6 +46,7 @@ class JenkinsHandler(
             }
 
         } catch (ex: Exception) {
+            //ex.printStackTrace() //- This is for debug purposes when enabled
             val errDesc = "Unable to find `$query` in the $embedTitle!"
             return ErrorResponse(user.name, errDesc)
         }
@@ -94,8 +95,9 @@ class JenkinsHandler(
         }
 
         val infoDescElement: Element = Jsoup.parse("<div>$infoRawDescription</div>").selectFirst("div")
-        var infoDescription: String = convertHyperlinksToMarkdown(infoDescElement, infoUrl).toMarkdown()
-        infoDescription = infoDescription.truncate(600)
+        val infoDescription: String = convertHyperlinksToMarkdown(infoDescElement, infoUrl)
+            .toMarkdown()
+            .truncate(600)
 
         val infoHyperlink: String = MarkdownUtil.maskedLink(infoName, infoUrl)
         docAlert.setDescription("**__${infoHyperlink}__**\n$infoDescription")
@@ -104,15 +106,22 @@ class JenkinsHandler(
             val rawExtraInfo: Map<String, String> = information.rawExtraInformation
 
             rawExtraInfo.forEach { (key, value) ->
-                val replacementNewline = if (key.equals("Parameters:", true)) "<br><br>" else "<br>"
-
-                val modifiedValue = value.replace("\n", replacementNewline)
+                val modifiedValue = value.replace("\n", "<br>")
 
                 val valueElement: Element = Jsoup.parse("<div>$modifiedValue</div>").selectFirst("div")
-                val convertedValue = convertHyperlinksToMarkdown(valueElement, infoUrl).toMarkdown()
+                val convertedValue = convertHyperlinksToMarkdown(valueElement, infoUrl)
+                    .toMarkdown()
 
+                val fieldValue = if (key.equals("Parameters:", true)) {
+                    convertedValue.truncate(250)
+                } else {
+                    if (convertedValue.length > 450) {
+                        convertedValue.truncate(450)
+                    }
+                    convertedValue
+                }
 
-                docAlert.addField(key, convertedValue, false)
+                docAlert.addField(key, fieldValue, false)
             }
         }
 
@@ -157,17 +166,20 @@ class JenkinsHandler(
 
         list.stream()
             .filter { !strBuilder.toString().contains(it, true) && strBuilder.length <= 512 }
-            .forEach { strBuilder.append("`$it` ") }
+            .forEach {
+                val builderLength = strBuilder.length + it.length
 
-        if (strBuilder.length >= 512) {
-            strBuilder.append("...")
-        }
+                val itemName = it.substringBefore("<")
+                val appendStr = if (builderLength >= 512) "`$itemName`..." else "`$itemName` "
+                strBuilder.append(appendStr)
+            }
 
         return strBuilder.toString().trim()
     }
 
     private fun getInfoName(className: String, infoName: String): String {
         return "$className#${infoName.substringAfter("(" + 1)}"
+            .replace("<.*?>+".toRegex(), "")
     }
 
     private fun convertHyperlinksToMarkdown(element: Element, url: String): String {
@@ -177,24 +189,45 @@ class JenkinsHandler(
             .filter { it.attr("href") != null }
             .forEach {
 
+                val baseClassUrl: String = url.substringBeforeLast("#")
                 var hrefUrl: String = it.attr("href")
                 val text: String = it.html().toMarkdown()
 
-                if (!hrefUrl.contains("http", true)) {
-                    if (hrefUrl.contains("../") || hrefUrl.contains("#")) {
-                        hrefUrl = hrefUrl.replace("../", "")
-                        val baseClassUrl = url.substringBeforeLast("#")
+                hrefUrl = with(hrefUrl) {
+                    when {
+                        contains("http", true) -> hrefUrl
+                        contains("../") || contains("#") -> {
+                            if(contains("#") && !contains("/")) {
+                                baseClassUrl + url
+                            } else {
+                                val modifiedHref = replace("../", "")
 
-                        hrefUrl = if (hrefUrl.contains("#") && !hrefUrl.contains("/")) {
-                            baseClassUrl + hrefUrl
-                        } else baseUrl + hrefUrl
+                                if(it.hasAttr("title")) {
+                                    val newPackage = it.attr("title")
+                                        .replace("class in ", "")
+                                        .replace(".", "/")
+                                        .trim()
 
-                    } else if (hrefUrl.contains(".html", true)) {
-                        hrefUrl = hrefUrl.substring(hrefUrl.lastIndexOf("/") + 1).substringBeforeLast(".")
-                        hrefUrl = retrieveClassUrl(hrefUrl)?.trim() ?: return@forEach
+                                    val parentPkgDir = "/${newPackage.substringBefore("/")}/"
+                                    val basePkgUrl = url.substringBeforeLast(parentPkgDir) + parentPkgDir
+
+                                    basePkgUrl + modifiedHref
+                                } else {
+                                    baseUrl + modifiedHref
+                                }
+                            }
+                        }
+                        contains(".html", true) -> {
+                            val modifiedHref = substring(lastIndexOf("/") + 1)
+                                .substringBeforeLast(".")
+
+                            retrieveClassUrl(modifiedHref)?.trim() ?: return@forEach
+                        }
+                        else -> this
                     }
 
                 }
+
 
                 if (hrefUrl.isNotEmpty()) {
                     hrefUrl = MarkdownSanitizer.escape(hrefUrl)
@@ -208,7 +241,7 @@ class JenkinsHandler(
         html = html.replace("<code>\\[(.*?)]\\((.*?)\\)</code>".toRegex(), "[`$1`]($2)")
 
         // This prevents an issue, if there are 2 or more hyperlinks in the same code block
-        return html.replace("<code>(\\[.*?\\).*?)</code>".toRegex(), "$1")
+        return html//html.replace("<code>(\\[.*?\\).*?)</code>".toRegex(), "$1")
     }
 
 
