@@ -1,4 +1,5 @@
 {
+  "log-level": "INFO",
   "mongodb": "mongodb://username:password@host:27017",
   "global-admins": [],
   "commands": {

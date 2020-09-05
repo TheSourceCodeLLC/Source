@@ -1,5 +1,6 @@
 package net.sourcebot
 
+import ch.qos.logback.classic.Level
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import net.dv8tion.jda.api.JDA
@@ -20,6 +21,7 @@ import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
+import net.sourcebot.api.logger.LoggerConfiguration
 import net.sourcebot.api.module.ModuleHandler
 import net.sourcebot.api.permission.PermissionHandler
 import net.sourcebot.api.permission.SourcePermission
@@ -142,7 +144,7 @@ class Source(val properties: Properties) {
             enabled = true
 
             JsonSerial.registerSerial(Properties.Serial())
-            return File("config.json").apply {
+            val properties = File("config.json").apply {
                 if (!exists()) {
                     Source::class.java.getResourceAsStream("/config.example.json").use {
                         Files.copy(it, this.toPath())
@@ -150,7 +152,11 @@ class Source(val properties: Properties) {
                 }
             }.let {
                 JsonSerial.mapper.readValue(it, Properties::class.java)
-            }.let { Source(it) }
+            }
+            val logLevelName = properties.required<String>("log-level")
+            val logLevel = Level.toLevel(logLevelName, Level.INFO)
+            LoggerConfiguration.LOG_LEVEL = logLevel
+            Source(properties)
         }
     }
 

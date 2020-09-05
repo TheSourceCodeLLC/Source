@@ -8,7 +8,9 @@ import ch.qos.logback.core.encoder.Encoder
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
+import org.slf4j.LoggerFactory
 import java.nio.charset.StandardCharsets
+import kotlin.properties.Delegates.observable
 
 class LoggerConfiguration : BasicConfigurator() {
     private val loggerLevels = mapOf<String, Level>(
@@ -76,6 +78,11 @@ class LoggerConfiguration : BasicConfigurator() {
     }
 
     companion object {
-        @JvmStatic var LOG_LEVEL: Level = Level.INFO
+        @JvmStatic
+        var LOG_LEVEL: Level by observable(Level.INFO) { _, old, new ->
+            if (old == new) return@observable
+            val context = LoggerFactory.getILoggerFactory() as LoggerContext
+            context.getLogger(Logger.ROOT_LOGGER_NAME).level = new
+        }
     }
 }
