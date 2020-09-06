@@ -8,10 +8,7 @@ private val hyperlinkPattern: Pattern = Pattern.compile("\\[.*?]\\(.*?\\)")
 private val remark: Remark = Remark()
 
 fun String.toMarkdown(): String {
-    val hyperlinkRegex: Regex = "<code>\\[(.*?)]\\((.*?)\\)</code>".toRegex()
-    val rawHtml = this.replace(hyperlinkRegex, "[<code>$1</code>]($2)")
-
-    return remark.convertFragment(rawHtml).replace("\\", "")
+    return remark.convertFragment(this).replace("\\", "")
 }
 
 fun String.truncate(limit: Int, ellipsis: String = "..."): String {

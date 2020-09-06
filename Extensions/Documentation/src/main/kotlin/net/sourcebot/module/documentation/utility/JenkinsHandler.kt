@@ -30,7 +30,9 @@ class JenkinsHandler(
         try {
             val infoList: List<Information> = jenkins.search(query)
 
-            if (infoList.isEmpty()) return ErrorResponse(user.name, "Unable to find `$query` in the $embedTitle!")
+            if (infoList.isEmpty()) {
+                return ErrorResponse(user.name, "Unable to find `$query` in the $embedTitle!")
+            }
 
             val docAlert = DocResponse()
             docAlert.setAuthor(embedTitle, null, iconUrl)
@@ -46,7 +48,7 @@ class JenkinsHandler(
             }
 
         } catch (ex: Exception) {
-            //ex.printStackTrace() //- This is for debug purposes when enabled
+            ex.printStackTrace() //- This is for debug purposes when enabled
             val errDesc = "Unable to find `$query` in the $embedTitle!"
             return ErrorResponse(user.name, errDesc)
         }
@@ -108,15 +110,17 @@ class JenkinsHandler(
             rawExtraInfo.forEach { (key, value) ->
                 val modifiedValue = value.replace("\n", "<br>")
 
+
                 val valueElement: Element = Jsoup.parse("<div>$modifiedValue</div>").selectFirst("div")
                 val convertedValue = convertHyperlinksToMarkdown(valueElement, infoUrl)
                     .toMarkdown()
+                    .replace("<\\[`?([^`]+)`?]\\((.*)\\)>".toRegex(), "[`<$1>`]($2)")
 
                 val fieldValue = if (key.equals("Parameters:", true)) {
                     convertedValue.truncate(250)
                 } else {
-                    if (convertedValue.length > 450) {
-                        convertedValue.truncate(450)
+                    if (convertedValue.length > 500) {
+                        convertedValue.truncate(500)
                     }
                     convertedValue
                 }
@@ -143,7 +147,13 @@ class JenkinsHandler(
             }
 
             val info = infoList[i]
-            val name = "${info.type} ${info.name}"
+
+            var name = "${info.type} ${info.name}"
+            if (info is MethodInformation) {
+                val className = info.classInfo.name.substringBefore("<")
+                name = "${info.type} $className#${info.name}"
+            }
+
             val optionText = MarkdownUtil.maskedLink(name, info.url)
 
             docAlert.appendDescription("\n\n**${i + 1}** - $optionText")
@@ -195,27 +205,33 @@ class JenkinsHandler(
 
                 hrefUrl = with(hrefUrl) {
                     when {
-                        contains("http", true) -> hrefUrl
-                        contains("../") || contains("#") -> {
-                            if(contains("#") && !contains("/")) {
-                                baseClassUrl + url
-                            } else {
-                                val modifiedHref = replace("../", "")
+                        contains("http") -> hrefUrl
+                        contains(".html") -> {
+                            val pkgUrl = url.substringBeforeLast("/")
+                            "$pkgUrl/$this"
+                        }
+                        contains("../") || contains("#") && !contains(".html") -> {
 
-                                if(it.hasAttr("title")) {
-                                    val newPackage = it.attr("title")
-                                        .replace("class in ", "")
-                                        .replace(".", "/")
-                                        .trim()
-
-                                    val parentPkgDir = "/${newPackage.substringBefore("/")}/"
-                                    val basePkgUrl = url.substringBeforeLast(parentPkgDir) + parentPkgDir
-
-                                    basePkgUrl + modifiedHref
-                                } else {
-                                    baseUrl + modifiedHref
-                                }
+                            if (contains("#") && !contains("/")) {
+                                return@with baseClassUrl + url
                             }
+
+                            val modifiedHref = replace("../", "")
+
+                            if (it.hasAttr("title")) {
+                                val newPackage = it.attr("title")
+                                    .replace("class in ", "")
+                                    .replace(".", "/")
+                                    .trim()
+
+                                val parentPkgDir = "/${newPackage.substringBefore("/")}/"
+                                val basePkgUrl = url.substringBeforeLast(parentPkgDir) + parentPkgDir
+
+                                basePkgUrl + modifiedHref
+                            } else {
+                                baseUrl + modifiedHref
+                            }
+
                         }
                         contains(".html", true) -> {
                             val modifiedHref = substring(lastIndexOf("/") + 1)
@@ -228,20 +244,23 @@ class JenkinsHandler(
 
                 }
 
-
                 if (hrefUrl.isNotEmpty()) {
+                    val isCodeBlock = it.parent().tagName()?.equals("code", true) ?: false
+
+                    val modifiedText = if (isCodeBlock && !text.contains("`")) "`$text`" else text
+
                     hrefUrl = MarkdownSanitizer.escape(hrefUrl)
-                    val hyperlink: String = MarkdownUtil.maskedLink(text, hrefUrl).replace("%29", ")")
+                    val hyperlink: String = MarkdownUtil.maskedLink(modifiedText, hrefUrl)
+                        .replace("%29", ")")
 
                     html = html.replace(it.outerHtml(), hyperlink)
                 }
 
             }
 
-        html = html.replace("<code>\\[(.*?)]\\((.*?)\\)</code>".toRegex(), "[`$1`]($2)")
 
-        // This prevents an issue, if there are 2 or more hyperlinks in the same code block
-        return html//html.replace("<code>(\\[.*?\\).*?)</code>".toRegex(), "$1")
+        // Removes code tags that surround a hyperlink
+        return html.replace("<code>(\\[.*?\\).*?)</code>".toRegex(), "$1")
     }
 
 
