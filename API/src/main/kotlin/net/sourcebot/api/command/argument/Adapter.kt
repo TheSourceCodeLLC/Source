@@ -1,6 +1,7 @@
 package net.sourcebot.api.command.argument
 
 import net.dv8tion.jda.api.entities.Guild
+import net.sourcebot.api.SourceDuration
 
 /**
  * Represents an adapter to convert command [Arguments] to a desired [T]
@@ -59,6 +60,10 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             val byName = target.runCatching { guild.getTextChannelsByName(this, true) }.getOrNull()
             if (byName?.isNotEmpty() == true) return@ofSingleArg byName[0]
             return@ofSingleArg null
+        }
+
+        @JvmStatic fun duration() = ofSingleArg {
+            it.runCatching(SourceDuration::parse).getOrNull()
         }
     }
 }

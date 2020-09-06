@@ -1,11 +1,12 @@
 package net.sourcebot.module.moderation
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.SuccessResponse
+import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.*
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.SuccessResponse
 
 abstract class ModerationCommand internal constructor(
     final override val name: String,
@@ -68,8 +69,8 @@ class MuteCommand : ModerationCommand(
 
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid user to mute!")
-        val duration = args.next("You did not specify a valid mute duration!")
-        // Try to parse duration string
+        val duration = args.next(Adapter.duration(),"You did not specify a valid mute duration!")
+        if (duration.isEmpty()) throw InvalidSyntaxException("Duration may not be empty!")
         val reason = args.slurp(" ", "You did not specify a mute reason!")
         //TODO: Mute user
         return SuccessResponse(
@@ -92,7 +93,8 @@ class TempbanCommand : ModerationCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid user to tempban!")
         val delDays = args.next(Adapter.int()) ?: 7
-        val duration = args.next("You did not specify a valid tempban duration!")
+        val duration = args.next(Adapter.duration(),"You did not specify a valid tempban duration!")
+        if (duration.isEmpty()) throw InvalidSyntaxException("Duration may not be empty!")
         val reason = args.slurp(" ", "You did not specify a tempban reason!")
         //TODO: Tempban, Case ID
         return SuccessResponse(
