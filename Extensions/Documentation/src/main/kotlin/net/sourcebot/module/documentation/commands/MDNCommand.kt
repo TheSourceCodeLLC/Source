@@ -31,14 +31,15 @@ class MDNCommand : RootCommand() {
         val iconUrl = "https://developer.mozilla.org/static/img/opengraph-logo.72382e605ce3.png"
 
         if (!args.hasNext()) {
-            val description = "You can find the MDN Documentation at [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/)"
+            val description =
+                "You can find the MDN Documentation at [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/)"
             return InfoResponse(user.name, description)
         }
 
         val query = args.next("Unable to find query!").replace("#", ".").removeSuffix("()")
 
-        if (cache.hasAlert(query)) {
-            return cache.getAlert(query)!!
+        if (cache.hasResponse(query)) {
+            return cache.getResponse(query)!!
         }
 
         val connectionStr = "https://developer.mozilla.org/api/v1/search/en-US?q=$query"
@@ -49,14 +50,14 @@ class MDNCommand : RootCommand() {
                 .maxBodySize(0)
                 .get()
 
-            val notFoundAlert = ErrorResponse(user.name, "Unable to find `$query` in the MDN Documentation!")
+            val notFoundResponse = ErrorResponse(user.name, "Unable to find `$query` in the MDN Documentation!")
 
 
             val jsonObject = JsonSerial.mapper.readTree(searchDocument.body().text())
             val documentArray = jsonObject["documents"] as ArrayNode
 
-            if (documentArray.size() == 0) {
-                return notFoundAlert
+            if (documentArray.isEmpty) {
+                return notFoundResponse
             }
 
             val resultList: MutableList<JsonNode> = mutableListOf()
@@ -67,25 +68,25 @@ class MDNCommand : RootCommand() {
             }.toCollection(resultList)
 
             if (resultList.isEmpty()) {
-                val alertDescSB = StringBuilder()
+                val responseDescSB = StringBuilder()
 
                 documentArray.forEach {
                     val title: String = it["title"].asText() ?: return@forEach
                     val url = "$baseUrl/${it["slug"].asText() ?: return@forEach}"
                     if (title.isEmpty()) return@forEach
                     val itemHyperlink = "[$title]($url)"
-                    alertDescSB.append("**$itemHyperlink**\n")
+                    responseDescSB.append("**$itemHyperlink**\n")
                 }
 
-                if (alertDescSB.isEmpty()) return notFoundAlert
+                if (responseDescSB.isEmpty()) return notFoundResponse
 
-                val searchResultAlert = DocResponse()
-                searchResultAlert.setAuthor("MDN Documentation", null, iconUrl)
+                val searchResultResponse = DocResponse()
+                searchResultResponse.setAuthor("MDN Documentation", null, iconUrl)
                     .setTitle("Search Results:")
-                    .setDescription(alertDescSB.toString())
+                    .setDescription(responseDescSB.toString())
 
-                cache.putAlert(query, searchResultAlert)
-                return searchResultAlert
+                cache.putResponse(query, searchResultResponse)
+                return searchResultResponse
             }
 
             val docObjectResult = resultList[0]
@@ -96,14 +97,14 @@ class MDNCommand : RootCommand() {
                 .maxBodySize(0)
                 .get()
 
-            val docAlert = DocResponse()
-            docAlert.setAuthor("MDN Documentation", null, iconUrl)
+            val docResponse = DocResponse()
+            docResponse.setAuthor("MDN Documentation", null, iconUrl)
 
             val wikiElement = resultDocument.selectFirst("article#wikiArticle")
             wikiElement.html(wikiElement.html().replace("<p></p>", ""))
 
             val descriptionElement = wikiElement.selectFirst("article > p")
-                    ?: return ErrorResponse(user.name, "Unable to find article description!")
+                ?: return ErrorResponse(user.name, "Unable to find article description!")
 
             val description = hyperlinksToMarkdown(descriptionElement).toMarkdown().truncate(600)
 
@@ -111,31 +112,31 @@ class MDNCommand : RootCommand() {
 
             val itemHyperlink = MarkdownUtil.maskedLink(anchorText, resultUrl)
 
-            docAlert.setDescription("**__${itemHyperlink}__**\n$description")
+            docResponse.setDescription("**__${itemHyperlink}__**\n$description")
 
             val propertyString = retrieveFormattedAnchorList(wikiElement, "Properties")
-            if (propertyString.isNotEmpty()) docAlert.addField("Properties:", propertyString, false)
+            if (propertyString.isNotEmpty()) docResponse.addField("Properties:", propertyString, false)
 
             val methodString = retrieveFormattedAnchorList(wikiElement, "Methods")
-            if (methodString.isNotEmpty()) docAlert.addField("Methods:", methodString, false)
+            if (methodString.isNotEmpty()) docResponse.addField("Methods:", methodString, false)
 
             val parameterString = retrieveFormattedElement(wikiElement, "Parameters")
-            if (parameterString.isNotEmpty()) docAlert.addField("Parameters:", parameterString, false)
+            if (parameterString.isNotEmpty()) docResponse.addField("Parameters:", parameterString, false)
 
             val returnValString = retrieveFormattedElement(wikiElement, "Return_value")
-            if (returnValString.isNotEmpty()) docAlert.addField("Returns:", returnValString, false)
+            if (returnValString.isNotEmpty()) docResponse.addField("Returns:", returnValString, false)
 
             val exceptionString = retrieveFormattedElement(wikiElement, "Exceptions")
-            if (exceptionString.isNotEmpty()) docAlert.addField("Exceptions:", exceptionString, false)
+            if (exceptionString.isNotEmpty()) docResponse.addField("Exceptions:", exceptionString, false)
 
             val valueString = retrieveFormattedElement(wikiElement, "Value")
-            if (valueString.isNotEmpty()) docAlert.addField("Value:", valueString, false)
+            if (valueString.isNotEmpty()) docResponse.addField("Value:", valueString, false)
 
             val throwString = retrieveFormattedElement(wikiElement, "Throws")
-            if (throwString.isNotEmpty()) docAlert.addField("Throws:", throwString, false)
+            if (throwString.isNotEmpty()) docResponse.addField("Throws:", throwString, false)
 
-            cache.putAlert(query, docAlert)
-            return docAlert
+            cache.putResponse(query, docResponse)
+            return docResponse
         } catch (ex: Exception) {
             ex.printStackTrace()
             return ErrorResponse(user.name, "Something went wrong, please try again!")
@@ -238,15 +239,15 @@ class MDNCommand : RootCommand() {
     private class MDNDocCache {
         val mdnCache: MutableMap<String, Response> = mutableMapOf()
 
-        fun hasAlert(query: String): Boolean {
-            return mdnCache.containsKey(query)
+        fun hasResponse(query: String): Boolean {
+            return mdnCache.containsKey(query.toLowerCase())
         }
 
-        fun putAlert(query: String, response: Response) {
+        fun putResponse(query: String, response: Response) {
             mdnCache[query.toLowerCase()] = response
         }
 
-        fun getAlert(query: String): Response? {
+        fun getResponse(query: String): Response? {
             return mdnCache[query.toLowerCase()]
         }
     }

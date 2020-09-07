@@ -64,7 +64,7 @@ class DJSCommand : RootCommand() {
             val responseBody: String = response.body().replace("\"icon_url\":", "\"iconUrl\":")
             JsonSerial.mapper.readValue(responseBody, DocResponse::class.java)
         } catch (ex: Exception) {
-            ex.printStackTrace()
+            //ex.printStackTrace()
             ErrorResponse(user.name, "Unable to find `$query` in the DJS Documentation!")
         }
     }

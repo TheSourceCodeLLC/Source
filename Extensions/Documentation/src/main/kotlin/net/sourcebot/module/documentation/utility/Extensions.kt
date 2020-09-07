@@ -43,3 +43,17 @@ fun String.truncate(limit: Int, ellipsis: String = "..."): String {
 
     return returnStr
 }
+
+fun StringBuilder.appendIfRoom(str: String, limit: Int, ellipsis: String = "...") {
+    if (this.length >= limit) return
+
+    this.append(str)
+    if (this.length >= limit) {
+        this.append(ellipsis)
+    }
+}
+
+fun String.capitalizeAllWords(): String {
+    return split(" ")
+        .joinToString(" ") { it.toLowerCase().capitalize() }
+}

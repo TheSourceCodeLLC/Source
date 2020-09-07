@@ -7,8 +7,9 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
 import net.sourcebot.module.documentation.utility.DocSelectorStorage
-import net.sourcebot.module.documentation.utility.JenkinsHandler
+
 
 class SpigotCommand : RootCommand() {
     override val name: String = "spigot"
@@ -18,15 +19,17 @@ class SpigotCommand : RootCommand() {
         Argument("query", "The item you are searching for in the Spigot documentation.")
     )
 
-    private val jenkinsHandler = JenkinsHandler("https://hub.spigotmc.org/javadocs/spigot/overview-tree.html",
+    private val jenkinsHandler = JenkinsHandler(
+        "https://hub.spigotmc.org/javadocs/spigot/overview-tree.html",
         "https://avatars0.githubusercontent.com/u/4350249?s=200&v=4",
-        "Spigot Javadocs")
+        "Spigot Javadocs"
+    )
 
     override fun execute(message: Message, args: Arguments): Response {
         return if (args.hasNext()) {
             val query = args.next("Unable to find query w/o version!")
 
-            jenkinsHandler.retrieveDocAlert(message, message.author, query)
+            jenkinsHandler.retrieveDocResponse(message, message.author, query)
         } else {
             val authorName = message.author.name
             val description =
