@@ -133,7 +133,6 @@ public class Source {
                 new PayCommand(),
                 new ReportCommand(),
                 new ShopCommand(),
-                new VerifyCommand(),
                 new HistoryCommand(),
                 new LeaderboardCommand(),
                 new CoinflipCommand(),

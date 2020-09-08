@@ -591,7 +591,6 @@ public class DatabaseManager {
             return;
         }
 
-        guild.addRoleToMember(member, SourceRole.UNVERIFIED.resolve(guild.getJDA())).queue();
         TextChannel channel = SourceChannel.AGREE.resolve(guild.getJDA());
         channel.sendMessage(user.getAsMention()).queue(m -> m.delete().queue());
 
