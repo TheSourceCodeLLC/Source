@@ -591,22 +591,21 @@ public class DatabaseManager {
             return;
         }
 
+        //Ping the new user in the verify channel so they know what they have to do
         TextChannel channel = SourceChannel.AGREE.resolve(guild.getJDA());
         channel.sendMessage(user.getAsMention()).queue(m -> m.delete().queue());
 
         String id = user.getId();
-        SourceProfile userProfile; // When this is declared it creates the user data or imports it if backup is found
-
         Document recoveredQuery = new Document().append("id", id);
         Document recovered = recovery.find(recoveredQuery).first();
+        //Restores user data if applicable or creates new data
         if (recovered != null) {
             recovery.deleteMany(recovered);
             recovered.remove("erase");
             userdata.insertOne(recovered);
-
-            userProfile = new SourceProfile(recovered);
+            new SourceProfile(recovered);
         } else {
-            userProfile = new SourceProfile(user);
+            new SourceProfile(user);
         }
 
         Document query = getCollection("PunishmentHandler").find(new Document("ID", user.getId()).append("TYPE", "TEMPMUTE")).first();
