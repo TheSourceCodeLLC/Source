@@ -8,7 +8,9 @@ private val hyperlinkPattern: Pattern = Pattern.compile("\\[.*?]\\(.*?\\)")
 private val remark: Remark = Remark()
 
 fun String.toMarkdown(): String {
-    return remark.convertFragment(this).replace("\\", "")
+    return remark.convertFragment(this)
+        .replace("\\", "")
+        .replace("%5C", "\\")
 }
 
 fun String.truncate(limit: Int, ellipsis: String = "..."): String {

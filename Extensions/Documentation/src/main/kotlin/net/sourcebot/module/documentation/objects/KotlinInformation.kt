@@ -81,9 +81,9 @@ abstract class KotlinInformation {
                 }
             }
 
-            val sanitizedUrl = MarkdownSanitizer.sanitize(url)
+            val sanitizedUrl = url.replace(")", "%5C)").replace(" ", "%20")
             val text: String = it.html().toMarkdown()
-            val hyperlink: String = MarkdownUtil.maskedLink(text, sanitizedUrl).replace("%29", ")")
+            val hyperlink = "[$text]($sanitizedUrl)"
 
             html = html.replace(it.outerHtml(), hyperlink)
         }
