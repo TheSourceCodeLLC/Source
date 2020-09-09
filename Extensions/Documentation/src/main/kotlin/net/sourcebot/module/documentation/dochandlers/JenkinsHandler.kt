@@ -1,4 +1,4 @@
-package net.sourcebot.module.documentation.utility
+package net.sourcebot.module.documentation.dochandlers
 
 import me.theforbiddenai.jenkinsparserkotlin.Jenkins
 import me.theforbiddenai.jenkinsparserkotlin.entities.*
@@ -9,6 +9,10 @@ import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.documentation.utility.DocResponse
+import net.sourcebot.module.documentation.utility.DocSelectorStorage
+import net.sourcebot.module.documentation.utility.toMarkdown
+import net.sourcebot.module.documentation.utility.truncate
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.util.stream.Collectors
@@ -24,7 +28,7 @@ class JenkinsHandler(
         url.substring(0, url.lastIndexOf("/") + 1).trim()
     }
 
-    fun retrieveDocAlert(cmdMessage: Message, user: User, query: String): Response {
+    fun retrieveDocResponse(cmdMessage: Message, user: User, query: String): Response {
         DocSelectorStorage.removeAndDeleteSelector(user)
 
         try {
@@ -34,27 +38,27 @@ class JenkinsHandler(
                 return ErrorResponse(user.name, "Unable to find `$query` in the $embedTitle!")
             }
 
-            val docAlert = DocResponse()
-            docAlert.setAuthor(embedTitle, null, iconUrl)
+            val docResponse = DocResponse()
+            docResponse.setAuthor(embedTitle, null, iconUrl)
 
             return if (infoList.size == 1) {
-                createDocumentationEmbed(docAlert, infoList[0])
+                createDocumentationEmbed(docResponse, infoList[0])
             } else {
                 val docStorage = DocSelectorStorage(null, cmdMessage, infoList, this)
                 DocSelectorStorage.addSelector(user, docStorage)
 
-                createSelectionEmbed(docAlert, infoList)
+                createSelectionEmbed(docResponse, infoList)
 
             }
 
         } catch (ex: Exception) {
-            ex.printStackTrace() //- This is for debug purposes when enabled
+            //ex.printStackTrace() //- This is for debug purposes when enabled
             val errDesc = "Unable to find `$query` in the $embedTitle!"
             return ErrorResponse(user.name, errDesc)
         }
     }
 
-    fun createDocumentationEmbed(docAlert: DocResponse, information: Information): DocResponse {
+    fun createDocumentationEmbed(docResponse: DocResponse, information: Information): DocResponse {
         var infoName: String = MarkdownSanitizer.sanitize(information.name)
         val infoRawDescription: String = information.rawDescription
         val infoUrl: String = MarkdownSanitizer.sanitize(information.url)
@@ -70,10 +74,10 @@ class JenkinsHandler(
                     .map { it.substringBefore("(").trim() }
                     .collect(Collectors.toList())
 
-                docAlert.attemptAddEmbedField(nestedClassList, "Nested Classes:")
-                docAlert.attemptAddEmbedField(methodList, "Methods:")
-                docAlert.attemptAddEmbedField(information.enumList, "Enums:")
-                docAlert.attemptAddEmbedField(information.fieldList, "Fields:")
+                docResponse.attemptAddEmbedField(nestedClassList, "Nested Classes:")
+                docResponse.attemptAddEmbedField(methodList, "Methods:")
+                docResponse.attemptAddEmbedField(information.enumList, "Enums:")
+                docResponse.attemptAddEmbedField(information.fieldList, "Fields:")
             }
 
             is MethodInformation -> {
@@ -102,7 +106,7 @@ class JenkinsHandler(
             .truncate(600)
 
         val infoHyperlink: String = MarkdownUtil.maskedLink(infoName, infoUrl)
-        docAlert.setDescription("**__${infoHyperlink}__**\n$infoDescription")
+        docResponse.setDescription("**__${infoHyperlink}__**\n$infoDescription")
 
         if (information !is ClassInformation) {
             val rawExtraInfo: Map<String, String> = information.rawExtraInformation
@@ -125,24 +129,24 @@ class JenkinsHandler(
                     convertedValue
                 }
 
-                docAlert.addField(key, fieldValue, false)
+                docResponse.addField(key, fieldValue, false)
             }
         }
 
-        return docAlert
+        return docResponse
     }
 
-    private fun createSelectionEmbed(docAlert: DocResponse, infoList: List<Information>): DocResponse {
-        docAlert.setTitle("Type the id of the option you would like to select in chat:")
-        docAlert.setFooter("Type cancel to delete this message.")
+    private fun createSelectionEmbed(docResponse: DocResponse, infoList: List<Information>): DocResponse {
+        docResponse.setTitle("Type the id of the option you would like to select in chat:")
+        docResponse.setFooter("Type cancel to delete this message.")
 
         infoList.sortedByDescending { it.name }
 
         for (i in infoList.indices) {
 
-            if (docAlert.descriptionBuilder.length >= 712) {
+            if (docResponse.descriptionBuilder.length >= 712) {
                 val format = "\n\nIds not shown above: %d to %d"
-                docAlert.appendDescription(String.format(format, i + 1, infoList.size))
+                docResponse.appendDescription(String.format(format, i + 1, infoList.size))
                 break
             }
 
@@ -156,11 +160,11 @@ class JenkinsHandler(
 
             val optionText = MarkdownUtil.maskedLink(name, info.url)
 
-            docAlert.appendDescription("\n\n**${i + 1}** - $optionText")
+            docResponse.appendDescription("\n\n**${i + 1}** - $optionText")
 
         }
 
-        return docAlert
+        return docResponse
     }
 
     private fun EmbedBuilder.attemptAddEmbedField(fieldList: List<String>, fieldName: String): EmbedBuilder {
@@ -210,7 +214,7 @@ class JenkinsHandler(
                             val pkgUrl = url.substringBeforeLast("/")
                             "$pkgUrl/$this"
                         }
-                        contains("../") || contains("#") && !contains(".html") -> {
+                        contains("../") || contains("#") -> {
 
                             if (contains("#") && !contains("/")) {
                                 return@with baseClassUrl + url

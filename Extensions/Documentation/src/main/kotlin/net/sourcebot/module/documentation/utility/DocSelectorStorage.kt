@@ -3,6 +3,7 @@ package net.sourcebot.module.documentation.utility
 import me.theforbiddenai.jenkinsparserkotlin.entities.Information
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
+import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
 
 internal data class DocSelectorStorage(
     var message: Message?,

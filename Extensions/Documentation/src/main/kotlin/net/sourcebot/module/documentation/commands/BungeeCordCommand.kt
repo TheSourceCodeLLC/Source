@@ -7,8 +7,8 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
 import net.sourcebot.module.documentation.utility.DocSelectorStorage
-import net.sourcebot.module.documentation.utility.JenkinsHandler
 
 class BungeeCordCommand : RootCommand() {
     override val name: String = "bungeecord"
@@ -19,15 +19,17 @@ class BungeeCordCommand : RootCommand() {
     )
     override val aliases: Array<String> = arrayOf("bungee")
 
-    private val jenkinsHandler = JenkinsHandler("https://papermc.io/javadocs/waterfall/allclasses-noframe.html",
+    private val jenkinsHandler = JenkinsHandler(
+        "https://papermc.io/javadocs/waterfall/allclasses-noframe.html",
         "https://avatars0.githubusercontent.com/u/4350249?s=200&v=4",
-        "BungeeCord Javadocs")
+        "BungeeCord Javadocs"
+    )
 
     override fun execute(message: Message, args: Arguments): Response {
         return if (args.hasNext()) {
             val query = args.next("Unable to find query w/o version!")
 
-            jenkinsHandler.retrieveDocAlert(message, message.author, query)
+            jenkinsHandler.retrieveDocResponse(message, message.author, query)
         } else {
             val authorName = message.author.name
             val description =

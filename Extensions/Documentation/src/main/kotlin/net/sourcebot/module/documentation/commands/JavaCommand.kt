@@ -8,8 +8,8 @@ import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
 import net.sourcebot.module.documentation.utility.DocSelectorStorage
-import net.sourcebot.module.documentation.utility.JenkinsHandler
 
 class JavaCommand : RootCommand() {
     override val name: String = "java"
@@ -20,7 +20,8 @@ class JavaCommand : RootCommand() {
         Argument("query", "The item you are searching for in the Java documentation.")
     )
 
-    private val iconUrl = "https://upload.wikimedia.org/wikipedia/en/thumb/3/30/Java_programming_language_logo.svg/1200px-Java_programming_language_logo.svg.png"
+    private val iconUrl =
+        "https://upload.wikimedia.org/wikipedia/en/thumb/3/30/Java_programming_language_logo.svg/1200px-Java_programming_language_logo.svg.png"
 
     private val javadocCache: MutableMap<Int, JenkinsHandler> = mutableMapOf()
 
@@ -43,8 +44,9 @@ class JavaCommand : RootCommand() {
 
                     jenkinsHandler = javadocCache[version]
                     if (jenkinsHandler == null) {
-                        val connectionString = if (version >= 11) "https://docs.oracle.com/en/java/javase/$version/docs/api/overview-tree.html"
-                        else "https://docs.oracle.com/javase/$version/docs/api/allclasses-noframe.html"
+                        val connectionString =
+                            if (version >= 11) "https://docs.oracle.com/en/java/javase/$version/docs/api/overview-tree.html"
+                            else "https://docs.oracle.com/javase/$version/docs/api/allclasses-noframe.html"
 
                         jenkinsHandler = JenkinsHandler(connectionString, iconUrl, "Java $version Javadocs")
                         javadocCache[version] = jenkinsHandler
@@ -58,7 +60,7 @@ class JavaCommand : RootCommand() {
                 return ErrorResponse(message.author.name, "Uh Oh, something went wrong! Please try again.")
             }
 
-            return jenkinsHandler.retrieveDocAlert(message, message.author, query)
+            return jenkinsHandler.retrieveDocResponse(message, message.author, query)
         } else {
             val authorName = message.author.name
             val description =

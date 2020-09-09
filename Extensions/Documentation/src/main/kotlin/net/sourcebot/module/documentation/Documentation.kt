@@ -15,11 +15,12 @@ class Documentation : SourceModule() {
             SpigotCommand(),
             BungeeCordCommand(),
             DJSCommand(),
-            MDNCommand()
+            MDNCommand(),
+            KotlinCommand()
         )
 
         val deleteSeconds: Long = source.properties.required("commands.delete-seconds")
-        source.shardManager.addEventListener(DocSelectorEvent(deleteSeconds))
+        source.jdaEventSystem.listen(this, DocSelectorEvent(deleteSeconds)::onMessageReceived)
     }
 
 }

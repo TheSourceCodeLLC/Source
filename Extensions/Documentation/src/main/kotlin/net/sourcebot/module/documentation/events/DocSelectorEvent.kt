@@ -4,15 +4,14 @@ import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.module.documentation.utility.DocResponse
 import net.sourcebot.module.documentation.utility.DocSelectorStorage
 import java.util.concurrent.TimeUnit
 
-class DocSelectorEvent(private val deleteSeconds: Long) : ListenerAdapter() {
+class DocSelectorEvent(private val deleteSeconds: Long) {
 
-    override fun onMessageReceived(event: MessageReceivedEvent) {
+    fun onMessageReceived(event: MessageReceivedEvent) {
         val user = event.author
         val channelType: ChannelType = event.channelType
 
@@ -42,29 +41,29 @@ class DocSelectorEvent(private val deleteSeconds: Long) : ListenerAdapter() {
         try {
             val selectedId: Int = messageContent.toInt() - 1
             if (selectedId > infoList.size) {
-                sendInvalidIdAlert(user, channelType, docMessage, cmdMessage)
+                sendInvalidIdResponse(user, channelType, docMessage, cmdMessage)
                 return
             }
 
-            var docAlert = DocResponse()
-            docAlert.setAuthor(jenkinsHandler.embedTitle, null, jenkinsHandler.iconUrl)
+            var docResponse = DocResponse()
+            docResponse.setAuthor(jenkinsHandler.embedTitle, null, jenkinsHandler.iconUrl)
 
-            docAlert = jenkinsHandler.createDocumentationEmbed(docAlert, infoList[selectedId])
+            docResponse = jenkinsHandler.createDocumentationEmbed(docResponse, infoList[selectedId])
 
-            docMessage.editMessage(docAlert.asMessage(user)).queue()
+            docMessage.editMessage(docResponse.asMessage(user)).queue()
             DocSelectorStorage.removeSelector(user)
         } catch (ex: Exception) {
-            sendInvalidIdAlert(user, channelType, docMessage, cmdMessage)
+            sendInvalidIdResponse(user, channelType, docMessage, cmdMessage)
         }
 
     }
 
-    private fun sendInvalidIdAlert(user: User, channelType: ChannelType, docMessage: Message, cmdMessage: Message) {
+    private fun sendInvalidIdResponse(user: User, channelType: ChannelType, docMessage: Message, cmdMessage: Message) {
         DocSelectorStorage.removeSelector(user)
 
-        val invalidIdAlert = ErrorResponse(user.name, "You entered an invalid selection id!")
+        val invalidIdResponse = ErrorResponse(user.name, "You entered an invalid selection id!")
 
-        docMessage.editMessage(invalidIdAlert.asMessage(user)).complete()
+        docMessage.editMessage(invalidIdResponse.asMessage(user)).complete()
             .delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)
 
         if (channelType != ChannelType.PRIVATE) {

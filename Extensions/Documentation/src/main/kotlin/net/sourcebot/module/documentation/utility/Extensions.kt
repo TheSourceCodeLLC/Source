@@ -8,7 +8,9 @@ private val hyperlinkPattern: Pattern = Pattern.compile("\\[.*?]\\(.*?\\)")
 private val remark: Remark = Remark()
 
 fun String.toMarkdown(): String {
-    return remark.convertFragment(this).replace("\\", "")
+    return remark.convertFragment(this)
+        .replace("\\", "")
+        .replace("%5C", "\\")
 }
 
 fun String.truncate(limit: Int, ellipsis: String = "..."): String {
@@ -42,4 +44,18 @@ fun String.truncate(limit: Int, ellipsis: String = "..."): String {
     }
 
     return returnStr
+}
+
+fun StringBuilder.appendIfRoom(str: String, limit: Int, ellipsis: String = "...") {
+    if (this.length >= limit) return
+
+    this.append(str)
+    if (this.length >= limit) {
+        this.append(ellipsis)
+    }
+}
+
+fun String.capitalizeAllWords(): String {
+    return split(" ")
+        .joinToString(" ") { it.toLowerCase().capitalize() }
 }
