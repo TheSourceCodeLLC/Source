@@ -6,7 +6,15 @@ subprojects {
 
     val targetFolder = File(rootProject.projectDir, "target")
     tasks {
+        register<Delete>("deleteOld") {
+            delete(
+                fileTree(File(targetFolder, "/bin/modules")).include(
+                    "${project.name}*.jar"
+                )
+            )
+        }
         named<ShadowJar>("shadowJar") {
+            dependsOn("deleteOld")
             destinationDirectory.set(File(targetFolder, "/bin/modules"))
         }
     }
