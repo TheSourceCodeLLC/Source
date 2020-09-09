@@ -1,9 +1,9 @@
 package net.sourcebot.api.module
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import net.sourcebot.api.configuration.Properties
+import net.sourcebot.api.configuration.JsonConfiguration
 
-class ModuleDescriptor(json: ObjectNode) : Properties(json) {
+class ModuleDescriptor(json: ObjectNode) : JsonConfiguration(json) {
     val main: String = required("main")
 
     val name: String = required("name")

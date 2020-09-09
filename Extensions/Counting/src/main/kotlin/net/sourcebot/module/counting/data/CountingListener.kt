@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.sourcebot.Source
 import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.module.SourceModule
 
 class CountingListener(
@@ -25,8 +26,15 @@ class CountingListener(
     private fun onReceive(event: GuildMessageReceivedEvent) {
         if (event.author.isBot) return
         val guildData = configurationManager[event.guild]
-        val data: CountingData = guildData.required("counting") { guildData.set("counting", CountingData()) }
-        val channel = data.channel?.let {
+        val data: JsonConfiguration = guildData.required("counting") {
+            JsonConfiguration(
+                mapOf(
+                    "channel" to null,
+                    "record" to 1
+                )
+            )
+        }
+        val channel = data.optional<String>("channel")?.let {
             event.guild.getTextChannelById(it)
         } ?: return
         if (event.channel != channel) return
@@ -67,8 +75,8 @@ class CountingListener(
     }
 
     private fun onEdit(event: GuildMessageUpdateEvent) {
-        val data: CountingData = configurationManager[event.guild].optional("counting") ?: return
-        val channel = data.channel?.let {
+        val data: JsonConfiguration = configurationManager[event.guild].optional("counting") ?: return
+        val channel = data.optional<String>("channel")?.let {
             event.guild.getTextChannelById(it)
         } ?: return
         if (event.channel != channel) return
@@ -80,17 +88,18 @@ class CountingListener(
     private fun restart(
         failMessage: String,
         message: Message,
-        data: CountingData
+        data: JsonConfiguration
     ) {
         val channel = message.channel as TextChannel
         var toSend = failMessage
         val current = records[channel.id] ?: 1
-        if (current > data.record) {
-            toSend += "\nNew Record! New: $current. Old: ${data.record}."
-            data.record = current
+        val record = data.required<Long>("record")
+        if (current > record) {
+            toSend += "\nNew Record! New: $current. Old: $record."
+            data["record"] = current
         }
         channel.sendMessage(
-            toSend + "\nRestarting... Current record: ${data.record}\n1"
+            toSend + "\nRestarting... Current record: ${record}\n1"
         ).complete()
 
         val lastMessage = CountingMessage(1, message.jda.selfUser.id)

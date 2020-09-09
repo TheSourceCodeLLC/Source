@@ -5,11 +5,10 @@ import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.SuccessResponse
-import net.sourcebot.module.counting.data.CountingData
 
 class CountingCommand(
     private val configurationManager: GuildConfigurationManager
@@ -22,7 +21,6 @@ class CountingCommand(
     init {
         addChildren(
             CountingRulesCommand(),
-            CountingChannelCommand(),
             CountingRecordCommand()
         )
     }
@@ -46,25 +44,11 @@ class CountingCommand(
     ) {
         override fun execute(message: Message, args: Arguments): Response {
             val guildData = configurationManager[message.guild]
-            val data: CountingData = guildData.optional("counting") ?: return ErrorResponse(
+            val data: JsonConfiguration = guildData.optional("counting") ?: return ErrorResponse(
                 "Counting Record Error", "Counting has not been configured for this Guild!"
             )
-            return InfoResponse("Counting Record", "The current record is: ${data.record}")
-        }
-    }
-
-    private inner class CountingChannelCommand : CommandBootstrap(
-        "channel", "Sets the counting channel to the current channel."
-    ) {
-        override fun execute(message: Message, args: Arguments): Response {
-            val guildData = configurationManager[message.guild]
-            val data: CountingData = guildData.required("counting") {
-                guildData.set("counting", CountingData(message.channel.id, 0))
-            }
-            data.channel = message.channel.id
-            guildData["counting"] = data
-            configurationManager.saveData(message.guild, guildData)
-            return SuccessResponse("Counting Channel Updated", "The current channel is now the counting channel!")
+            val record: Long = data.optional("record") ?: 0
+            return InfoResponse("Counting Record", "The current record is: $record")
         }
     }
 

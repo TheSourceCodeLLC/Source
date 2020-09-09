@@ -14,15 +14,16 @@ import java.util.regex.Pattern
  * @version April 25, 2020
  */
 abstract class AbstractMessageHandler constructor(private val prefix: String) {
-    private val ARGS_PATTERN = Pattern.compile("(\".*?\"|[^ ]+)")
+    private val ARGS_PATTERN = Pattern.compile("(\".*?\"|\\S+)")
     fun onMessageReceived(event: MessageReceivedEvent) {
         val message = event.message
         var content = message.contentRaw
         if (!content.startsWith(prefix)) return
         content = content.substring(prefix.length)
         val args = ARGS_PATTERN.matcher(content).results()
-            .map { it.group() /* .replace("\"(.+)\"".toRegex(), "$1") */ }
-            .toArray<String> { arrayOfNulls(it) }
+            .map {
+                it.group().replace(Regex("\"(.+)\""), "$1")
+            }.toArray<String> { arrayOfNulls(it) }
         val label = args[0].toLowerCase()
         cascade(message, label, args.copyOfRange(1, args.size))
     }

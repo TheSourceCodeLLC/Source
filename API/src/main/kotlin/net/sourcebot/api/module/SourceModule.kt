@@ -1,8 +1,8 @@
 package net.sourcebot.api.module
 
 import net.sourcebot.Source
+import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.configuration.JsonSerial
-import net.sourcebot.api.configuration.Properties
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -31,10 +31,10 @@ abstract class SourceModule {
         }
     }
 
-    val config: Properties by lazy {
+    val config: JsonConfiguration by lazy {
         val file = File(dataFolder, "config.json")
         if (!file.exists()) saveResource("/config.json")
-        return@lazy file.let { JsonSerial.mapper.readValue(it, Properties::class.java) }
+        return@lazy file.let { JsonSerial.mapper.readValue(it, JsonConfiguration::class.java) }
     }
 
     fun saveResource(absPath: String): File {

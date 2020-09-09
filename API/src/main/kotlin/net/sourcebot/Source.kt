@@ -15,8 +15,8 @@ import net.dv8tion.jda.api.requests.GatewayIntent.GUILD_MESSAGE_TYPING
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.sourcebot.api.command.CommandHandler
 import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.configuration.JsonSerial
-import net.sourcebot.api.configuration.Properties
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.EventSystem
@@ -39,7 +39,7 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 import java.util.concurrent.Executors
 
-class Source(val properties: Properties) {
+class Source(val properties: JsonConfiguration) {
     private val logger: Logger = LoggerFactory.getLogger(Source::class.java)
 
     private val ignoredIntents = EnumSet.of(
@@ -143,7 +143,7 @@ class Source(val properties: Properties) {
             if (enabled) throw IllegalStateException("Source is already enabled!")
             enabled = true
 
-            JsonSerial.registerSerial(Properties.Serial())
+            JsonSerial.registerSerial(JsonConfiguration.Serial())
             val properties = File("config.json").apply {
                 if (!exists()) {
                     Source::class.java.getResourceAsStream("/config.example.json").use {
@@ -151,7 +151,7 @@ class Source(val properties: Properties) {
                     }
                 }
             }.let {
-                JsonSerial.mapper.readValue(it, Properties::class.java)
+                JsonSerial.mapper.readValue(it, JsonConfiguration::class.java)
             }
             val logLevelName = properties.required<String>("log-level")
             val logLevel = Level.toLevel(logLevelName, Level.INFO)

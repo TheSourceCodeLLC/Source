@@ -2,8 +2,8 @@ package net.sourcebot.module.trivia.data
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
+import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.configuration.JsonSerial
-import net.sourcebot.api.configuration.Properties
 import net.sourcebot.api.urlDecoded
 
 object OpenTDB {
@@ -12,7 +12,7 @@ object OpenTDB {
     private const val categoryUrl = "$baseUrl/api_category.php"
 
     val categories: List<Category> by lazy {
-        JsonSerial.fromUrl<Properties>(categoryUrl).required("trivia_categories")
+        JsonSerial.fromUrl<JsonConfiguration>(categoryUrl).required("trivia_categories")
     }
 
     private val categoryIds by lazy { categories.map(Category::id) }
@@ -25,7 +25,7 @@ object OpenTDB {
         var reqUrl = "$apiUrl?amount=$amount"
         if (category != null) reqUrl += "&category=$category"
         reqUrl += "&type=multiple&encode=url3986"
-        val response: Properties = JsonSerial.fromUrl(reqUrl)
+        val response: JsonConfiguration = JsonSerial.fromUrl(reqUrl)
         return response.required("results")
     }
 

@@ -7,10 +7,7 @@ import net.sourcebot.api.module.InvalidModuleException
 import net.sourcebot.api.module.ModuleClassLoader
 import net.sourcebot.api.module.ModuleDescriptor
 import net.sourcebot.api.module.SourceModule
-import net.sourcebot.impl.command.GuildInfoCommand
-import net.sourcebot.impl.command.HelpCommand
-import net.sourcebot.impl.command.PermissionsCommand
-import net.sourcebot.impl.command.TimingsCommand
+import net.sourcebot.impl.command.*
 import net.sourcebot.impl.command.lifecycle.RestartCommand
 
 class BaseModule(
@@ -40,6 +37,7 @@ class BaseModule(
             GuildInfoCommand(),
             TimingsCommand(),
             PermissionsCommand(source.permissionHandler),
+            ConfigurationCommand(source.guildConfigurationManager),
 
             RestartCommand(source.properties.required("restart-script")),
         )
