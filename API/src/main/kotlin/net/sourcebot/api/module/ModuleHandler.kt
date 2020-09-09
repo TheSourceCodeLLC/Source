@@ -111,6 +111,7 @@ class ModuleHandler(
         val mainClass = findClass(descriptor.main, loader)
         val module = mainClass.newInstance() as SourceModule
         module.apply {
+            this.source = this@ModuleHandler.source
             this.classLoader = loader
             this.descriptor = descriptor
             loadModule(this)
@@ -121,15 +122,15 @@ class ModuleHandler(
 
     fun loadModule(
         module: SourceModule
-    ) = module.load(source) { moduleIndex[module.name] = module }
+    ) = module.load { moduleIndex[module.name] = module }
 
     fun enableModule(
         module: SourceModule
-    ) = module.enable(source) { module.enabled = true }
+    ) = module.enable { module.enabled = true }
 
     fun disableModule(
         module: SourceModule
-    ) = module.disable(source) { module.enabled = false }
+    ) = module.disable { module.enabled = false }
 
     fun findModule(name: String): SourceModule? = moduleIndex.values.find {
         it.name.startsWith(name, true)

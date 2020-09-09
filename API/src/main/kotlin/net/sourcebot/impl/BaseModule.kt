@@ -11,9 +11,10 @@ import net.sourcebot.impl.command.*
 import net.sourcebot.impl.command.lifecycle.RestartCommand
 
 class BaseModule(
-    private val source: Source
+    source: Source
 ) : SourceModule() {
     init {
+        this.source = source
         classLoader = object : ModuleClassLoader(source.moduleHandler) {
             override fun findClass(name: String, searchParent: Boolean): Class<*> {
                 return try {
@@ -30,9 +31,8 @@ class BaseModule(
         }.let(::ModuleDescriptor)
     }
 
-    override fun onEnable(source: Source) {
-        source.commandHandler.registerCommands(
-            this,
+    override fun onEnable() {
+        registerCommands(
             HelpCommand(source.moduleHandler, source.commandHandler),
             GuildInfoCommand(),
             TimingsCommand(),

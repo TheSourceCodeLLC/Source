@@ -1,6 +1,7 @@
 package net.sourcebot.api.module
 
 import net.sourcebot.Source
+import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.configuration.JsonSerial
 import org.slf4j.Logger
@@ -10,6 +11,9 @@ import java.nio.file.Files
 
 abstract class SourceModule {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
+
+    lateinit var source: Source
+        internal set
 
     lateinit var classLoader: ModuleClassLoader
         internal set
@@ -49,8 +53,8 @@ abstract class SourceModule {
         }
     }
 
-    fun load(source: Source, postLoad: () -> Unit) {
-        onLoad(source)
+    fun load(postLoad: () -> Unit) {
+        onLoad()
         postLoad()
         logger.info("Loaded $name v$version by $author.")
     }
@@ -59,10 +63,10 @@ abstract class SourceModule {
      * Fired when this Module is being loaded; before it is enabled.
      * Methods in this scope should not utilize API from other Modules.
      */
-    open fun onLoad(source: Source) = Unit
+    open fun onLoad() = Unit
 
-    fun enable(source: Source, postEnable: () -> Unit) {
-        onEnable(source)
+    fun enable(postEnable: () -> Unit) {
+        onEnable()
         postEnable()
         logger.info("Enabled $name v${version}.")
     }
@@ -70,10 +74,10 @@ abstract class SourceModule {
     /**
      * Fired when this Module is being enabled, after it is loaded.
      */
-    open fun onEnable(source: Source) = Unit
+    open fun onEnable() = Unit
 
-    fun disable(source: Source, postDisable: () -> Unit) {
-        onDisable(source)
+    fun disable(postDisable: () -> Unit) {
+        onDisable()
         postDisable()
         logger.info("Disabled $name v${version}.")
     }
@@ -81,5 +85,9 @@ abstract class SourceModule {
     /**
      * Fired when this Module is being disabled, before it is unloaded.
      */
-    open fun onDisable(source: Source) = Unit
+    open fun onDisable() = Unit
+
+    fun registerCommands(vararg commands: RootCommand) {
+        source.commandHandler.registerCommands(this, *commands)
+    }
 }

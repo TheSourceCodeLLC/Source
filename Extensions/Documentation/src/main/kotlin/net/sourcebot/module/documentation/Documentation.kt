@@ -1,15 +1,13 @@
 package net.sourcebot.module.documentation
 
-import net.sourcebot.Source
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.documentation.commands.*
 import net.sourcebot.module.documentation.events.DocSelectorEvent
 
 class Documentation : SourceModule() {
 
-    override fun onEnable(source: Source) {
-        source.commandHandler.registerCommands(
-            this,
+    override fun onEnable() {
+        registerCommands(
             JDACommand(),
             JavaCommand(),
             SpigotCommand(),

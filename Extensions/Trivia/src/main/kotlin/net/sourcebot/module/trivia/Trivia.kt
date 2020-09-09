@@ -1,16 +1,14 @@
 package net.sourcebot.module.trivia
 
-import net.sourcebot.Source
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.trivia.command.TriviaCommand
 import net.sourcebot.module.trivia.data.TriviaListener
 
-
 class Trivia : SourceModule() {
 
-    override fun onEnable(source: Source) {
+    override fun onEnable() {
         triviaListener = TriviaListener(this, source.jdaEventSystem)
-        source.commandHandler.registerCommands(this, TriviaCommand())
+        registerCommands(TriviaCommand())
     }
 
     companion object {
