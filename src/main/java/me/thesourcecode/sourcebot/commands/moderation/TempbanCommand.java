@@ -5,6 +5,7 @@ import me.thesourcecode.sourcebot.api.command.Command;
 import me.thesourcecode.sourcebot.api.command.CommandInfo;
 import me.thesourcecode.sourcebot.api.entity.SourceRole;
 import me.thesourcecode.sourcebot.api.message.alerts.CommonAlerts;
+import me.thesourcecode.sourcebot.api.message.alerts.CriticalAlert;
 import me.thesourcecode.sourcebot.api.message.alerts.SuccessAlert;
 import me.thesourcecode.sourcebot.api.objects.incidents.SourceTempban;
 import me.thesourcecode.sourcebot.api.utility.Utility;
@@ -73,14 +74,18 @@ public class TempbanCommand extends Command {
         String reason = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
 
         SourceTempban sourceTempban = new SourceTempban(user.getId(), targetUser.getId(), durationString, reason);
-        sourceTempban.sendIncidentEmbed();
-        sourceTempban.execute();
+        if (sourceTempban.execute()) {
+            sourceTempban.sendIncidentEmbed();
 
 
-        // Sends a success embed
-        SuccessAlert sAlert = new SuccessAlert();
-        sAlert.setDescription("You have successfully tempbanned " + targetUser.getAsTag() + "!");
+            // Sends a success embed
+            SuccessAlert sAlert = new SuccessAlert();
+            sAlert.setDescription("You have successfully tempbanned " + targetUser.getAsTag() + "!");
 
-        return new MessageBuilder(sAlert.build(user)).build();
+            return new MessageBuilder(sAlert.build(user)).build();
+        }
+        CriticalAlert cAlert = new CriticalAlert();
+        cAlert.setTitle("Error!").setDescription("I could not tempban that user!");
+        return new MessageBuilder(cAlert.build(user)).build();
     }
 }

@@ -28,15 +28,21 @@ public class SourceClear extends SourceIncident {
     }
 
     @Override
-    public void execute() {
-        TextChannel targetChannel = guild.getTextChannelById(getTargetId());
+    public boolean execute() {
+        try {
+            TextChannel targetChannel = guild.getTextChannelById(getTargetId());
 
-        MessageHistory history = new MessageHistory(targetChannel);
-        List<Message> msgs;
+            MessageHistory history = new MessageHistory(targetChannel);
+            List<Message> msgs;
 
-        int clearMsgAmnt = getClearedMessageAmount();
-        msgs = history.retrievePast(clearMsgAmnt == 100 ? clearMsgAmnt : clearMsgAmnt + 1).complete();
-        targetChannel.purgeMessages(msgs);
+            int clearMsgAmnt = getClearedMessageAmount();
+            msgs = history.retrievePast(clearMsgAmnt == 100 ? clearMsgAmnt : clearMsgAmnt + 1).complete();
+            targetChannel.purgeMessages(msgs);
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     @Override

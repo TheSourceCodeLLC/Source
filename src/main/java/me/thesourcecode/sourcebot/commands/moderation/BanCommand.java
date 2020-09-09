@@ -5,6 +5,7 @@ import me.thesourcecode.sourcebot.api.command.Command;
 import me.thesourcecode.sourcebot.api.command.CommandInfo;
 import me.thesourcecode.sourcebot.api.entity.SourceRole;
 import me.thesourcecode.sourcebot.api.message.alerts.CommonAlerts;
+import me.thesourcecode.sourcebot.api.message.alerts.CriticalAlert;
 import me.thesourcecode.sourcebot.api.message.alerts.SuccessAlert;
 import me.thesourcecode.sourcebot.api.objects.incidents.SourceBan;
 import me.thesourcecode.sourcebot.api.utility.Utility;
@@ -46,13 +47,17 @@ public class BanCommand extends Command {
         String reason = String.join(" ", args).replaceFirst(args[0], "");
 
         SourceBan sourceBan = new SourceBan(user.getId(), targetUser.getId(), reason);
-        sourceBan.sendIncidentEmbed();
-        sourceBan.execute();
+        if (sourceBan.execute()) {
+            sourceBan.sendIncidentEmbed();
 
-        // Sends a success message
-        SuccessAlert sAlert = new SuccessAlert();
-        sAlert.setDescription("You have successfully banned " + targetUser.getAsTag() + "!");
+            // Sends a success message
+            SuccessAlert sAlert = new SuccessAlert();
+            sAlert.setDescription("You have successfully banned " + targetUser.getAsTag() + "!");
 
-        return new MessageBuilder(sAlert.build(user)).build();
+            return new MessageBuilder(sAlert.build(user)).build();
+        }
+        CriticalAlert cAlert = new CriticalAlert();
+        cAlert.setTitle("Error").setDescription("I could not ban that user!");
+        return new MessageBuilder(cAlert.build(user)).build();
     }
 }

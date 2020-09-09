@@ -49,9 +49,15 @@ public class SourceTempban extends SourceIncident {
     }
 
     @Override
-    public void execute() {
-        User targetUser = jda.getUserById(getTargetId());
-        guild.ban(targetUser, 7, getReason()).queue();
+    public boolean execute() {
+        try {
+            User targetUser = jda.getUserById(getTargetId());
+            guild.ban(targetUser, 7, getReason()).queue();
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     @Override

@@ -5,6 +5,7 @@ import me.thesourcecode.sourcebot.api.command.Command;
 import me.thesourcecode.sourcebot.api.command.CommandInfo;
 import me.thesourcecode.sourcebot.api.entity.SourceRole;
 import me.thesourcecode.sourcebot.api.message.alerts.CommonAlerts;
+import me.thesourcecode.sourcebot.api.message.alerts.CriticalAlert;
 import me.thesourcecode.sourcebot.api.message.alerts.SuccessAlert;
 import me.thesourcecode.sourcebot.api.objects.incidents.SourceSoftban;
 import me.thesourcecode.sourcebot.api.utility.Utility;
@@ -47,13 +48,17 @@ public class SoftbanCommand extends Command {
         String reason = String.join(" ", args).replaceFirst(args[0], "");
 
         SourceSoftban sourceSoftban = new SourceSoftban(user.getId(), targetUser.getId(), reason);
-        sourceSoftban.sendIncidentEmbed();
-        sourceSoftban.execute();
+        if (sourceSoftban.execute()) {
+            sourceSoftban.sendIncidentEmbed();
 
-        SuccessAlert sAlert = new SuccessAlert();
-        sAlert.setDescription("You have successfully softbanned " + targetUser.getAsTag() + "!");
+            SuccessAlert sAlert = new SuccessAlert();
+            sAlert.setDescription("You have successfully softbanned " + targetUser.getAsTag() + "!");
 
-        return new MessageBuilder(sAlert.build(user)).build();
+            return new MessageBuilder(sAlert.build(user)).build();
+        }
+        CriticalAlert cAlert = new CriticalAlert();
+        cAlert.setTitle("Error!").setDescription("I could not softban that user!");
+        return new MessageBuilder(cAlert.build(user)).build();
     }
 
 }

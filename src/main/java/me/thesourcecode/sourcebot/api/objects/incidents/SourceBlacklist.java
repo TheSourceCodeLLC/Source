@@ -48,10 +48,16 @@ public class SourceBlacklist extends SourceIncident {
     }
 
     @Override
-    public void execute() {
-        Member targetMember = guild.getMemberById(getTargetId());
+    public boolean execute() {
+        try {
+            Member targetMember = guild.getMemberById(getTargetId());
 
-        guild.addRoleToMember(targetMember, blacklistRole).complete();
+            guild.addRoleToMember(targetMember, blacklistRole).complete();
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     @Override

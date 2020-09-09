@@ -70,16 +70,22 @@ public class SourceMute extends SourceIncident {
     }
 
     @Override
-    public void execute() {
-        Member targetMember = guild.getMemberById(getTargetId());
+    public boolean execute() {
+        try {
+            Member targetMember = guild.retrieveMemberById(getTargetId()).complete();
 
-        List<Role> modifiedRoles = targetMember.getRoles().stream()
+            List<Role> modifiedRoles = targetMember.getRoles().stream()
                 .filter(Role::isManaged)
                 .collect(Collectors.toList());
-        modifiedRoles.add(mutedRole);
+            modifiedRoles.add(mutedRole);
 
-        // Adds the mute role and removes all other roles
-        guild.modifyMemberRoles(targetMember, modifiedRoles).complete();
+            // Adds the mute role and removes all other roles
+            guild.modifyMemberRoles(targetMember, modifiedRoles).complete();
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     @Override

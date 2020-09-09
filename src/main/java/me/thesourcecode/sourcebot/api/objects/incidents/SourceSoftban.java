@@ -12,10 +12,16 @@ public class SourceSoftban extends SourceIncident {
     }
 
     @Override
-    public void execute() {
-        User targetUser = jda.getUserById(getTargetId());
-        guild.ban(targetUser, 7, getReason()).complete();
-        guild.unban(targetUser).queue();
+    public boolean execute() {
+        try {
+            User targetUser = jda.getUserById(getTargetId());
+            guild.ban(targetUser, 7, getReason()).complete();
+            guild.unban(targetUser).queue();
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     @Override

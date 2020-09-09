@@ -109,7 +109,7 @@ public abstract class SourceIncident {
         incidentCollection.insertOne(getIncidentDocument());
     }
 
-    public abstract void execute();
+    public abstract boolean execute();
 
     public abstract void sendIncidentEmbed();
 

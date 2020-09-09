@@ -13,9 +13,15 @@ public class SourceKick extends SourceIncident {
     }
 
     @Override
-    public void execute() {
-        Member targetMember = guild.getMemberById(getTargetId());
-        guild.kick(targetMember, getReason()).queue();
+    public boolean execute() {
+        try {
+            Member targetMember = guild.getMemberById(getTargetId());
+            guild.kick(targetMember, getReason()).queue();
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     @Override

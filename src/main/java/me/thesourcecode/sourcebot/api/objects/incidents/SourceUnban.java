@@ -25,8 +25,15 @@ public class SourceUnban extends SourceIncident {
     }
 
     @Override
-    public void execute() {
-        guild.unban(targetUser).queue();
+
+    public boolean execute() {
+        try {
+            guild.unban(targetUser).complete();
+        } catch (Throwable ex) {
+            ex.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     @Override

@@ -80,13 +80,17 @@ public class TempmuteCommand extends Command {
         String reason = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
 
         SourceMute sourceMute = new SourceMute(user.getId(), targetUser.getId(), durationString, reason);
-        sourceMute.sendIncidentEmbed();
-        sourceMute.execute();
+        if (sourceMute.execute()) {
+            sourceMute.sendIncidentEmbed();
 
-        // Sends a success embed
-        SuccessAlert sAlert = new SuccessAlert();
-        sAlert.setDescription("You have successfully tempmuted " + targetUser.getAsTag() + "!");
+            // Sends a success embed
+            SuccessAlert sAlert = new SuccessAlert();
+            sAlert.setDescription("You have successfully tempmuted " + targetUser.getAsTag() + "!");
 
-        return new MessageBuilder(sAlert.build(user)).build();
+            return new MessageBuilder(sAlert.build(user)).build();
+        }
+        CriticalAlert cAlert = new CriticalAlert();
+        cAlert.setTitle("Error!").setDescription("I could not mute that user!");
+        return new MessageBuilder(cAlert.build(user)).build();
     }
 }

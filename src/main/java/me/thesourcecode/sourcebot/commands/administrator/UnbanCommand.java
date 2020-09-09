@@ -43,13 +43,16 @@ public class UnbanCommand extends Command {
 
         String reason = String.join(" ", args).replaceFirst(args[0], "");
         SourceUnban sourceUnban = new SourceUnban(user.getId(), targetUser.getId(), reason);
-        sourceUnban.sendIncidentEmbed();
-        sourceUnban.execute();
+        if (sourceUnban.execute()) {
+            sourceUnban.sendIncidentEmbed();
+            // Sends a success embed
+            SuccessAlert sAlert = new SuccessAlert();
+            sAlert.setDescription("You have successfully unbanned " + targetUser.getAsTag() + "!");
 
-        // Sends a success embed
-        SuccessAlert sAlert = new SuccessAlert();
-        sAlert.setDescription("You have successfully unbanned " + targetUser.getAsTag() + "!");
-
-        return new MessageBuilder(sAlert.build(user)).build();
+            return new MessageBuilder(sAlert.build(user)).build();
+        }
+        final CriticalAlert criticalAlert = new CriticalAlert();
+        criticalAlert.setTitle("Error!").setDescription("I could not unban that user!");
+        return new MessageBuilder(criticalAlert.build(user)).build();
     }
 }

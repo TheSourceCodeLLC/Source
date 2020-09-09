@@ -5,6 +5,7 @@ import me.thesourcecode.sourcebot.api.command.Command;
 import me.thesourcecode.sourcebot.api.command.CommandInfo;
 import me.thesourcecode.sourcebot.api.entity.SourceRole;
 import me.thesourcecode.sourcebot.api.message.alerts.CommonAlerts;
+import me.thesourcecode.sourcebot.api.message.alerts.CriticalAlert;
 import me.thesourcecode.sourcebot.api.message.alerts.SuccessAlert;
 import me.thesourcecode.sourcebot.api.objects.incidents.SourceKick;
 import me.thesourcecode.sourcebot.api.utility.Utility;
@@ -48,13 +49,17 @@ public class KickCommand extends Command {
         String reason = String.join(" ", args).replaceFirst(args[0], "");
 
         SourceKick sourceKick = new SourceKick(user.getId(), targetUser.getId(), reason);
-        sourceKick.sendIncidentEmbed();
-        sourceKick.execute();
+        if (sourceKick.execute()) {
+            sourceKick.sendIncidentEmbed();
 
-        // Creates and sends a success alert
-        SuccessAlert sAlert = new SuccessAlert();
-        sAlert.setDescription("You have successfully kicked " + targetUser.getAsTag() + "!");
+            // Creates and sends a success alert
+            SuccessAlert sAlert = new SuccessAlert();
+            sAlert.setDescription("You have successfully kicked " + targetUser.getAsTag() + "!");
 
-        return new MessageBuilder(sAlert.build(user)).build();
+            return new MessageBuilder(sAlert.build(user)).build();
+        }
+        CriticalAlert criticalAlert = new CriticalAlert();
+        criticalAlert.setTitle("Error!").setDescription("I could not kick that user!");
+        return new MessageBuilder(criticalAlert.build(user)).build();
     }
 }

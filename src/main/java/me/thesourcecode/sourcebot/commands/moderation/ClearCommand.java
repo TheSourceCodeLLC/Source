@@ -62,13 +62,13 @@ public class ClearCommand extends Command {
         String reason = String.join(" ", args).replaceFirst(args[0], "");
 
         SourceClear sourceClear = new SourceClear(user.getId(), targetChannel.getId(), messageAmount, reason);
-        sourceClear.sendIncidentEmbed();
-        sourceClear.execute();
+        if (sourceClear.execute()) {
+            sourceClear.sendIncidentEmbed();
 
-        SuccessAlert sAlert = new SuccessAlert();
-        sAlert.setDescription("You have successfully cleared " + messageAmount + " messages!");
-        targetChannel.sendMessage(sAlert.build(user)).queue(m -> m.delete().queueAfter(15, TimeUnit.SECONDS));
+            SuccessAlert sAlert = new SuccessAlert();
+            sAlert.setDescription("You have successfully cleared " + messageAmount + " messages!");
+            targetChannel.sendMessage(sAlert.build(user)).queue(m -> m.delete().queueAfter(15, TimeUnit.SECONDS));
+        }
         return null;
-
     }
 }

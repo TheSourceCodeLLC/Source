@@ -93,14 +93,18 @@ public class BlacklistDevelopmentCommand extends Command {
         String durationString = duration + " " + (duration == 1 ? fullType.substring(0, fullType.length() - 1) : fullType);
 
         SourceBlacklist sourceBlacklist = new SourceBlacklist(user.getId(), targetUser.getId(), durationString, reason);
-        sourceBlacklist.sendIncidentEmbed();
-        sourceBlacklist.execute();
+        if (sourceBlacklist.execute()) {
+            sourceBlacklist.sendIncidentEmbed();
 
-        // Sends a success message
-        SuccessAlert sAlert = new SuccessAlert();
-        sAlert.setDescription("You have successfully blacklisted " + targetUser.getAsTag() + "!");
+            // Sends a success message
+            SuccessAlert sAlert = new SuccessAlert();
+            sAlert.setDescription("You have successfully blacklisted " + targetUser.getAsTag() + "!");
 
-        return new MessageBuilder(sAlert.build(user)).build();
+            return new MessageBuilder(sAlert.build(user)).build();
+        }
+        CriticalAlert cAlert = new CriticalAlert();
+        cAlert.setTitle("Error!").setDescription("I could not blacklist that user!");
+        return new MessageBuilder(cAlert.build(user)).build();
     }
 
     private HashMap<Integer, String> getPunishments(DatabaseManager dbManager) {

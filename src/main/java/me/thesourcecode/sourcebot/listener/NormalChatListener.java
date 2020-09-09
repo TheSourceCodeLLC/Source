@@ -81,8 +81,7 @@ public final class NormalChatListener extends AbstractListener<GuildMessageRecei
                     "10 minutes",
                     String.format("Mention Spam Threshold Reached (%d Members)", mentionThreshold)
             );
-            mute.sendIncidentEmbed();
-            mute.execute();
+            if (mute.execute()) mute.sendIncidentEmbed();
         }
     }
 

@@ -120,8 +120,8 @@ public class ReportsListener extends AbstractListener<GuildMessageReactionAddEve
             reason = isInChat ? "Advertising in Chat (Punishments vary based on your punishment history)" : reason;
 
             SourceTempban sourceTempban = new SourceTempban(staffId, targetId, "1 Week", reason);
-            sourceTempban.sendIncidentEmbed();
             sourceTempban.execute();
+            sourceTempban.sendIncidentEmbed();
 
             long decayTime = (2592000000L * 8) + System.currentTimeMillis();
             Utility.addPointsToUser(targetId, 77.8, decayTime);

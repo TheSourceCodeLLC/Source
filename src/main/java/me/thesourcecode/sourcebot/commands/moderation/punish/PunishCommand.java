@@ -231,12 +231,16 @@ public class PunishCommand extends Command {
                 return new MessageBuilder("Uh Oh! Something went wrong, please notify TheForbiddenAi.").build();
         }
 
-        sourceIncident.sendIncidentEmbed();
-        sourceIncident.execute();
+        if (sourceIncident.execute()) {
+            sourceIncident.sendIncidentEmbed();
 
-        SuccessAlert sAlert = new SuccessAlert();
-        sAlert.setDescription("You have successfully punished " + targetUser.getAsTag() + " for " + reason + "!");
+            SuccessAlert sAlert = new SuccessAlert();
+            sAlert.setDescription("You have successfully punished " + targetUser.getAsTag() + " for " + reason + "!");
 
-        return new MessageBuilder(sAlert.build(user)).build();
+            return new MessageBuilder(sAlert.build(user)).build();
+        }
+        CriticalAlert cAlert = new CriticalAlert();
+        cAlert.setTitle("Error").setDescription("I could not punish that user!");
+        return new MessageBuilder(cAlert.build(user)).build();
     }
 }
