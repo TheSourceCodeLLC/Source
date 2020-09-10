@@ -19,6 +19,7 @@ class TriviaCommand : RootCommand() {
     override val description: String = "Manage active trivia game, or start a new one."
     override val guildOnly: Boolean = true
     override val aliases: Array<String> = arrayOf("triv")
+    override val permission = name
 
     private val activeGames = HashMap<String, Game>()
 
@@ -99,5 +100,5 @@ abstract class Bootstrap(
     final override val description: String
 ) : Command() {
     final override val guildOnly = true
-    final override val permission by lazy { "trivia.$name" }
+    final override val permission = "trivia.$name"
 }

@@ -33,7 +33,7 @@ class BaseModule(
 
     override fun onEnable() {
         registerCommands(
-            HelpCommand(source.moduleHandler, source.commandHandler),
+            HelpCommand(source.moduleHandler, source.permissionHandler, source.commandHandler),
             GuildInfoCommand(),
             TimingsCommand(),
             PermissionsCommand(source.permissionHandler),

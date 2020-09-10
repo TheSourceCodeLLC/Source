@@ -3,16 +3,17 @@ package net.sourcebot.impl.command
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.Source
-import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.Response
 
 class GuildInfoCommand : RootCommand() {
     override val name = "guildinfo"
     override val description = "Show information about the current guild."
     override val guildOnly = true
     override val aliases = arrayOf("info", "online", "boosts")
+    override val permission = name
 
     override fun execute(message: Message, args: Arguments): Response {
         val guild = message.guild

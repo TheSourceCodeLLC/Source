@@ -5,7 +5,7 @@ plugins {
 
 allprojects {
     group = "net.sourcebot"
-    version = "5.0.6"
+    version = "5.0.7"
     buildDir = File(rootProject.projectDir, "target/output/$name")
 
     apply { plugin("org.jetbrains.kotlin.jvm") }

@@ -15,6 +15,7 @@ class DJSCommand : RootCommand() {
     override val name: String = "djs"
     override val description: String = "Allows the user to query the Discord.JS Documentation."
     override var cleanupResponse: Boolean = false
+    override val permission = "documentation.$name"
 
     private val defaultSources: MutableList<String> = mutableListOf(
         "stable", "master", "rpc", "commando", "akairo", "akairo-master", "collection"

@@ -53,10 +53,10 @@ class CountingCommand(
     }
 
     private abstract class CommandBootstrap(
-        override val name: String,
-        override val description: String
+        final override val name: String,
+        final override val description: String
     ) : Command() {
-        override val permission by lazy { "counting.$name" }
+        override val permission = "counting.$name"
         override val guildOnly = true
     }
 }

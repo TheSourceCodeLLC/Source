@@ -18,6 +18,7 @@ class SpigotCommand : RootCommand() {
     override val argumentInfo: ArgumentInfo = ArgumentInfo(
         Argument("query", "The item you are searching for in the Spigot documentation.")
     )
+    override val permission = "documentation.$name"
 
     private val jenkinsHandler = JenkinsHandler(
         "https://hub.spigotmc.org/javadocs/spigot/overview-tree.html",

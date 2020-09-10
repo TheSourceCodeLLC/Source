@@ -17,6 +17,7 @@ class JDACommand : RootCommand() {
     override val argumentInfo: ArgumentInfo = ArgumentInfo(
         Argument("query", "The item you are searching for in the JDA documentation.")
     )
+    override val permission = "documentation.$name"
 
     private val jenkinsHandler = JenkinsHandler(
         "https://ci.dv8tion.net/job/JDA/javadoc/allclasses.html",

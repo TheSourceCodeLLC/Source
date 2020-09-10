@@ -19,6 +19,7 @@ class JavaCommand : RootCommand() {
         Argument("version", "The version of the java docs you would like to query, default is 13."),
         Argument("query", "The item you are searching for in the Java documentation.")
     )
+    override val permission = "documentation.$name"
 
     private val iconUrl =
         "https://upload.wikimedia.org/wikipedia/en/thumb/3/30/Java_programming_language_logo.svg/1200px-Java_programming_language_logo.svg.png"

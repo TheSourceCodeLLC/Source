@@ -7,7 +7,7 @@ import net.sourcebot.api.command.InvalidSyntaxException
  * Arguments can be requested optionally or exceptionally
  * Arguments can also be converted to a specific type by specifying a proper adapter function
  */
-class Arguments(private var raw: Array<String>) : Iterator<String?> {
+class Arguments(private val raw: Array<String>) : Iterator<String?> {
     private var index = 0
     override fun hasNext() = index + 1 <= raw.size
 

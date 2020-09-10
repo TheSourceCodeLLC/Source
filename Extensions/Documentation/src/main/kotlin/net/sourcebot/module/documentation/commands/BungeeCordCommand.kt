@@ -18,6 +18,7 @@ class BungeeCordCommand : RootCommand() {
         Argument("query", "The item you are searching for in the BungeeCord documentation.")
     )
     override val aliases: Array<String> = arrayOf("bungee")
+    override val permission = "documentation.$name"
 
     private val jenkinsHandler = JenkinsHandler(
         "https://papermc.io/javadocs/waterfall/allclasses-noframe.html",

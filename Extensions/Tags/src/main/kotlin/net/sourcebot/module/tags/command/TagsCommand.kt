@@ -25,6 +25,7 @@ class TagsCommand(
     override val description = "Manage Tags."
     override val guildOnly = true
     override val aliases = arrayOf("tag")
+    override val permission = name
 
     init {
         addChildren(
@@ -37,7 +38,7 @@ class TagsCommand(
         )
     }
 
-    private inner class TagsCreateCommand : CommandBootstrap(
+    private inner class TagsCreateCommand : Bootstrap(
         "create",
         "Create a tag."
     ) {
@@ -57,7 +58,7 @@ class TagsCommand(
         }
     }
 
-    private inner class TagsDeleteCommand : CommandBootstrap(
+    private inner class TagsDeleteCommand : Bootstrap(
         "delete",
         "Delete a tag."
     ) {
@@ -74,7 +75,7 @@ class TagsCommand(
         }
     }
 
-    private inner class TagsEditCommand : CommandBootstrap(
+    private inner class TagsEditCommand : Bootstrap(
         "edit",
         "Edit tag properties."
     ) {
@@ -111,7 +112,7 @@ class TagsCommand(
         }
     }
 
-    private inner class TagsInfoCommand : CommandBootstrap(
+    private inner class TagsInfoCommand : Bootstrap(
         "info",
         "Show tag information."
     ) {
@@ -127,7 +128,7 @@ class TagsCommand(
         }
     }
 
-    private inner class TagsListCommand : CommandBootstrap(
+    private inner class TagsListCommand : Bootstrap(
         "list",
         "List all tags."
     ) {
@@ -139,7 +140,7 @@ class TagsCommand(
         }
     }
 
-    private inner class TagsRawCommand : CommandBootstrap(
+    private inner class TagsRawCommand : Bootstrap(
         "raw", "Show the raw content of a tag."
     ) {
         override val argumentInfo = ArgumentInfo(
@@ -182,11 +183,11 @@ class TagsCommand(
         }
     }
 
-    private abstract class CommandBootstrap(
+    private abstract class Bootstrap(
         final override val name: String,
         final override val description: String
     ) : Command() {
-        final override val permission by lazy { "tags.$name" }
+        final override val permission = "tags.$name"
         final override val guildOnly = true
     }
 }

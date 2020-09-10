@@ -12,8 +12,8 @@ import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.module.documentation.utility.DocResponse
-import net.sourcebot.module.documentation.utility.truncate
 import net.sourcebot.module.documentation.utility.toMarkdown
+import net.sourcebot.module.documentation.utility.truncate
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 
@@ -22,6 +22,7 @@ class MDNCommand : RootCommand() {
     override val description: String = "Allows the user to query the MDN Documentation."
     override var cleanupResponse: Boolean = false
     override val aliases: Array<String> = arrayOf("javascript", "js")
+    override val permission = "documentation.$name"
 
     private val baseUrl = "https://developer.mozilla.org"
     private val cache = MDNDocCache()

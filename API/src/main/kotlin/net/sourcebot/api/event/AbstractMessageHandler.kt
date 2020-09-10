@@ -20,6 +20,7 @@ abstract class AbstractMessageHandler constructor(private val prefix: String) {
         var content = message.contentRaw
         if (!content.startsWith(prefix)) return
         content = content.substring(prefix.length)
+        if (content.isBlank()) return
         val args = ARGS_PATTERN.matcher(content).results()
             .map {
                 it.group().replace(Regex("\"(.+)\""), "$1")

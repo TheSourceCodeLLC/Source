@@ -16,7 +16,7 @@ class ConfigurationCommand(
 ) : RootCommand() {
     override val name = "configuration"
     override val description = "Modify the Guild Configuration."
-    override val permission = "configuration"
+    override val permission = name
     override val guildOnly = true
     override val aliases = arrayOf("config", "configure", "cfg")
 

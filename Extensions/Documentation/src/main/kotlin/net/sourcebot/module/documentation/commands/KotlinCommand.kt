@@ -5,7 +5,6 @@ import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.EmptyResponse
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
@@ -18,9 +17,9 @@ class KotlinCommand : RootCommand() {
         Argument("query", "The item you are searching for in the BungeeCord documentation.")
     )
     override var cleanupResponse: Boolean = false
+    override val permission = "documentation.$name"
 
     private val kotlinHandler = KotlinHandler()
-
 
     override fun execute(message: Message, args: Arguments): Response {
         val user = message.author
