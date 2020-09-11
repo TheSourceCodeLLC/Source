@@ -43,7 +43,8 @@ class HelpCommand(
                 "There are currently no modules enabled."
             )
             val available = enabled.filter {
-                commandHandler.getCommands(it).any { cmd ->
+                val commands = commandHandler.getCommands(it)
+                commands.isNotEmpty() && commands.any { cmd ->
                     commandHandler.checkPermissions(message, cmd).isValid()
                 }
             }
