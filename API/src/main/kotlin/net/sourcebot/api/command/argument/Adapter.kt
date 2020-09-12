@@ -11,7 +11,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
         @JvmStatic
         fun <T> ofSingleArg(adapter: (String) -> T): Adapter<T> = Adapter {
             val arg = it.next() ?: return@Adapter null
-            val result = adapter(arg)
+            val result = arg.runCatching(adapter).getOrNull()
             return@Adapter if (result == null) {
                 it.backtrack(); null
             } else result

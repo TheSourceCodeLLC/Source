@@ -1,8 +1,17 @@
 package net.sourcebot.module.moderation.data
 
+import net.dv8tion.jda.api.entities.TextChannel
+
 abstract class SourceIncident(
-    final override val type: Incident.Type
-) : Incident {
+    val type: Type
+) {
     private var last: Long = 0
-    final override fun computeId() = ++last
+    fun computeId() = ++last
+
+    abstract fun execute(): Throwable?
+    abstract fun sendLog(channel: TextChannel): Long
+
+    enum class Type {
+        MUTE, KICK, TEMPBAN, BAN, UNMUTE, UNBAN
+    }
 }

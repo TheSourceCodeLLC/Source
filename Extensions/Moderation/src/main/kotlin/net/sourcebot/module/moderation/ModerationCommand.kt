@@ -7,7 +7,9 @@ import net.sourcebot.api.command.argument.*
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.SuccessResponse
+import net.sourcebot.module.moderation.data.BanIncident
 import net.sourcebot.module.moderation.data.KickIncident
+import net.sourcebot.module.moderation.data.UnbanIncident
 
 abstract class ModerationCommand internal constructor(
     final override val name: String,
@@ -29,17 +31,17 @@ class KickCommand : ModerationCommand(
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid member to kick!")
         val reason = args.slurp(" ", "You did not specify a kick reason!")
         val incident = KickIncident(message.member!!, target, reason)
-        if (incident.execute()) {
+        val caught = incident.execute()
+        return if (caught == null) {
             val case = incident.sendLog(message.textChannel)
-            return SuccessResponse(
+            SuccessResponse(
                 "Kick Success (#$case)",
                 "Kicked user ${"%#s".format(target.user)}"
             )
-        }
-        return ErrorResponse(
+        } else ErrorResponse(
             "Kick Failure",
             "I could not kick that member!"
-        )
+        ).addField("Exception:", caught.toString(), false) as Response
     }
 }
 
@@ -102,12 +104,18 @@ class BanCommand : ModerationCommand(
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid member to ban!")
         val delDays = args.next(Adapter.int()) ?: 7
         val reason = args.slurp(" ", "You did not specify a ban reason!")
-        target.ban(delDays, reason).queue()
-        //TODO: Case ID, success
-        return SuccessResponse(
-            "Ban Success",
-            "Banned ${String.format("%#s", target.user)}: $reason"
-        )
+        val incident = BanIncident(message.member!!, target, delDays, reason)
+        val caught = incident.execute()
+        return if (caught == null) {
+            val case = incident.sendLog(message.textChannel)
+            SuccessResponse(
+                "Ban Success (#$case)",
+                "Banned user ${"%#s".format(target.user)}"
+            )
+        } else ErrorResponse(
+            "Ban Failure",
+            "I could not ban that user!"
+        ).addField("Exception:", caught.toString(), false) as Response
     }
 }
 
@@ -141,18 +149,17 @@ class UnbanCommand : ModerationCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next("You did not specify a user ID to unban!")
         val reason = args.slurp(" ", "You did not specify an unban reason!")
-        val user = try {
-            message.guild.retrieveBanById(target).complete()
-        } catch (ex: Exception) {
-            return ErrorResponse(
-                "Unban Failure",
-                "I couldn't find a banned user with that ID!"
+        val incident = UnbanIncident(message.member!!, target, reason)
+        val caught = incident.execute()
+        return if (caught == null) {
+            val case = incident.sendLog(message.textChannel)
+            SuccessResponse(
+                "Unban Success (#$case)",
+                "Unbanned user ${"%#s".format(incident.unbanned)}"
             )
-        }.user
-        //TODO: Case ID
-        return SuccessResponse(
-            "Unban Success",
-            "Unbanned ${"%#s".format(user)}: $reason"
-        )
+        } else return ErrorResponse(
+            "Unban Failure",
+            "I could not unban that user!"
+        ).addField("Exception:", caught.toString(), false) as Response
     }
 }
