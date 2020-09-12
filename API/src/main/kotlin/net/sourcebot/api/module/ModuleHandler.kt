@@ -14,26 +14,32 @@ class ModuleHandler(
     private val source: Source
 ) : ClassLoader() {
     private val logger: Logger = LoggerFactory.getLogger(ModuleHandler::class.java)
-    private val classes = ConcurrentHashMap<String, Class<*>>()
+    private val classCache = ConcurrentHashMap<String, Class<*>>()
     private val moduleIndex = HashMap<String, SourceModule>()
 
     public override fun findClass(
         name: String
-    ): Class<*> = classes.computeIfAbsent(name) {
-        moduleIndex.values.map(SourceModule::classLoader).forEach {
-            return@computeIfAbsent try {
-                it.findClass(name, false)
+    ): Class<*> {
+        val cached = classCache[name]
+        if (cached != null) return cached
+        var found: Class<*>? = null
+        for (it in moduleIndex.values.map(SourceModule::classLoader)) {
+            try {
+                found = it.findClass(name, false); break
             } catch (ex: Exception) {
-                null
-            } ?: return@forEach
+            }
         }
-        throw ClassNotFoundException(name)
+        return found?.also { classCache[name] = it } ?: throw ClassNotFoundException(name)
     }
 
     fun findClass(
         name: String,
         loader: JarModuleClassLoader
-    ): Class<*> = classes.computeIfAbsent(name) { loader.findClass(name, false) }
+    ): Class<*> = classCache[name] ?: try {
+        loader.findClass(name, false)
+    } catch (ex: Exception) {
+        null
+    }?.also { classCache[name] = it } ?: throw ClassNotFoundException(name)
 
     fun loadDescriptor(file: File): ModuleDescriptor = JarFile(file).use { jar ->
         jar.getJarEntry("module.json")?.let(jar::getInputStream)?.use {
