@@ -27,11 +27,6 @@ class KickIncident(
             """.trimIndent()
         ).asEmbed(target.user)
         channel.sendMessage(embed).queue()
-        target.user.openPrivateChannel().queue {
-            it.sendMessage(
-                "You were kicked from ${sender.guild.name}!"
-            ).embed(embed).queue()
-        }
         return case
     }
 }
