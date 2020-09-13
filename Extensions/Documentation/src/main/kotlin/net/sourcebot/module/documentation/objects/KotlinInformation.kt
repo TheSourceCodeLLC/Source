@@ -1,8 +1,6 @@
 package net.sourcebot.module.documentation.objects
 
-import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import net.dv8tion.jda.api.utils.MarkdownUtil
-import net.sourcebot.api.response.Response
 import net.sourcebot.module.documentation.utility.DocResponse
 import net.sourcebot.module.documentation.utility.toMarkdown
 import net.sourcebot.module.documentation.utility.truncate

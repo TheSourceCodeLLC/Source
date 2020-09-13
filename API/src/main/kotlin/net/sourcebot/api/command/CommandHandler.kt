@@ -141,7 +141,6 @@ class CommandHandler(
     }
 
     fun unregister(module: SourceModule) = commandMap.removeIf { it.module == module }
-
 }
 
 class PermissionCheck(val command: Command, val type: Type) {

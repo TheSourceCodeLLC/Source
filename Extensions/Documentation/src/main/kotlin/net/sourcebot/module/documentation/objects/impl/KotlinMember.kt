@@ -1,7 +1,6 @@
 package net.sourcebot.module.documentation.objects.impl
 
 import net.dv8tion.jda.api.utils.MarkdownUtil
-import net.sourcebot.api.response.EmptyResponse
 import net.sourcebot.module.documentation.objects.KotlinInformation
 import net.sourcebot.module.documentation.utility.DocResponse
 import net.sourcebot.module.documentation.utility.capitalizeAllWords

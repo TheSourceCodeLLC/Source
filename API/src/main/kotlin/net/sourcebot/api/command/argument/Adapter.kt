@@ -19,14 +19,19 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
 
         @JvmStatic
         fun boolean() = ofSingleArg(String::toBoolean)
+
         @JvmStatic
         fun short() = ofSingleArg(String::toShort)
+
         @JvmStatic
         fun int() = ofSingleArg(String::toInt)
+
         @JvmStatic
         fun long() = ofSingleArg(String::toLong)
+
         @JvmStatic
         fun float() = ofSingleArg(String::toFloat)
+
         @JvmStatic
         fun double() = ofSingleArg(String::toDouble)
 
@@ -62,7 +67,8 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             return@ofSingleArg null
         }
 
-        @JvmStatic fun duration() = ofSingleArg {
+        @JvmStatic
+        fun duration() = ofSingleArg {
             it.runCatching(SourceDuration::parse).getOrNull()
         }
     }

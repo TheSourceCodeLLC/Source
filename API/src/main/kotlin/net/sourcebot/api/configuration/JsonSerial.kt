@@ -22,14 +22,16 @@ interface JsonSerial<T> {
             MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS
         )
 
-        @JvmStatic fun <T> registerSerial(type: Class<T>, serial: JsonSerial<T>) {
+        @JvmStatic
+        fun <T> registerSerial(type: Class<T>, serial: JsonSerial<T>) {
             val module = SimpleModule()
             module.addSerializer(type, serial.serializer)
             module.addDeserializer(type, serial.deserializer)
             mapper.registerModule(module)
         }
 
-        @JvmStatic inline fun <reified T> registerSerial(
+        @JvmStatic
+        inline fun <reified T> registerSerial(
             serial: JsonSerial<T>
         ) = registerSerial(T::class.java, serial)
 
@@ -49,6 +51,7 @@ interface JsonSerial<T> {
 
         @JvmStatic
         fun newObject(): ObjectNode = mapper.createObjectNode()
+
         @JvmStatic
         fun newArray(): ArrayNode = mapper.createArrayNode()
 

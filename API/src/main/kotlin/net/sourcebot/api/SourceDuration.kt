@@ -36,9 +36,11 @@ class SourceDuration private constructor(
     fun isEmpty() = seconds == 0.toLong()
 
     companion object {
-        @JvmStatic private val pattern = "(\\d+)([Mdhms])".toRegex()
+        @JvmStatic
+        private val pattern = "(\\d+)([Mdhms])".toRegex()
 
-        @JvmStatic fun parse(input: String): SourceDuration {
+        @JvmStatic
+        fun parse(input: String): SourceDuration {
             if (!pattern.matches(input)) throw IllegalArgumentException("Parse input does not match pattern!")
             val map = EnumMap<ChronoUnit, Long>(ChronoUnit::class.java)
             pattern.findAll(input).forEach {
@@ -52,13 +54,13 @@ class SourceDuration private constructor(
                     "s" -> ChronoUnit.SECONDS
                     else -> throw IllegalStateException("Invalid unit parsed!")
                 }
-                map.compute(asChrono) { _,v -> if (v == null) asLong else v + asLong }
+                map.compute(asChrono) { _, v -> if (v == null) asLong else v + asLong }
             }
             return SourceDuration(map)
         }
     }
 
-    override fun toString() = timeMap.entries.joinToString{ (unit, amount) ->
+    override fun toString() = timeMap.entries.joinToString { (unit, amount) ->
         var name = unit.name.toLowerCase().capitalize()
         if (amount == 1.toLong()) name = name.substring(0, name.length - 1)
         "$amount $name"

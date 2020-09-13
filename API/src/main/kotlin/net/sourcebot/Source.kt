@@ -109,23 +109,29 @@ class Source(val properties: JsonConfiguration) {
     }
 
     companion object {
-        @JvmField val TIME_ZONE: ZoneId = ZoneId.of("America/New_York")
+        @JvmField
+        val TIME_ZONE: ZoneId = ZoneId.of("America/New_York")
+
         @JvmField
         val DATE_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
             "MM/dd/yyyy hh:mm:ss a z"
         ).withZone(TIME_ZONE)
+
         @JvmField
         val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
             "hh:mm:ss a z"
         ).withZone(TIME_ZONE)
+
         @JvmField
         val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
             "MM/dd/yyyy"
         ).withZone(TIME_ZONE)
 
         private val numCores = Runtime.getRuntime().availableProcessors()
+
         @JvmField
         val SCHEDULED_EXECUTOR_SERVICE = Executors.newScheduledThreadPool(2 * numCores)
+
         @JvmField
         val EXECUTOR_SERVICE = Executors.newFixedThreadPool(2 * numCores)
 

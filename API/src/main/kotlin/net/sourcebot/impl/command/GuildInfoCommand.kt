@@ -37,18 +37,18 @@ class GuildInfoCommand : RootCommand() {
         return InfoResponse(
             "$name Guild Information:",
             "**Creation Date**: $created\n" +
-            "**Owner**: ${owner.asMention}\n"
+                    "**Owner**: ${owner.asMention}\n"
         ).addField(
             "Member Demographics",
             "**Online Members**: $online\n" +
-            "**Total Members**: $totalMembers\n" +
-            "**Bots**: $bots",
+                    "**Total Members**: $totalMembers\n" +
+                    "**Bots**: $bots",
             false
         ).addField(
             "Boost Information",
             "**Total Boosts**: $boosts\n" +
-            "**Boosters**: $boosters\n" +
-            "**Boost Tier**: $boostTier",
+                    "**Boosters**: $boosters\n" +
+                    "**Boost Tier**: $boostTier",
             false
         ).setThumbnail(icon) as Response
     }

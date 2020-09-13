@@ -45,7 +45,7 @@ class PermissionsCommand(
         val asMention = permissible.asMention()
         val toSend = when (args.next(
             "You did not specify an operation!\n" +
-            "Valid operations: `set`,`unset`,`info`,`check`,`clear`"
+                    "Valid operations: `set`,`unset`,`info`,`check`,`clear`"
         ).toLowerCase()) {
             "set" -> {
                 permissionHandler.checkPermission(user, "permissions.$type.set", message.channel) {
@@ -115,7 +115,7 @@ class PermissionsCommand(
             }
             else -> throw InvalidSyntaxException(
                 "Invalid Operation!\n" +
-                "Valid operations: `set`,`unset`,`info`,`check`,`clear`"
+                        "Valid operations: `set`,`unset`,`info`,`check`,`clear`"
             )
         }
         permissible.update(permissionData)
