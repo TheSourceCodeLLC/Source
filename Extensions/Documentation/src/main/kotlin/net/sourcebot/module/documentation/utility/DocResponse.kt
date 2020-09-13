@@ -10,6 +10,9 @@ import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.SourceColor
 
+/**
+ * This is the [Response] used for all of the documentation commands
+ */
 class DocResponse : EmbedBuilder(), Response {
     override fun asMessage(user: User): Message {
         setColor(SourceColor.INFO.color)

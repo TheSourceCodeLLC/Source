@@ -2,7 +2,7 @@ package net.sourcebot.module.documentation
 
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.documentation.commands.*
-import net.sourcebot.module.documentation.events.DocSelectorEvent
+import net.sourcebot.module.documentation.events.SelectorEventSubscriber
 
 class Documentation : SourceModule() {
 
@@ -17,8 +17,9 @@ class Documentation : SourceModule() {
             KotlinCommand()
         )
 
-        val deleteSeconds: Long = source.properties.required("commands.delete-seconds")
-        source.jdaEventSystem.listen(this, DocSelectorEvent(deleteSeconds)::onMessageReceived)
+        subscribeEvents(
+            SelectorEventSubscriber(this)
+        )
     }
 
 }

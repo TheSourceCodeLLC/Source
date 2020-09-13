@@ -10,7 +10,7 @@ import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
-import net.sourcebot.module.documentation.utility.DocSelectorStorage
+import net.sourcebot.module.documentation.utility.SelectorModel
 
 class JavaCommand : RootCommand() {
     override val name: String = "java"
@@ -62,7 +62,7 @@ class JavaCommand : RootCommand() {
                 return ErrorResponse(message.author.name, "Uh Oh, something went wrong! Please try again.")
             }
 
-            return jenkinsHandler.retrieveDocResponse(message, message.author, query)
+            return jenkinsHandler.retrieveResponse(message, query)
         } else {
             val authorName = message.author.name
             val description =
@@ -74,6 +74,6 @@ class JavaCommand : RootCommand() {
     }
 
     override fun postResponse(response: Response, forWhom: User, message: Message) {
-        DocSelectorStorage.updateSelector(message)
+        SelectorModel.selectorCache.updateSelector(forWhom, message)
     }
 }
