@@ -4,6 +4,7 @@ import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.configuration.JsonSerial
+import net.sourcebot.api.event.EventSubscriber
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -89,5 +90,14 @@ abstract class SourceModule {
 
     fun registerCommands(vararg commands: RootCommand) {
         source.commandHandler.registerCommands(this, *commands)
+    }
+
+    private fun subscribeEvents(
+        vararg subscribers: EventSubscriber
+    ) = subscribers.forEach {
+        it.subscribe(
+            source.jdaEventSystem,
+            source.sourceEventSystem
+        )
     }
 }
