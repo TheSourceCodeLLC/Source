@@ -9,7 +9,7 @@ import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
-import net.sourcebot.module.documentation.utility.DocSelectorStorage
+import net.sourcebot.module.documentation.utility.SelectorModel
 
 
 class SpigotCommand : RootCommand() {
@@ -31,7 +31,7 @@ class SpigotCommand : RootCommand() {
         return if (args.hasNext()) {
             val query = args.next("Unable to find query w/o version!")
 
-            jenkinsHandler.retrieveDocResponse(message, message.author, query)
+            jenkinsHandler.retrieveResponse(message, query)
         } else {
             val authorName = message.author.name
             val description =
@@ -43,6 +43,6 @@ class SpigotCommand : RootCommand() {
     }
 
     override fun postResponse(response: Response, forWhom: User, message: Message) {
-        DocSelectorStorage.updateSelector(message)
+        SelectorModel.selectorCache.updateSelector(forWhom, message)
     }
 }

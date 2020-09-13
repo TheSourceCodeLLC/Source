@@ -92,7 +92,7 @@ abstract class SourceModule {
         source.commandHandler.registerCommands(this, *commands)
     }
 
-    private fun subscribeEvents(
+    fun subscribeEvents(
         vararg subscribers: EventSubscriber
     ) = subscribers.forEach {
         it.subscribe(

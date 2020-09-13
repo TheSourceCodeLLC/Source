@@ -36,18 +36,10 @@ class KotlinCommand : RootCommand() {
 
         val notFoundResponse = ErrorResponse(user.name, "Unable to find `$query` in the Kotlin Documentation!")
 
-        return try {
-            val results = kotlinHandler.search(query)
-
-            // I still need to create a selection thing for this but eh
-            if (results.size > 1) {
-                // do stuffs
-            } else {
-
-            }
-
+        val results = kotlinHandler.search(query)
+        return if (results.size > 0) {
             results[0].createResponse()
-        } catch (ex: Exception) {
+        } else {
             notFoundResponse
         }
 

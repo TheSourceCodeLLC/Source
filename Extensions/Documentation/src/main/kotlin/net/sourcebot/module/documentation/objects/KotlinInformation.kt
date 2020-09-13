@@ -1,11 +1,23 @@
 package net.sourcebot.module.documentation.objects
 
 import net.dv8tion.jda.api.utils.MarkdownUtil
+import net.sourcebot.module.documentation.objects.impl.KotlinMember
+import net.sourcebot.module.documentation.objects.impl.KotlinType
 import net.sourcebot.module.documentation.utility.DocResponse
 import net.sourcebot.module.documentation.utility.toMarkdown
 import net.sourcebot.module.documentation.utility.truncate
 import org.jsoup.nodes.Element
 
+/**
+ * Provides convenient access to retrieve the formatted description and tag lists from the Kotlin documentation,
+ * along with providing away for converting anchor elements to markdown, for classes which inherit this abstract class
+ *
+ * @property iconUrl The response embed icon url
+ * @property url The url to the specific [KotlinType]/[KotlinMember] on the kotlin documentation
+ * @property type The type of the [KotlinType]/[KotlinMember] (i.e. Class, Extension Function, etc)
+ * @property description The description from the kotlin documentation site for the specific KotlinType/KotlinMember
+ * @property tags The tags from the kotlin docs for the specific [KotlinType]/[KotlinMember] (i.e. JS, JVM, Common, etc)
+ */
 abstract class KotlinInformation {
 
     internal val iconUrl = "https://pbs.twimg.com/profile_images/699217734492647428/pCfEzr6L_400x400.png"
@@ -16,8 +28,26 @@ abstract class KotlinInformation {
     abstract val description: String
     abstract val tags: ArrayList<String>
 
+    /**
+     * Generates the response embed for the [KotlinType]/[KotlinMember]
+     *
+     * @return The created response object
+     */
     abstract fun createResponse(): DocResponse
 
+    /**
+     * Retrieves the type of this [KotlinInformation]
+     *
+     * @return The type string
+     */
+    internal abstract fun retrieveType(): String
+
+    /**
+     * Retrieves the description from the given element from the Kotlin Documentation site and converts it to markdown
+     *
+     * @param element The element from which to pull the description from
+     * @return The formatted description
+     */
     internal fun retrieveDescription(element: Element): String {
         var foundDescription: String
         if (element.hasClass("declarations")) {
@@ -41,6 +71,12 @@ abstract class KotlinInformation {
         return foundDescription
     }
 
+    /**
+     * Retrieves the tags from the given element from the Kotlin Documentation site
+     *
+     * @param element The element from which to retrieve the tag list from
+     * @return An [ArrayList] of [String]s which contain the tag titles
+     */
     internal fun retrieveTags(element: Element): ArrayList<String> {
         val tagArray = arrayListOf<String>()
         val tagDiv = element.selectFirst("div.tags")
@@ -52,6 +88,12 @@ abstract class KotlinInformation {
         return tagArray
     }
 
+    /**
+     * Converts anchor elements to markdown
+     *
+     * @param element The element which contains the anchor elements to convert to hyperlinks
+     * @return Raw html where the anchor elements have been replaced with their markdown equivalent
+     */
     internal fun hyperlinksToMarkdown(element: Element): String {
         var html = element.outerHtml()
 

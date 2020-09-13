@@ -6,9 +6,16 @@ import net.sourcebot.module.documentation.utility.DocResponse
 import net.sourcebot.module.documentation.utility.capitalizeAllWords
 import org.jsoup.nodes.Element
 
+/**
+ * This class contains information of the members of a [KotlinType], an example of a [KotlinMember] is a property
+ * and an extension function
+ *
+ * @property memberElement The element from which the information is pulled from
+ * @property parentName The name of the [KotlinType] the the [KotlinMember] belongs to
+ */
 class KotlinMember(
     private val memberElement: Element,
-    val typeName: String
+    private val parentName: String
 ) : KotlinInformation() {
 
     override lateinit var url: String
@@ -17,6 +24,9 @@ class KotlinMember(
     override val description: String by lazy { retrieveDescription(memberElement) }
     override val tags: ArrayList<String> by lazy { retrieveTags(memberElement) }
 
+    /**
+     * Initializes the name and url properties
+     */
     init {
         val header = memberElement.selectFirst("h4")
         val anchor = header.selectFirst("a")
@@ -26,8 +36,11 @@ class KotlinMember(
         url = documentUri + anchor.attr("href")
     }
 
+    /**
+     * @see KotlinInformation for information about this function
+     */
     override fun createResponse(): DocResponse {
-        val hyperlink = MarkdownUtil.maskedLink("$typeName#$name", url)
+        val hyperlink = MarkdownUtil.maskedLink("$parentName#$name", url)
         val docResponse = DocResponse()
 
         docResponse.setAuthor("Kotlin Documentation", null, iconUrl)
@@ -36,7 +49,10 @@ class KotlinMember(
         return docResponse
     }
 
-    private fun retrieveType(): String {
+    /**
+     * @see KotlinInformation for information about this function
+     */
+    override fun retrieveType(): String {
         val parentDiv = memberElement.parent()
         val headerName = parentDiv.previousElementSibling().text()
         val pluralType = headerName.capitalizeAllWords()

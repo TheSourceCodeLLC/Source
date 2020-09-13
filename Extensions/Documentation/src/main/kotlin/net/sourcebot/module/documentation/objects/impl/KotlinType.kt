@@ -8,37 +8,54 @@ import net.sourcebot.module.documentation.utility.toMarkdown
 import net.sourcebot.module.documentation.utility.truncate
 import org.jsoup.nodes.Document
 
+/**
+ * This class contains the information of a Type from the Kotlin Documentation, an example of a [KotlinType] is a
+ * class or an interface.
+ *
+ * @property document The Jsoup Document which contains the information about the [KotlinType]
+ * @property mainPageDiv The div with a class of node-page-main
+ * @property memberArray The [KotlinMember] apart of this [KotlinType]
+ */
 class KotlinType(
     private val document: Document,
 ) : KotlinInformation() {
 
     override val url: String = document.baseUri()
     override var name: String = document.selectFirst("h1").text()
-    override lateinit var type: String
-    override var description: String = ""
-    override var tags: ArrayList<String> = arrayListOf()
 
-    private val memberMap: ArrayList<KotlinMember> = retrieveMembers()
-
-    init {
-        val mainPageDiv = document.selectFirst("div.node-page-main")
-        name = document.selectFirst("h1").text()
-        description = retrieveDescription(mainPageDiv)
-        tags = retrieveTags(mainPageDiv)
-        initializeType()
-
+    override val type: String by lazy {
+        retrieveType()
+    }
+    override val description: String by lazy {
+        retrieveDescription(mainPageDiv)
+    }
+    override val tags: ArrayList<String> by lazy {
+        retrieveTags(mainPageDiv)
     }
 
+    private val mainPageDiv = document.selectFirst("div.node-page-main")
+    private val memberArray: ArrayList<KotlinMember> by lazy { retrieveMembers() }
+
+
+    /**
+     * Retrieves all found [KotlinMember]s, apart of this [KotlinType], with a specific name
+     *
+     * @param query The string that is compared against the [KotlinMember]'s name
+     * @return All of the found [KotlinMember]s
+     */
     fun searchMembers(query: String): ArrayList<KotlinMember> {
         val modifiedQuery = query.replace("#", ".")
         val foundMembersArray: ArrayList<KotlinMember> = arrayListOf()
 
-        memberMap.filter { it.name.equals(modifiedQuery, true) }
+        memberArray.filter { it.name.equals(modifiedQuery, true) }
             .forEach { foundMembersArray.add(it) }
 
         return foundMembersArray
     }
 
+    /**
+     * @see KotlinInformation for information about this function
+     */
     override fun createResponse(): DocResponse {
         val stringLengthLimit = 300
         val paramHeader = document.selectFirst("h3#parameters")
@@ -55,7 +72,7 @@ class KotlinType(
             docResponse.addField("Parameters:", paramDesc, false)
         }
 
-        retrieveMemberStringBuilders(stringLengthLimit)
+        retrieveMemberStringMap(stringLengthLimit)
             .forEach { (fieldName, fieldDescription) ->
                 if (fieldDescription.isBlank()) return@forEach
                 docResponse.addField(fieldName, fieldDescription, false)
@@ -64,7 +81,32 @@ class KotlinType(
         return docResponse
     }
 
-    private fun retrieveMemberStringBuilders(limit: Int): Map<String, String> {
+    /**
+     * @see KotlinInformation for information about this function
+     */
+    override fun retrieveType(): String {
+        val mainPageDiv = document.selectFirst("div.node-page-main")
+        val signatureDiv = mainPageDiv.selectFirst("div.signature")
+            ?: throw Exception("Unable to find signature!")
+
+        val keywordList = signatureDiv.select("span.keyword")
+
+        val keywordElement = when (keywordList.size) {
+            0 -> throw Exception("Unable to find keyword elements in the div signature")
+            1 -> keywordList[0]
+            else -> keywordList[1]
+        }
+
+        return keywordElement.text().capitalize()
+    }
+
+    /**
+     * Retrieves all [KotlinMember]s apart of this [KotlinType] and sorts them based on their type
+     *
+     * @param limit The [StringBuilder] length limit
+     * @return A map which contains all [KotlinMember] types with their found [KotlinMember] names
+     */
+    private fun retrieveMemberStringMap(limit: Int): Map<String, String> {
         val memberSBMap: MutableMap<String, String> = mutableMapOf()
 
         val propertiesSB = StringBuilder()
@@ -73,7 +115,7 @@ class KotlinType(
         val extFuncSB = StringBuilder()
         val inheritorsSB = StringBuilder()
 
-        memberMap.forEach {
+        memberArray.forEach {
             val type = it.type.toLowerCase()
             val appendStr = "`${it.name}` "
             when (type) {
@@ -94,6 +136,11 @@ class KotlinType(
         return memberSBMap
     }
 
+    /**
+     * Retrieves all [KotlinMember]s apart of this [KotlinType]
+     *
+     * @return An [ArrayList] of all of the found [KotlinMember]
+     */
     private fun retrieveMembers(): ArrayList<KotlinMember> {
         val memberArray: ArrayList<KotlinMember> = arrayListOf()
 
@@ -106,20 +153,5 @@ class KotlinType(
         return memberArray
     }
 
-    private fun initializeType() {
-        val mainPageDiv = document.selectFirst("div.node-page-main")
-        val signatureDiv = mainPageDiv.selectFirst("div.signature")
-            ?: throw Exception("Unable to find signature!")
-
-        val keywordList = signatureDiv.select("span.keyword")
-
-        val keywordElement = when (keywordList.size) {
-            0 -> throw Exception("Unable to find keyword elements in the div signature")
-            1 -> keywordList[0]
-            else -> keywordList[1]
-        }
-
-        type = keywordElement.text().capitalize()
-    }
 
 }
