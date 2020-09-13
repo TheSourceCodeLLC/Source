@@ -29,30 +29,26 @@ abstract class AbstractMessageHandler constructor(private val prefix: String) {
     private fun readArguments(input: String): Array<String> {
         val out = mutableListOf<String>()
         var current = String()
-        var escapeNext = false
-        var activeWord = false
+        var shouldEscape = false
+        var insideQuotes = false
         for (it in input.toCharArray()) {
-            if (escapeNext) {
-                current += it; escapeNext = false; continue
+            if (shouldEscape) {
+                current += it; shouldEscape = false; continue
             }
             if (it == '\\') {
-                escapeNext = true; continue
+                shouldEscape = true; continue
             }
             if (it == '\"') {
-                if (activeWord) {
-                    activeWord = false
+                if (insideQuotes) {
+                    insideQuotes = false
                     out += current
                     current = String()
                     continue
                 } else {
-                    activeWord = true; continue
+                    insideQuotes = true; continue
                 }
             }
-            if (it.isWhitespace()) {
-                if (activeWord) {
-                    current += it
-                    continue
-                }
+            if (it.isWhitespace() && !insideQuotes) {
                 if (current.isNotEmpty()) {
                     out += current
                     current = String()
