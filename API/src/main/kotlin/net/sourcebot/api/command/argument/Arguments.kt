@@ -24,7 +24,12 @@ class Arguments(private val raw: Array<String>) : Iterator<String?> {
     /**
      * Gets the next [T] optionally
      */
-    fun <T> next(adapter: (Arguments) -> T?) = adapter(this)
+    fun <T> next(adapter: (Arguments) -> T?) =
+        try {
+            adapter(this)
+        } catch (ex: Throwable) {
+            throw InvalidSyntaxException(ex)
+        }
 
     /**
      * Gets the next [T] exceptionally, throwing if it is absent or malformed

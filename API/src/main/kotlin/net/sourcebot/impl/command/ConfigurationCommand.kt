@@ -1,12 +1,15 @@
 package net.sourcebot.impl.command
 
+import com.fasterxml.jackson.databind.JsonNode
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.SuccessResponse
@@ -15,10 +18,11 @@ class ConfigurationCommand(
     private val configurationManager: GuildConfigurationManager
 ) : RootCommand() {
     override val name = "configuration"
-    override val description = "Modify the Guild Configuration."
+    override val description = "Utilize the Guild Configuration."
     override val permission = name
     override val guildOnly = true
     override val aliases = arrayOf("config", "configure", "cfg")
+    override var cleanupResponse = true
 
     private inner class ConfigurationSetCommand : Bootstrap(
         "set", "Set a configuration value."
@@ -32,7 +36,7 @@ class ConfigurationCommand(
             val path = args.next("You did not specify a configuration path!")
             val value = args.next("You did not specify a value to set!")
             val config = configurationManager[message.guild]
-            config[path] = value
+            config[path] = JsonSerial.mapper.readTree(value)
             configurationManager.saveData(message.guild)
             return SuccessResponse(
                 "Configuration Updated",
@@ -61,19 +65,19 @@ class ConfigurationCommand(
     }
 
     private inner class ConfigurationGetCommand : Bootstrap(
-        "get", "Get a configuration value."
+        "get", "Get a value from the configuration."
     ) {
         override val argumentInfo = ArgumentInfo(
-            Argument("path", "The path of the value to get.")
+            OptionalArgument("path", "The path of the value to get, absent to get the whole configuration.")
         )
 
         override fun execute(message: Message, args: Arguments): Response {
-            val path = args.next("You did not specify a configuration path!")
             val config = configurationManager[message.guild]
-            val found = config.optional<Any>(path)
             return InfoResponse(
                 "Configuration Query",
-                "`$path` : `$found`"
+                args.next()?.let {
+                    "```json\n${config.optional<JsonNode>(it)?.toPrettyString()}\n```"
+                } ?: "```json\n${config.json.toPrettyString()}\n```"
             )
         }
     }
@@ -88,9 +92,10 @@ class ConfigurationCommand(
 }
 
 private abstract class Bootstrap(
-    override val name: String,
-    override val description: String
+    final override val name: String,
+    final override val description: String
 ) : Command() {
-    override val permission by lazy { "configuration.$name" }
-    override val guildOnly = true
+    final override val permission by lazy { "configuration.$name" }
+    final override val guildOnly = true
+    override var cleanupResponse = false
 }

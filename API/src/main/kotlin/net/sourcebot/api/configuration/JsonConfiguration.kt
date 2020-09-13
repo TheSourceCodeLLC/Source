@@ -14,7 +14,7 @@ import net.sourcebot.api.typeRefOf
 import java.io.File
 
 open class JsonConfiguration @JsonCreator constructor(
-    private val json: ObjectNode = JsonSerial.newObject()
+    internal val json: ObjectNode = JsonSerial.newObject()
 ) {
     constructor(map: Map<String, Any?>) : this() {
         map.forEach(::set)
