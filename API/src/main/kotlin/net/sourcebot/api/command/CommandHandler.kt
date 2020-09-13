@@ -109,7 +109,7 @@ class CommandHandler(
 
     private fun respond(command: Command, message: Message, response: Response) {
         message.channel.sendMessage(response.asMessage(message.author)).queue {
-            command.postResponse(response, it)
+            command.postResponse(response, message.author, it)
             if (!command.cleanupResponse) return@queue
             if (message.channelType == ChannelType.TEXT) {
                 message.delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)

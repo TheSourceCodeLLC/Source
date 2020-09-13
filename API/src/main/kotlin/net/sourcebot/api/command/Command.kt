@@ -1,6 +1,7 @@
 package net.sourcebot.api.command
 
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
@@ -48,7 +49,7 @@ abstract class Command {
         args: Arguments
     ): Response = throw InvalidSyntaxException("Invalid Subcommand!")
 
-    open fun postResponse(response: Response, message: Message) = Unit
+    open fun postResponse(response: Response, forWhom: User, message: Message) = Unit
 
     protected fun addChildren(vararg command: Command) = command.forEach(::addChild)
     protected fun addChild(

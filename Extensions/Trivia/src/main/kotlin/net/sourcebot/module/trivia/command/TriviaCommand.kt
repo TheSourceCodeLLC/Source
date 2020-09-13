@@ -1,6 +1,7 @@
 package net.sourcebot.module.trivia.command
 
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.RootCommand
@@ -62,7 +63,7 @@ class TriviaCommand : RootCommand() {
             return game.start { activeGames.remove(message.guild.id) }
         }
 
-        override fun postResponse(response: Response, message: Message) {
+        override fun postResponse(response: Response, forWhom: User, message: Message) {
             if (response !is Game.TriviaStartResponse) return
             activeGames[message.guild.id]?.setMessage(message)
         }

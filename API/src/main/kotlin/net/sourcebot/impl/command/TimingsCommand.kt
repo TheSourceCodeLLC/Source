@@ -1,6 +1,7 @@
 package net.sourcebot.impl.command
 
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.InfoResponse
@@ -20,11 +21,41 @@ class TimingsCommand : RootCommand() {
         val difference = abs(sent - now)
         val gateway = message.jda.gatewayPing
         val rest = message.jda.restPing.complete()
-        return InfoResponse(
-            "Source Timings",
-            "**Command Execution**: ${difference}ms\n" +
-            "**Gateway Ping**: ${gateway}ms\n" +
-            "**REST Ping**: ${rest}ms"
-        )
+        return TimingsResponse(difference, gateway, rest)
+    }
+
+    override fun postResponse(response: Response, forWhom: User, message: Message) {
+        if (response !is TimingsResponse) return
+        response.renderResponseTime(forWhom, message)
+    }
+}
+
+class TimingsResponse(
+    private val execution: Long,
+    private val gateway: Long,
+    private val rest: Long
+) : InfoResponse(
+    "Source Timings",
+    """
+      **Command Execution**: ${execution}ms
+      **Gateway Ping**: ${gateway}ms
+      **REST Ping**: ${rest}ms
+    """.trimIndent()
+) {
+    fun renderResponseTime(forWhom: User, message: Message) {
+        val sent = message.timeCreated.toInstant().toEpochMilli()
+        val now = Instant.now().toEpochMilli()
+        val response = abs(sent - now)
+        message.editMessage(
+            InfoResponse(
+                "Source Timings",
+                """
+                    **Command Execution**: ${execution}ms
+                    **Command Response**: ${response}ms
+                    **Gateway Ping**: ${gateway}ms
+                    **REST Ping**: ${rest}ms
+                """.trimIndent()
+            ).asEmbed(forWhom)
+        ).queue()
     }
 }

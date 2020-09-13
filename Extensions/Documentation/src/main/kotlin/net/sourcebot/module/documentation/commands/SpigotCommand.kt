@@ -1,6 +1,7 @@
 package net.sourcebot.module.documentation.commands
 
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
@@ -41,7 +42,7 @@ class SpigotCommand : RootCommand() {
 
     }
 
-    override fun postResponse(response: Response, message: Message) {
+    override fun postResponse(response: Response, forWhom: User, message: Message) {
         DocSelectorStorage.updateSelector(message)
     }
 }
