@@ -8,7 +8,6 @@ import net.sourcebot.api.module.ModuleClassLoader
 import net.sourcebot.api.module.ModuleDescriptor
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.impl.command.*
-import net.sourcebot.impl.command.lifecycle.RestartCommand
 
 class BaseModule(
     source: Source
