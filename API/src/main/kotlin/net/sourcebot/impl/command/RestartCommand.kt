@@ -13,25 +13,23 @@ class RestartCommand(
 ) : RootCommand() {
     override val name = "restart"
     override val description = "Restart the bot."
-
     override val requiresGlobal = true
 
-    private val onQueued = InfoResponse(
-        "Restart Scheduled",
-        "The bot has been scheduled to restart."
-    )
-    private val onFailure = ErrorResponse(
-        "Restart Failure",
-        "There was a problem restarting the bot."
-    )
-
     override fun execute(message: Message, args: Arguments): Response {
-        message.channel.sendMessage(onQueued.asMessage(message.author)).complete()
-        try {
+        message.channel.sendMessage(
+            InfoResponse(
+                "Restart Scheduled",
+                "The bot has been scheduled to restart."
+            ).asMessage(message.author)
+        ).complete()
+        return try {
             Runtime.getRuntime().exec(script)
+            EmptyResponse()
         } catch (ex: Throwable) {
-            return onFailure.addField("Exception:", ex.message, false) as Response
+            ErrorResponse(
+                "Restart Failure",
+                "There was a problem restarting the bot."
+            ).addField("Exception:", ex.message, false) as Response
         }
-        return EmptyResponse()
     }
 }
