@@ -57,6 +57,7 @@ class Source(val properties: JsonConfiguration) {
     val commandHandler = CommandHandler(
         properties.required("commands.prefix"),
         properties.required("commands.delete-seconds"),
+        guildConfigurationManager,
         permissionHandler
     )
 

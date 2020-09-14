@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.command.PermissionCheck.Type.*
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.configuration.GuildConfigurationManager
 import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.permission.PermissionHandler
@@ -18,10 +19,13 @@ import net.sourcebot.api.response.error.GuildOnlyCommandResponse
 import java.util.concurrent.TimeUnit
 
 class CommandHandler(
-    val prefix: String,
+    private val defaultPrefix: String,
     private val deleteSeconds: Long,
+    private val configurationManager: GuildConfigurationManager,
     private val permissionHandler: PermissionHandler
-) : AbstractMessageHandler(prefix) {
+) : AbstractMessageHandler(
+    defaultPrefix, { configurationManager[it].required("command-prefix") { defaultPrefix } }
+) {
     private var commandMap = CommandMap<RootCommand>()
 
     override fun cascade(
@@ -118,7 +122,7 @@ class CommandHandler(
         }
     }
 
-    fun getSyntax(command: Command) = "$prefix${command.usage}".trim()
+    fun getSyntax(command: Command) = "$defaultPrefix${command.usage}".trim()
 
     fun getCommands(
         module: SourceModule
@@ -135,8 +139,8 @@ class CommandHandler(
     }
 
     fun isValidCommand(input: String): Boolean? {
-        if (!input.startsWith(prefix)) return null
-        val identifier = input.substring(prefix.length, input.length).split(" ")[0]
+        if (!input.startsWith(defaultPrefix)) return null
+        val identifier = input.substring(defaultPrefix.length, input.length).split(" ")[0]
         return getCommand(identifier) != null
     }
 

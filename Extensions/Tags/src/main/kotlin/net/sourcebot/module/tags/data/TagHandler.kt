@@ -5,6 +5,7 @@ import com.google.common.cache.CacheLoader
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
+import net.sourcebot.api.configuration.GuildConfigurationManager
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.AbstractMessageHandler
@@ -13,9 +14,12 @@ import org.bson.Document
 import java.util.concurrent.TimeUnit
 
 class TagHandler(
+    defaultPrefix: String,
     private val mongodb: MongoDB,
-    prefix: String
-) : AbstractMessageHandler(prefix) {
+    private val configurationManager: GuildConfigurationManager
+) : AbstractMessageHandler(
+    defaultPrefix, { configurationManager[it].required("tag-prefix") { defaultPrefix } }
+) {
     private val tags = CacheBuilder.newBuilder().weakKeys()
         .expireAfterWrite(10, TimeUnit.MINUTES)
         .build(object : CacheLoader<Guild, TagCache>() {
