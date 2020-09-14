@@ -17,12 +17,20 @@ abstract class AbstractMessageHandler constructor(
     private val defaultPrefix: String,
     private val guildPrefixSupplier: (Guild) -> String = { defaultPrefix }
 ) {
-    fun onMessageReceived(event: MessageReceivedEvent) {
+    fun onMessageReceived(event: MessageReceivedEvent, checkMention: Boolean = false) {
         val message = event.message
-        val prefix = if (message.isFromGuild) guildPrefixSupplier(message.guild) else defaultPrefix
         var content = message.contentRaw
-        if (!content.startsWith(prefix)) return
-        content = content.substring(prefix.length)
+        val prefix = if (message.isFromGuild) guildPrefixSupplier(message.guild) else defaultPrefix
+        content = if (!content.startsWith(prefix)) {
+            if (checkMention) {
+                val id = message.jda.selfUser.id
+                val mention = "<@!$id> "
+                if (!content.startsWith(mention)) return
+                content.substring(mention.length)
+            } else return
+        } else {
+            content.substring(prefix.length)
+        }
         if (content.isBlank()) return
         val args = readArguments(content)
         val label = args[0].toLowerCase()
