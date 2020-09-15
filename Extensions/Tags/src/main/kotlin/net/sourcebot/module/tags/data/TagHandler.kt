@@ -5,6 +5,7 @@ import com.google.common.cache.CacheLoader
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
+import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.configuration.GuildConfigurationManager
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
@@ -26,11 +27,11 @@ class TagHandler(
             override fun load(guild: Guild) = TagCache(mongodb.getCollection(guild.id, "tags"))
         })
 
-    override fun cascade(message: Message, label: String, args: Array<String>) {
+    override fun cascade(message: Message, label: String, arguments: Arguments) {
         if (!message.isFromGuild) return
         val tagCache = get(message.guild)
         val tag = tagCache.getTag(label.toLowerCase()) ?: return
-        val content = tag.processArguments(args)
+        val content = tag.processArguments(arguments.rawCopy())
         when (tag.type) {
             Tag.Type.TEXT -> message.channel.sendMessage(content).queue()
             Tag.Type.EMBED -> {

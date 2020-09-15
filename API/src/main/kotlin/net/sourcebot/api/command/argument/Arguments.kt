@@ -59,4 +59,52 @@ class Arguments(private val raw: Array<String>) : Iterator<String?> {
     fun backtrack(amount: Int = 1) {
         index -= amount
     }
+
+    fun rawCopy(): Array<String> = raw.copyOf()
+
+    companion object {
+        /**
+         * Reads arguments from a given input string
+         * Arguments are delimited by whitespace unless they are wrapped in quotes.
+         * Quotes and other characters may be escaped.
+         *
+         * @param[input] The input String to read arguments from
+         * @return An [Array<String>] of the read arguments
+         */
+        @JvmStatic
+        fun parse(input: String): Arguments {
+            val raw = mutableListOf<String>()
+            var current = String()
+            var shouldEscape = false
+            var insideQuotes = false
+            for (it in input.toCharArray()) {
+                if (shouldEscape) {
+                    current += it; shouldEscape = false; continue
+                }
+                if (it == '\\') {
+                    shouldEscape = true; continue
+                }
+                if (it == '\"') {
+                    if (insideQuotes) {
+                        insideQuotes = false
+                        raw += current
+                        current = String()
+                        continue
+                    } else {
+                        insideQuotes = true; continue
+                    }
+                }
+                if (it.isWhitespace() && !insideQuotes) {
+                    if (current.isNotEmpty()) {
+                        raw += current
+                        current = String()
+                    }
+                    continue
+                }
+                current += it
+            }
+            if (current.isNotEmpty()) raw += current
+            return Arguments(raw.toTypedArray())
+        }
+    }
 }

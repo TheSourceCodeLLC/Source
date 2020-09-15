@@ -29,12 +29,11 @@ class CommandHandler(
     private var commandMap = CommandMap<RootCommand>()
 
     override fun cascade(
-        message: Message, label: String, args: Array<String>
+        message: Message, label: String, arguments: Arguments
     ) {
         if (message.author.isBot) return
         val rootCommand = commandMap[label] ?: return
         if (!rootCommand.module.enabled) return
-        val arguments = Arguments(args)
         val permissionCheck = checkPermissions(message, rootCommand, arguments)
         val command = permissionCheck.command
         when (permissionCheck.type) {
