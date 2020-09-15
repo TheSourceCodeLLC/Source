@@ -56,10 +56,11 @@ class CommandHandler(
                 )
             )
             VALID -> {
-                val response = try {
-                    command.execute(message, args)
+                try {
+                    val response = command.execute(message, args)
+                    if (response !is EmptyResponse) return respond(command, message, response)
                 } catch (exception: Exception) {
-                    if (exception is InvalidSyntaxException) {
+                    val error = if (exception is InvalidSyntaxException) {
                         ErrorResponse(
                             "Invalid Syntax!",
                             "${exception.message!!}\n" +
@@ -69,8 +70,8 @@ class CommandHandler(
                         exception.printStackTrace()
                         ExceptionResponse(exception)
                     }
+                    return respond(command, message, error)
                 }
-                if (response !is EmptyResponse) return respond(command, message, response)
             }
         }
     }
