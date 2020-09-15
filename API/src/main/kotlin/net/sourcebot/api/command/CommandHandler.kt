@@ -26,16 +26,24 @@ class CommandHandler(
 ) : AbstractMessageHandler(
     defaultPrefix, { configurationManager[it].required("command-prefix") { defaultPrefix } }
 ) {
-    private var commandMap = CommandMap<RootCommand>()
+    private val commandMap = CommandMap<RootCommand>()
 
     override fun cascade(
-        message: Message, label: String, args: Array<String>
+        message: Message, label: String, arguments: Arguments
     ) {
         if (message.author.isBot) return
-        val rootCommand = commandMap[label] ?: return
+        var identifier = label
+        var args = arguments
+        val rootCommand = commandMap[identifier] ?: commandMap.find {
+            val transformer = it.transformers.find { transform ->
+                transform.regex.matches(identifier)
+            } ?: return@find false
+            args = transformer.transformArguments(identifier, args)
+            identifier = args.next()?.toLowerCase() ?: return@find false
+            true
+        } ?: return
         if (!rootCommand.module.enabled) return
-        val arguments = Arguments(args)
-        val permissionCheck = checkPermissions(message, rootCommand, arguments)
+        val permissionCheck = checkPermissions(message, rootCommand, args)
         val command = permissionCheck.command
         when (permissionCheck.type) {
             GLOBAL_ONLY -> respond(permissionCheck.command, message, GlobalAdminOnlyResponse())
@@ -49,7 +57,7 @@ class CommandHandler(
             )
             VALID -> {
                 val response = try {
-                    command.execute(message, arguments)
+                    command.execute(message, args)
                 } catch (exception: Exception) {
                     if (exception is InvalidSyntaxException) {
                         ErrorResponse(
@@ -146,7 +154,6 @@ class CommandHandler(
 
     fun unregister(module: SourceModule) = commandMap.removeIf { it.module == module }
 }
-
 class PermissionCheck(val command: Command, val type: Type) {
     enum class Type {
         GLOBAL_ONLY,
