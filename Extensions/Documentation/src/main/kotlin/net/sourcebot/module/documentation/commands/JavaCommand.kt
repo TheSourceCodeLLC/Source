@@ -13,11 +13,13 @@ import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
 import net.sourcebot.module.documentation.utility.SelectorModel
 
 class JavaCommand : RootCommand() {
+    private val defaultVersion = 14
+
     override val name: String = "java"
     override val description: String = "Allows the user to query the Java Documentation."
     override var cleanupResponse: Boolean = false
     override val argumentInfo: ArgumentInfo = ArgumentInfo(
-        Argument("version", "The version of the java docs you would like to query, default is 13."),
+        Argument("version", "The version of the java docs you would like to query, default is $defaultVersion."),
         Argument("query", "The item you are searching for in the Java documentation.")
     )
     override val permission = "documentation.$name"
@@ -25,16 +27,18 @@ class JavaCommand : RootCommand() {
     private val iconUrl =
         "https://upload.wikimedia.org/wikipedia/en/thumb/3/30/Java_programming_language_logo.svg/1200px-Java_programming_language_logo.svg.png"
 
+
     private val javadocCache: MutableMap<Int, JenkinsHandler> = mutableMapOf()
 
     override fun execute(message: Message, args: Arguments): Response {
-        var jenkinsHandler = javadocCache[13]
+
+        var jenkinsHandler = javadocCache[defaultVersion]
 
         if (jenkinsHandler == null) {
-            val connectionString = "https://docs.oracle.com/en/java/javase/13/docs/api/overview-tree.html"
+            val connectionString = "https://docs.oracle.com/en/java/javase/$defaultVersion/docs/api/overview-tree.html"
 
-            jenkinsHandler = JenkinsHandler(connectionString, iconUrl, "Java 13 Javadocs")
-            javadocCache[13] = jenkinsHandler
+            jenkinsHandler = JenkinsHandler(connectionString, iconUrl, "Java $defaultVersion Javadocs")
+            javadocCache[defaultVersion] = jenkinsHandler
         }
 
         if (args.hasNext()) {
@@ -54,7 +58,7 @@ class JavaCommand : RootCommand() {
                         javadocCache[version] = jenkinsHandler
                     }
                 } catch (ex: Exception) {
-                    jenkinsHandler = javadocCache[13]
+                    jenkinsHandler = javadocCache[defaultVersion]
                 }
             }
 
@@ -65,8 +69,8 @@ class JavaCommand : RootCommand() {
             return jenkinsHandler.retrieveResponse(message, query)
         } else {
             val authorName = message.author.name
-            val description =
-                "You can find the Java Documentation at [docs.oracle.com](https://docs.oracle.com/javase/13/docs/)"
+            val description = "You can find the Java Documentation at " +
+                    "[docs.oracle.com](https://docs.oracle.com/javase/$defaultVersion/docs/)"
             return InfoResponse(authorName, description)
         }
 

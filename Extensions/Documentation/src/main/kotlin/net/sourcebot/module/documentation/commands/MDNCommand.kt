@@ -12,6 +12,7 @@ import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.module.documentation.utility.DocResponse
+import net.sourcebot.module.documentation.utility.attemptAddEmbedField
 import net.sourcebot.module.documentation.utility.toMarkdown
 import net.sourcebot.module.documentation.utility.truncate
 import org.jsoup.Jsoup
@@ -116,25 +117,18 @@ class MDNCommand : RootCommand() {
             docResponse.setDescription("**__${itemHyperlink}__**\n$description")
 
             val propertyString = retrieveFormattedAnchorList(wikiElement, "Properties")
-            if (propertyString.isNotEmpty()) docResponse.addField("Properties:", propertyString, false)
+            docResponse.attemptAddEmbedField("Properties:", propertyString)
 
             val methodString = retrieveFormattedAnchorList(wikiElement, "Methods")
-            if (methodString.isNotEmpty()) docResponse.addField("Methods:", methodString, false)
+            docResponse.attemptAddEmbedField("Methods:", methodString)
 
-            val parameterString = retrieveFormattedElement(wikiElement, "Parameters")
-            if (parameterString.isNotEmpty()) docResponse.addField("Parameters:", parameterString, false)
+            val headerNames = arrayOf("Parameters", "Return_value", "Exceptions", "Value", "Throws")
+            headerNames.forEach {
+                val fieldName = if (it.equals("Return_value", true)) "Returns:" else "$it:"
+                val fieldDescription = retrieveFormattedElement(wikiElement, it)
 
-            val returnValString = retrieveFormattedElement(wikiElement, "Return_value")
-            if (returnValString.isNotEmpty()) docResponse.addField("Returns:", returnValString, false)
-
-            val exceptionString = retrieveFormattedElement(wikiElement, "Exceptions")
-            if (exceptionString.isNotEmpty()) docResponse.addField("Exceptions:", exceptionString, false)
-
-            val valueString = retrieveFormattedElement(wikiElement, "Value")
-            if (valueString.isNotEmpty()) docResponse.addField("Value:", valueString, false)
-
-            val throwString = retrieveFormattedElement(wikiElement, "Throws")
-            if (throwString.isNotEmpty()) docResponse.addField("Throws:", throwString, false)
+                docResponse.attemptAddEmbedField(fieldName, fieldDescription)
+            }
 
             cache.putResponse(query, docResponse)
             return docResponse
