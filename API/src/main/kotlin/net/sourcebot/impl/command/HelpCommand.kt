@@ -110,8 +110,11 @@ class HelpCommand(
             if (available.isEmpty()) return InfoResponse(
                 header, "You do not have access to any of this module's commands."
             )
+            val prefix =
+                if (message.isFromGuild) commandHandler.getPrefix(message.guild)
+                else commandHandler.getPrefix()
             val listing = available.sortedBy { it.name }.joinToString("\n") {
-                "**${it.name}**: ${it.description}"
+                "**$prefix${it.name}**: ${it.description}"
             }
             return InfoResponse(
                 header, "Below is a list of the commands provided by this module"

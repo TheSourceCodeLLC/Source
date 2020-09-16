@@ -130,6 +130,7 @@ class CommandHandler(
         }
     }
 
+    fun getPrefix() = defaultPrefix
     fun getPrefix(guild: Guild) = guildPrefixSupplier(guild)
     fun getSyntax(guild: Guild, command: Command) = getSyntax(getPrefix(guild), command)
     fun getSyntax(prefix: String, command: Command) = "$prefix${command.getUsage()}".trim()
