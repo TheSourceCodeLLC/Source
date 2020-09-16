@@ -32,14 +32,15 @@ abstract class Command {
     open val permission: String? = null
     open val guildOnly = false
 
-    val usage: String by lazy {
+    fun getUsage(): String = getUsage(this.name)
+    fun getUsage(label: String): String {
         var parent = this.parent
-        var parentStr = this.name
+        var parentStr = label
         while (parent != null) {
             parentStr = "${parent.name} $parentStr"
             parent = parent.parent
         }
-        "$parentStr ${argumentInfo.asList()}"
+        return "$parentStr ${argumentInfo.asList()}"
     }
 
     operator fun get(identifier: String) = children[identifier]

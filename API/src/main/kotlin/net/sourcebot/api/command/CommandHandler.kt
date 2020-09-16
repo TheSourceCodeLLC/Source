@@ -2,6 +2,7 @@ package net.sourcebot.api.command
 
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.ChannelType
+import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.command.PermissionCheck.Type.*
@@ -54,8 +55,15 @@ class CommandHandler(
                     val error = if (exception is InvalidSyntaxException) {
                         ErrorResponse(
                             "Invalid Syntax!",
-                            "${exception.message!!}\n" +
-                                    "**Syntax:** ${getSyntax(command)}"
+                            """
+                                ${exception.message!!}
+                                **Syntax**: ${
+                                when {
+                                    message.isFromGuild -> getSyntax(message.guild, command)
+                                    else -> getSyntax(command)
+                                }
+                            }
+                            """.trimIndent()
                         )
                     } else {
                         exception.printStackTrace()
@@ -122,7 +130,10 @@ class CommandHandler(
         }
     }
 
-    fun getSyntax(command: Command) = "$defaultPrefix${command.usage}".trim()
+    fun getPrefix(guild: Guild) = guildPrefixSupplier(guild)
+    fun getSyntax(guild: Guild, command: Command) = getSyntax(getPrefix(guild), command)
+    fun getSyntax(prefix: String, command: Command) = "$prefix${command.getUsage()}".trim()
+    fun getSyntax(command: Command) = getSyntax(defaultPrefix, command)
 
     fun getCommands(
         module: SourceModule

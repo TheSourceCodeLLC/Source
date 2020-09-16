@@ -84,7 +84,12 @@ class HelpCommand(
                         "Arguments surrounded by <> are required, those surrounded by () are optional."
                     ).apply {
                         addField("Description:", command.description, false)
-                        addField("Usage:", commandHandler.getSyntax(command), false)
+                        addField(
+                            "Usage:", when {
+                                message.isFromGuild -> commandHandler.getSyntax(message.guild, command)
+                                else -> commandHandler.getSyntax(command)
+                            }, false
+                        )
                         addField("Detail:", command.argumentInfo.asList(), false)
                         if (command.aliases.isNotEmpty())
                             addField("Aliases:", command.aliases.joinToString(), false)

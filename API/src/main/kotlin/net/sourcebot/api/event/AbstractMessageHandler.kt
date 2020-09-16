@@ -16,7 +16,7 @@ import net.sourcebot.api.command.argument.Arguments
  */
 abstract class AbstractMessageHandler constructor(
     private val defaultPrefix: String,
-    private val guildPrefixSupplier: (Guild) -> String = { defaultPrefix }
+    protected val guildPrefixSupplier: (Guild) -> String = { defaultPrefix }
 ) {
     fun onMessageReceived(event: MessageReceivedEvent, checkMention: Boolean = false) {
         val message = event.message
