@@ -67,7 +67,7 @@ class JenkinsHandler(
             }
 
         } catch (ex: Exception) {
-            //ex.printStackTrace() //- This is for debug purposes when enabled
+            //ex.printStackTrace() // This is for debug purposes when enabled
             val errDesc = "Unable to find `$query` in the $responseTitle!"
             return ErrorResponse(user.name, errDesc)
         }
@@ -147,13 +147,10 @@ class JenkinsHandler(
                 val fieldValue = if (key.equals("Parameters:", true)) {
                     convertedValue.truncate(250)
                 } else {
-                    if (convertedValue.length > 500) {
-                        convertedValue.truncate(500)
-                    }
                     convertedValue
                 }
 
-                docResponse.addField(key, fieldValue, false)
+                docResponse.addField(key, fieldValue.truncate(500), false)
             }
         }
 
@@ -319,13 +316,11 @@ class JenkinsHandler(
      * @return The found url or null
      */
     private fun retrieveClassUrl(className: String): String? {
-        val urlList = jenkins.classList.stream()
-            .filter {
-                val modifiedElement = it.substring(it.lastIndexOf("/") + 1).removeSuffix(".html")
-                return@filter modifiedElement.equals(className, true)
-            }.collect(Collectors.toList())
+        val urlList = jenkins.classMap
+            .filter { (_, classMapName) -> return@filter classMapName.equals(className, true) }
+            .map { (classUrl, _) -> classUrl }
 
-        return if (urlList.size == 0) null else urlList[0]
+        return if (urlList.isEmpty()) null else urlList[0]
     }
 
 }
