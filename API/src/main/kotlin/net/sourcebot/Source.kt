@@ -57,6 +57,7 @@ class Source(val properties: JsonConfiguration) {
     val commandHandler = CommandHandler(
         properties.required("commands.prefix"),
         properties.required("commands.delete-seconds"),
+        guildConfigurationManager,
         permissionHandler
     )
 
@@ -69,7 +70,7 @@ class Source(val properties: JsonConfiguration) {
         object : ListenerAdapter() {
             override fun onMessageReceived(
                 event: MessageReceivedEvent
-            ) = commandHandler.onMessageReceived(event)
+            ) = commandHandler.onMessageReceived(event, true)
         }
     ).setActivityProvider(activityProvider::asActivity).build().also {
         it.shards.forEach(JDA::awaitReady)

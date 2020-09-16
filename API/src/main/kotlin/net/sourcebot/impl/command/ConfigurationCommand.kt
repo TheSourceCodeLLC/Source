@@ -36,7 +36,9 @@ class ConfigurationCommand(
             val path = args.next("You did not specify a configuration path!")
             val value = args.next("You did not specify a value to set!")
             val config = configurationManager[message.guild]
-            config[path] = JsonSerial.mapper.readTree(value)
+            value.runCatching {
+                JsonSerial.mapper.readTree(this)
+            }.getOrDefault(value).let { config[path] = it }
             configurationManager.saveData(message.guild)
             return SuccessResponse(
                 "Configuration Updated",

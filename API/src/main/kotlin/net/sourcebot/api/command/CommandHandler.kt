@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.command.PermissionCheck.Type.*
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.configuration.GuildConfigurationManager
 import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.permission.PermissionHandler
@@ -18,19 +19,21 @@ import net.sourcebot.api.response.error.GuildOnlyCommandResponse
 import java.util.concurrent.TimeUnit
 
 class CommandHandler(
-    val prefix: String,
+    private val defaultPrefix: String,
     private val deleteSeconds: Long,
+    private val configurationManager: GuildConfigurationManager,
     private val permissionHandler: PermissionHandler
-) : AbstractMessageHandler(prefix) {
+) : AbstractMessageHandler(
+    defaultPrefix, { configurationManager[it].required("command-prefix") { defaultPrefix } }
+) {
     private var commandMap = CommandMap<RootCommand>()
 
     override fun cascade(
-        message: Message, label: String, args: Array<String>
+        message: Message, label: String, arguments: Arguments
     ) {
         if (message.author.isBot) return
         val rootCommand = commandMap[label] ?: return
         if (!rootCommand.module.enabled) return
-        val arguments = Arguments(args)
         val permissionCheck = checkPermissions(message, rootCommand, arguments)
         val command = permissionCheck.command
         when (permissionCheck.type) {
@@ -44,10 +47,11 @@ class CommandHandler(
                 )
             )
             VALID -> {
-                val response = try {
-                    command.execute(message, arguments)
+                try {
+                    val response = command.execute(message, arguments)
+                    if (response !is EmptyResponse) return respond(command, message, response)
                 } catch (exception: Exception) {
-                    if (exception is InvalidSyntaxException) {
+                    val error = if (exception is InvalidSyntaxException) {
                         ErrorResponse(
                             "Invalid Syntax!",
                             "${exception.message!!}\n" +
@@ -57,8 +61,8 @@ class CommandHandler(
                         exception.printStackTrace()
                         ExceptionResponse(exception)
                     }
+                    return respond(command, message, error)
                 }
-                if (response !is EmptyResponse) return respond(command, message, response)
             }
         }
     }
@@ -118,7 +122,7 @@ class CommandHandler(
         }
     }
 
-    fun getSyntax(command: Command) = "$prefix${command.usage}".trim()
+    fun getSyntax(command: Command) = "$defaultPrefix${command.usage}".trim()
 
     fun getCommands(
         module: SourceModule
@@ -135,8 +139,8 @@ class CommandHandler(
     }
 
     fun isValidCommand(input: String): Boolean? {
-        if (!input.startsWith(prefix)) return null
-        val identifier = input.substring(prefix.length, input.length).split(" ")[0]
+        if (!input.startsWith(defaultPrefix)) return null
+        val identifier = input.substring(defaultPrefix.length, input.length).split(" ")[0]
         return getCommand(identifier) != null
     }
 
