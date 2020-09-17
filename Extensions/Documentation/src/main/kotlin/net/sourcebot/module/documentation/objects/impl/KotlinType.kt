@@ -2,10 +2,7 @@ package net.sourcebot.module.documentation.objects.impl
 
 import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.module.documentation.objects.KotlinInformation
-import net.sourcebot.module.documentation.utility.DocResponse
-import net.sourcebot.module.documentation.utility.appendIfRoom
-import net.sourcebot.module.documentation.utility.toMarkdown
-import net.sourcebot.module.documentation.utility.truncate
+import net.sourcebot.module.documentation.utility.*
 import org.jsoup.nodes.Document
 
 /**
@@ -68,7 +65,10 @@ class KotlinType(
 
         if (paramHeader != null) {
             val paramParagraphElement = paramHeader.nextElementSibling()
-            val paramDesc = hyperlinksToMarkdown(paramParagraphElement).toMarkdown().truncate(stringLengthLimit)
+            val paramDesc = paramParagraphElement.anchorsToHyperlinks(baseUrl)
+                .toMarkdown()
+                .truncate(stringLengthLimit)
+
             docResponse.addField("Parameters:", paramDesc, false)
         }
 

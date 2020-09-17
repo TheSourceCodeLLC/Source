@@ -239,88 +239,11 @@ class JenkinsHandler(
      * equivalent
      */
     private fun convertHyperlinksToMarkdown(element: Element, url: String): String {
-        var html: String = element.outerHtml()
-
-        element.select("a").stream()
-            .filter { it.attr("href") != null }
-            .forEach {
-
-                val baseClassUrl: String = url.substringBeforeLast("#")
-                var hrefUrl: String = it.attr("href")
-                val text: String = it.html().toMarkdown()
-
-                hrefUrl = with(hrefUrl) {
-                    when {
-                        contains("http") -> hrefUrl
-                        contains(".html") -> {
-                            val pkgUrl = url.substringBeforeLast("/")
-                            "$pkgUrl/$this"
-                        }
-                        contains("../") || contains("#") -> {
-
-                            if (contains("#") && !contains("/")) {
-                                return@with baseClassUrl + url
-                            }
-
-                            val modifiedHref = replace("../", "")
-
-                            if (it.hasAttr("title")) {
-                                val newPackage = it.attr("title")
-                                    .replace("class in ", "")
-                                    .replace(".", "/")
-                                    .trim()
-
-                                val parentPkgDir = "/${newPackage.substringBefore("/")}/"
-                                val basePkgUrl = url.substringBeforeLast(parentPkgDir) + parentPkgDir
-
-                                basePkgUrl + modifiedHref
-                            } else {
-                                baseUrl + modifiedHref
-                            }
-
-                        }
-                        contains(".html", true) -> {
-                            val modifiedHref = substring(lastIndexOf("/") + 1)
-                                .substringBeforeLast(".")
-
-                            retrieveClassUrl(modifiedHref)?.trim() ?: return@forEach
-                        }
-                        else -> this
-                    }
-
-                }
-
-                if (hrefUrl.isNotEmpty()) {
-                    val isCodeBlock = it.parent().tagName()?.equals("code", true) ?: false
-
-                    val modifiedText = if (isCodeBlock && !text.contains("`")) "`$text`" else text
-
-                    hrefUrl = MarkdownSanitizer.escape(hrefUrl)
-                    val hyperlink: String = MarkdownUtil.maskedLink(modifiedText, hrefUrl)
-                        .replace("%29", ")")
-
-                    html = html.replace(it.outerHtml(), hyperlink)
-                }
-
-            }
+        val html = element.anchorsToHyperlinks(url)
 
 
         // Removes code tags that surround a hyperlink
         return html.replace("<code>(\\[.*?\\).*?)</code>".toRegex(), "$1")
-    }
-
-    /**
-     * Retrieves a class url by name
-     *
-     * @param className The name of the class the user is attempting to get the url from
-     * @return The found url or null
-     */
-    private fun retrieveClassUrl(className: String): String? {
-        val urlList = jenkins.classMap
-            .filter { (_, classMapName) -> return@filter classMapName.equals(className, true) }
-            .map { (classUrl, _) -> classUrl }
-
-        return if (urlList.isEmpty()) null else urlList[0]
     }
 
 }

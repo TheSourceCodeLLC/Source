@@ -3,6 +3,7 @@ package net.sourcebot.module.documentation.utility
 import com.overzealous.remark.Remark
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.MessageEmbed
+import org.jsoup.nodes.Element
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -104,4 +105,66 @@ fun EmbedBuilder.attemptAddEmbedField(fieldName: String, fieldDescription: Strin
     }
 
     return this
+}
+
+/**
+ * Converts anchor elements to their markdown equivalent
+ *
+ * @receiver [Element]
+ * @param baseUrl The url to the documentation
+ * @return Raw html where the anchor elements have been replaced with their markdown equivalent
+ */
+fun Element.anchorsToHyperlinks(baseUrl: String): String {
+    var html = this.html()
+    val documentUrl = this.ownerDocument().baseUri().removeSuffix("/")
+    val isDocUrlBlank = documentUrl.isBlank()
+
+    val baseClassUrl = if (isDocUrlBlank) {
+        baseUrl.substringBeforeLast("#")
+    } else {
+        documentUrl
+    }
+
+    this.select("a").forEach {
+        val href = it.attr("href")
+
+        val createdUrl = with(href) {
+            when {
+                contains("https") -> href
+                contains("#") && !contains("/") -> baseClassUrl + href
+                contains("../") -> {
+                    var modifiedDocUrl = if (isDocUrlBlank) {
+                        baseClassUrl.substringBeforeLast("/")
+                    } else {
+                        baseClassUrl
+                    }
+                    var modifiedHref = href
+
+                    while (modifiedHref.contains("../")) {
+                        modifiedDocUrl = modifiedDocUrl.substringBeforeLast("/")
+                        modifiedHref = modifiedHref.replaceFirst("../", "")
+                    }
+
+                    "$modifiedDocUrl/$modifiedHref"
+                }
+                contains(".html") -> {
+                    val pkgUrl = baseUrl.substringBeforeLast("/")
+                    "$pkgUrl/$this"
+                }
+                else -> "$baseUrl/$href"
+            }
+        }
+
+        val sanitizedUrl = createdUrl.replace("(%5C)?(%29|\\))".toRegex(), "%5C)")
+            .replace(" ", "%20")
+        val text = it.html().toMarkdown()
+
+        val isCodeBlock = it.parent().tagName()?.equals("code", true) ?: false
+        val modifiedText = if (isCodeBlock && !text.contains("`")) "`$text`" else text
+        val hyperlink = "[$modifiedText]($sanitizedUrl)"
+
+        html = html.replace(it.outerHtml(), hyperlink)
+    }
+
+    return html
 }
