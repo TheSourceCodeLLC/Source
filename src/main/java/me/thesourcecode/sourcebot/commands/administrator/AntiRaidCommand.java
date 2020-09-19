@@ -12,9 +12,9 @@ import java.time.temporal.ChronoUnit;
 
 public class AntiRaidCommand extends Command {
     private final CommandInfo INFO = new CommandInfo(
-            "antiraid",
-            "Ban suspected raid participants.",
-            CommandInfo.Category.ADMIN
+        "antiraid",
+        "Ban suspected raid participants.",
+        CommandInfo.Category.ADMIN
     ).asGuildOnly().withControlRoles(SourceRole.ADMIN, SourceRole.OWNER);
 
     @Override
@@ -26,11 +26,13 @@ public class AntiRaidCommand extends Command {
     public Message execute(Source source, Message message, String[] args) {
         final Guild guild = message.getGuild();
         final Instant now = Instant.now();
-        guild.getMembers().stream().filter(
-                it -> it.getTimeJoined()
-                        .toInstant()
-                        .isAfter(now.minus(15, ChronoUnit.MINUTES)
-                        )).forEach(it -> it.ban(7, "Raid Candidate.").queue());
+        guild.getMembersWithRoles(
+            SourceRole.UNVERIFIED.resolve(message.getJDA())
+        ).stream().filter(
+            it -> it.getTimeJoined()
+                .toInstant()
+                .isAfter(now.minus(15, ChronoUnit.MINUTES)
+                )).forEach(it -> it.ban(7, "Raid Candidate.").queue());
         return null;
     }
 }
