@@ -174,7 +174,8 @@ public class Source {
                 new StopCommand(),
                 new UpdateCommand(),
 
-                new ChangelogCommand()
+                new ChangelogCommand(),
+                new AntiRaidCommand()
         ).forEach(commandHandler::registerCommand);
     }
 
