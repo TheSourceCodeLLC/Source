@@ -68,7 +68,9 @@ class SelectorCache {
      * @param user The [User] who opened the [SelectorModel]
      * @param deleteAfter The amount of time, in seconds, to delete the message after
      */
-    fun deleteMessages(user: User, deleteAfter: Long = 0) {
+    fun deleteMessages(user: User, deleteAfter: Long = -1L) {
+        if (deleteAfter == -1L) return
+
         val selector = getSelector(user) ?: return
         val channelType = selector.cmdMessage.channelType
 
@@ -87,7 +89,7 @@ class SelectorCache {
      * @param user The [User] who opened the [SelectorModel]
      * @param deleteAfter The amount of time, in seconds, to delete the message after
      */
-    fun deleteMessagesAndRemove(user: User, deleteAfter: Long = 0) {
+    fun deleteMessagesAndRemove(user: User, deleteAfter: Long = -1L) {
         deleteMessages(user, deleteAfter)
         removeSelector(user)
     }

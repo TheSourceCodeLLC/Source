@@ -71,7 +71,7 @@ class SelectorEventSubscriber(private val docModule: Documentation) : EventSubsc
             docResponse = jenkinsHandler.createDocResponse(docResponse, infoList[selectedId])
 
             docMessage.editMessage(docResponse.asMessage(user)).queue()
-            selectorCache.deleteMessagesAndRemove(user, deleteSeconds)
+            selectorCache.deleteMessagesAndRemove(user)
         } catch (ex: Exception) {
             sendInvalidIdResponse(user, docMessage)
         }
