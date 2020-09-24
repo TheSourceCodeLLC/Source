@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.module.documentation.objects.impl.KotlinMember
 import net.sourcebot.module.documentation.objects.impl.KotlinType
 import net.sourcebot.module.documentation.utility.DocResponse
+import net.sourcebot.module.documentation.utility.anchorsToHyperlinks
 import net.sourcebot.module.documentation.utility.toMarkdown
 import net.sourcebot.module.documentation.utility.truncate
 import org.jsoup.nodes.Element
@@ -13,6 +14,7 @@ import org.jsoup.nodes.Element
  * along with providing away for converting anchor elements to markdown, for classes which inherit this abstract class
  *
  * @property iconUrl The response embed icon url
+ * @property baseUrl The url to the kotlin documentation standard library
  * @property url The url to the specific [KotlinType]/[KotlinMember] on the kotlin documentation
  * @property type The type of the [KotlinType]/[KotlinMember] (i.e. Class, Extension Function, etc)
  * @property description The description from the kotlin documentation site for the specific KotlinType/KotlinMember
@@ -21,6 +23,7 @@ import org.jsoup.nodes.Element
 abstract class KotlinInformation {
 
     internal val iconUrl = "https://pbs.twimg.com/profile_images/699217734492647428/pCfEzr6L_400x400.png"
+    internal val baseUrl = "https://kotlinlang.org/api/latest/jvm/stdlib"
 
     abstract val url: String
     abstract val name: String
@@ -49,26 +52,32 @@ abstract class KotlinInformation {
      * @return The formatted description
      */
     internal fun retrieveDescription(element: Element): String {
-        var foundDescription: String
+        val descriptionStrBuilder = StringBuilder()
+
         if (element.hasClass("declarations")) {
             val divSummary = element.selectFirst("div.summary-group")
             val paragraphElement = divSummary.selectFirst("p")
 
-            foundDescription = if (paragraphElement == null) {
-                "N/A"
-            } else {
-                hyperlinksToMarkdown(paragraphElement).toMarkdown().truncate(500)
-            }
+            descriptionStrBuilder.append(
+                paragraphElement?.anchorsToHyperlinks(baseUrl)
+                    ?.toMarkdown()
+                    ?.truncate(500) ?: "N/A"
+            )
 
             val signatureElement = divSummary.selectFirst("div.signature") ?: return description
             val codeBlock = MarkdownUtil.codeblock("kotlin", signatureElement.text())
-            foundDescription += "\n$codeBlock"
+            descriptionStrBuilder.append("\n$codeBlock")
         } else {
             val paragraphElement = element.selectFirst("p")
-            foundDescription = hyperlinksToMarkdown(paragraphElement).toMarkdown().truncate(600)
+
+            descriptionStrBuilder.append(
+                paragraphElement.anchorsToHyperlinks(baseUrl)
+                    .toMarkdown()
+                    .truncate(600)
+            )
         }
 
-        return foundDescription
+        return descriptionStrBuilder.toString()
     }
 
     /**
@@ -86,49 +95,6 @@ abstract class KotlinInformation {
             .forEach { tagArray.add(it) }
 
         return tagArray
-    }
-
-    /**
-     * Converts anchor elements to markdown
-     *
-     * @param element The element which contains the anchor elements to convert to hyperlinks
-     * @return Raw html where the anchor elements have been replaced with their markdown equivalent
-     */
-    internal fun hyperlinksToMarkdown(element: Element): String {
-        var html = element.outerHtml()
-
-        val baseUrl = "https://kotlinlang.org/api/latest/jvm/stdlib"
-        val documentUrl = element.ownerDocument().baseUri().removeSuffix("/")
-
-        element.select("a").forEach {
-            val href = it.attr("href")
-
-            val url = with(href) {
-                when {
-                    contains("https") -> href
-                    contains("../") -> {
-                        var modifiedDocUrl = documentUrl
-                        var modifiedHref = href
-
-                        while (modifiedHref.contains("../")) {
-                            modifiedDocUrl = modifiedDocUrl.substringBeforeLast("/")
-                            modifiedHref = modifiedHref.replaceFirst("../", "")
-                        }
-
-                        "$modifiedDocUrl/$modifiedHref"
-                    }
-                    else -> "$baseUrl/$href"
-                }
-            }
-
-            val sanitizedUrl = url.replace(")", "%5C)").replace(" ", "%20")
-            val text: String = it.html().toMarkdown()
-            val hyperlink = "[$text]($sanitizedUrl)"
-
-            html = html.replace(it.outerHtml(), hyperlink)
-        }
-
-        return html
     }
 
 }

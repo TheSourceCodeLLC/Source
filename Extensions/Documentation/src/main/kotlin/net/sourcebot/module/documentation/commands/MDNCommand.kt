@@ -3,7 +3,6 @@ package net.sourcebot.module.documentation.commands
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
@@ -11,10 +10,7 @@ import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
-import net.sourcebot.module.documentation.utility.DocResponse
-import net.sourcebot.module.documentation.utility.attemptAddEmbedField
-import net.sourcebot.module.documentation.utility.toMarkdown
-import net.sourcebot.module.documentation.utility.truncate
+import net.sourcebot.module.documentation.utility.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 
@@ -108,7 +104,9 @@ class MDNCommand : RootCommand() {
             val descriptionElement = wikiElement.selectFirst("article > p")
                 ?: return ErrorResponse(user.name, "Unable to find article description!")
 
-            val description = hyperlinksToMarkdown(descriptionElement).toMarkdown().truncate(600)
+            val description = descriptionElement.anchorsToHyperlinks(baseUrl)
+                .toMarkdown()
+                .truncate(600)
 
             val anchorText = docObjectResult["title"].asText().replace(".", "#")
 
@@ -176,7 +174,8 @@ class MDNCommand : RootCommand() {
         val descTagList = returnElement.select("dt")
 
         if (descTagList.size == 0) {
-            return hyperlinksToMarkdown(returnElement).toMarkdown()
+            return returnElement.anchorsToHyperlinks(baseUrl)
+                .toMarkdown()
         }
 
         val returnSB = StringBuilder()
@@ -203,7 +202,9 @@ class MDNCommand : RootCommand() {
                 // Removes remnants of list elements (i.e. "This can either be:")
                 descElement = descElement.html(descElement.html().replace("(\\.)(.*)[:]".toRegex(), "$1"))
 
-                val itemDesc = hyperlinksToMarkdown(descElement).toMarkdown().truncate(128)
+                val itemDesc = descElement.anchorsToHyperlinks(baseUrl)
+                    .toMarkdown()
+                    .truncate(128)
 
                 val appendFormat = "$itemName - $itemDesc\n"
                 val appendString = if (count == 3 && descTagList.size > 4) "$appendFormat..." else "$appendFormat\n"
@@ -215,20 +216,6 @@ class MDNCommand : RootCommand() {
         returnSB.trimToSize()
         return returnSB.toString()
 
-    }
-
-    private fun hyperlinksToMarkdown(element: Element): String {
-        var html = element.outerHtml()
-
-        element.select("a").forEach {
-            val url: String = MarkdownSanitizer.escape("$baseUrl${it.attr("href")}")
-            val text: String = it.outerHtml().toMarkdown()
-            val hyperlink: String = MarkdownUtil.maskedLink(text, url).replace("%29", ")")
-
-            html = html.replace(it.outerHtml(), hyperlink)
-        }
-
-        return html
     }
 
     private class MDNDocCache {
