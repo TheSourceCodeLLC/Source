@@ -49,14 +49,10 @@ object DurationUtils {
             ChronoUnit.HOURS to hours,
             ChronoUnit.MINUTES to minutes,
             ChronoUnit.SECONDS to seconds
-        ).entries.joinToString { (unit, amount) ->
-            if (amount == 0L) {
-                ""
-            } else {
-                var name = unit.name
-                if (amount == 1L) name = name.substring(0, name.length - 1)
-                "$amount $name"
-            }
+        ).entries.filter { (_, a) -> a != 0L }.joinToString { (unit, amount) ->
+            var name = unit.name
+            if (amount == 1L) name = name.substring(0, name.length - 1)
+            "$amount $name"
         }.toLowerCase()
     }
 

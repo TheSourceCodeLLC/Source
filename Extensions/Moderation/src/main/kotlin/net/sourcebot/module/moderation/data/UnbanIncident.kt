@@ -3,37 +3,39 @@ package net.sourcebot.module.moderation.data
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
+import net.sourcebot.api.asMessage
+import net.sourcebot.api.formatted
 import net.sourcebot.api.response.SuccessResponse
 
 class UnbanIncident(
+    override val id: Long,
     private val sender: Member,
-    private val target: String,
-    private val reason: String
-) : SourceIncident(Type.UNBAN) {
-    lateinit var unbanned: User
-        internal set
+    val unbanned: User,
+    override val reason: String,
+) : OneshotIncident() {
+    override val source = sender.id
+    override val target = unbanned.id
+    override val type = Incident.Type.UNBAN
 
-    override fun execute(): Throwable? =
-        try {
-            val guild = sender.guild
-            unbanned = guild.retrieveBanById(target).complete().user
-            guild.unban(target).complete()
-            null
-        } catch (ex: Throwable) {
-            ex
+    private val unban = SuccessResponse(
+        "Unban - Case #$id",
+        """
+            **Unbanned By:** ${sender.formatted()} ($source)
+            **Unbanned User:** ${unbanned.formatted()} ($target)
+            **Reason:** $reason
+        """.trimIndent()
+    )
+
+    override fun execute() {
+        //Ignore DM failures
+        kotlin.runCatching {
+            val dm = unbanned.openPrivateChannel().complete()
+            dm.sendMessage(unban.asMessage(unbanned)).complete()
         }
-
-    override fun sendLog(channel: TextChannel): Long {
-        val case = computeId()
-        val embed = SuccessResponse(
-            "Unban - Case #$case",
-            """
-                **Unbanned By:** ${"%#s".format(sender.user)} (${sender.id}) 
-                **Unbanned User:** ${"%#s".format(unbanned)} (${unbanned.id})
-                **Reason:**: $reason
-            """.trimIndent()
-        ).asEmbed(unbanned)
-        channel.sendMessage(embed).queue()
-        return case
+        sender.guild.unban(unbanned).complete()
     }
+
+    override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(
+        unban.asMessage(sender)
+    ).queue()
 }

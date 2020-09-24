@@ -2,24 +2,24 @@ package net.sourcebot.module.moderation.data
 
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.TextChannel
-import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.WarningResponse
 
-class KickIncident(
+class WarnIncident(
     override val id: Long,
     private val sender: Member,
-    val kicked: Member,
+    val warned: Member,
     override val reason: String,
 ) : OneshotIncident() {
-    override val source = sender.id
-    override val target = kicked.id
-    override val type = Incident.Type.KICK
-    private val kick = WarningResponse(
-        "Kick - Case #$id",
+    override val source: String = sender.id
+    override val target: String = warned.id
+    override val type = Incident.Type.WARN
+
+    private val warning = WarningResponse(
+        "Warning - Case #$id",
         """
-            **Kicked By:** ${sender.formatted()} ($source)
-            **Kicked User:** ${kicked.formatted()} ($target)
+            **Warned By:** ${sender.formatted()} ($source)
+            **Warned User:** ${warned.formatted()} ($target)
             **Reason:** $reason
         """.trimIndent()
     )
@@ -27,13 +27,12 @@ class KickIncident(
     override fun execute() {
         //Ignore DM failures
         kotlin.runCatching {
-            val dm = kicked.user.openPrivateChannel().complete()
-            dm.sendMessage(kick.asMessage(kicked)).complete()
+            val dm = warned.user.openPrivateChannel().complete()
+            dm.sendMessage(warning.asMessage(warned.user)).complete()
         }
-        kicked.kick(reason).queue()
     }
 
     override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(
-        kick.asMessage(sender)
+        warning.asMessage(sender.user)
     ).queue()
 }

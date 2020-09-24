@@ -3,6 +3,7 @@ package net.sourcebot.api
 import com.fasterxml.jackson.core.type.TypeReference
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
+import net.sourcebot.api.response.Response
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.Charset
@@ -14,3 +15,5 @@ inline fun <reified T> typeRefOf(): TypeReference<T> = object : TypeReference<T>
 
 fun Member.formatted(): String = user.formatted()
 fun User.formatted(): String = "%#s".format(this)
+
+fun Response.asMessage(member: Member) = asMessage(member.user)
