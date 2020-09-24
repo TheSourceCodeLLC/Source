@@ -70,7 +70,7 @@ class Source(val properties: JsonConfiguration) {
         object : ListenerAdapter() {
             override fun onMessageReceived(
                 event: MessageReceivedEvent
-            ) = commandHandler.onMessageReceived(event, true)
+            ) = commandHandler.onMessageReceived(event)
         }
     ).setActivityProvider(activityProvider::asActivity).build().also {
         it.shards.forEach(JDA::awaitReady)

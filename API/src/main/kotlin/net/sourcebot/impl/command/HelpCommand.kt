@@ -90,7 +90,7 @@ class HelpCommand(
                                 else -> commandHandler.getSyntax(command)
                             }, false
                         )
-                        addField("Detail:", command.argumentInfo.asList(), false)
+                        addField("Detail:", command.argumentInfo.getParameterDetail(), false)
                         if (command.aliases.isNotEmpty())
                             addField("Aliases:", command.aliases.joinToString(), false)
                     }

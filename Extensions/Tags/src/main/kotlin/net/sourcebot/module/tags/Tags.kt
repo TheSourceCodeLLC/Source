@@ -12,8 +12,8 @@ class Tags : SourceModule() {
 
         val tagHandler = TagHandler(
             config.required("prefix"),
-            source.mongodb,
-            source.guildConfigurationManager
+            source.guildConfigurationManager,
+            source.mongodb
         )
 
         source.jdaEventSystem.listen(this, tagHandler::onMessageReceived)

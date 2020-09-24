@@ -1,7 +1,7 @@
 package net.sourcebot.api.command.argument
 
 import net.dv8tion.jda.api.entities.Guild
-import net.sourcebot.api.SourceDuration
+import net.sourcebot.api.DurationUtils
 
 /**
  * Represents an adapter to convert command [Arguments] to a desired [T]
@@ -58,7 +58,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
         }
 
         @JvmStatic
-        fun channel(guild: Guild) = ofSingleArg {
+        fun textChannel(guild: Guild) = ofSingleArg {
             val target = it.replace("<#(\\d+)>".toRegex(), "$1")
             val byId = target.runCatching(guild::getTextChannelById).getOrNull()
             if (byId != null) return@ofSingleArg byId
@@ -68,8 +68,17 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
         }
 
         @JvmStatic
+        fun category(guild: Guild) = ofSingleArg {
+            val byId = it.runCatching(guild::getCategoryById).getOrNull()
+            if (byId != null) return@ofSingleArg byId
+            val byName = it.runCatching { guild.getCategoriesByName(this, true) }.getOrNull()
+            if (byName?.isNotEmpty() == true) return@ofSingleArg byName[0]
+            return@ofSingleArg null
+        }
+
+        @JvmStatic
         fun duration() = ofSingleArg {
-            it.runCatching(SourceDuration::parse).getOrNull()
+            it.runCatching(DurationUtils::parseDuration).getOrNull()
         }
     }
 }

@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.sourcebot.api.command.PermissionCheck.Type.*
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.configuration.GuildConfigurationManager
@@ -22,11 +23,9 @@ import java.util.concurrent.TimeUnit
 class CommandHandler(
     private val defaultPrefix: String,
     private val deleteSeconds: Long,
-    private val configurationManager: GuildConfigurationManager,
+    private val configManager: GuildConfigurationManager,
     private val permissionHandler: PermissionHandler
-) : AbstractMessageHandler(
-    defaultPrefix, { configurationManager[it].required("command-prefix") { defaultPrefix } }
-) {
+) : AbstractMessageHandler() {
     private var commandMap = CommandMap<RootCommand>()
 
     override fun cascade(
@@ -74,6 +73,13 @@ class CommandHandler(
             }
         }
     }
+
+    override fun getViablePrefixes(
+        event: MessageReceivedEvent
+    ) = mutableListOf(
+        "<@!${event.jda.selfUser.id}> ",
+        "<@${event.jda.selfUser.id}> "
+    ) + if (event.isFromGuild) getPrefix(event.guild) else defaultPrefix
 
     fun checkPermissions(
         message: Message,
@@ -131,7 +137,10 @@ class CommandHandler(
     }
 
     fun getPrefix() = defaultPrefix
-    fun getPrefix(guild: Guild) = guildPrefixSupplier(guild)
+    override fun getPrefix(
+        guild: Guild
+    ) = configManager[guild].required("command-prefix") { defaultPrefix }
+
     fun getSyntax(guild: Guild, command: Command) = getSyntax(getPrefix(guild), command)
     fun getSyntax(prefix: String, command: Command) = "$prefix${command.getUsage()}".trim()
     fun getSyntax(command: Command) = getSyntax(defaultPrefix, command)
