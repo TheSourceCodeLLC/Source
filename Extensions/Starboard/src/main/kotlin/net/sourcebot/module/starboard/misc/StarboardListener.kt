@@ -13,7 +13,6 @@ import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionRemove
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.module.SourceModule
-import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.WarningResponse
 import org.bson.Document
 
@@ -42,9 +41,7 @@ class StarboardListener(
         if (count < threshold) return
         val channel = data.optional<String>("channel")?.let {
             event.guild.getTextChannelById(it)
-        } ?: return event.channel.sendMessage(
-            NoChannelResponse().asMessage(event.jda.selfUser)
-        ).queue()
+        } ?: return
         val linkObject = getLinkObject(event.guild, message.id)
         if (linkObject != null) {
             val starredId = linkObject["starred"] as String
@@ -72,9 +69,7 @@ class StarboardListener(
         val count = message.reactions.find { it.reactionEmote.name == UNICODE_STAR }?.count ?: 0
         val channel = data.optional<String>("channel")?.let {
             event.guild.getTextChannelById(it)
-        } ?: return event.channel.sendMessage(
-            NoChannelResponse().asMessage(event.jda.selfUser)
-        ).queue()
+        } ?: return
         if (count < data.required<Long>("threshold")) {
             channel.deleteMessageById(starredId).queue({}, {})
             getCollection(event.guild).deleteOne(linkObject!!)
@@ -124,10 +119,6 @@ class StarboardListener(
     ) = getCollection(guild).find(Document("original", original)).first()
 
     private fun getCollection(guild: Guild) = mongo.getCollection(guild.id, "starboard")
-
-    private class NoChannelResponse : ErrorResponse(
-        "Starboard Error", "There is no valid Starboard channel!"
-    )
 
     private class StarboardResponse(
         original: Message
