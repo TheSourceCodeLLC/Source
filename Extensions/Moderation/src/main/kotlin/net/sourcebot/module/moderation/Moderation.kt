@@ -19,6 +19,9 @@ class Moderation : SourceModule() {
             UnmuteCommand(),
             UnbanCommand()
         )
+        punishmentHandler.expireOldIncidents {
+            source.shardManager.guilds
+        }
     }
 
     companion object {

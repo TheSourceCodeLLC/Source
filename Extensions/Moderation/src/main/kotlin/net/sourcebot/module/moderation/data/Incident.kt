@@ -47,5 +47,3 @@ abstract class OneshotIncident : Incident {
         this["time"] = time.toEpochMilli()
     }
 }
-
-

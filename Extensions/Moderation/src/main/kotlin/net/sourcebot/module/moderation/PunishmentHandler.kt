@@ -3,6 +3,7 @@ package net.sourcebot.module.moderation
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.TextChannel
+import net.sourcebot.Source
 import net.sourcebot.api.configuration.GuildConfigurationManager
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.formatted
@@ -10,7 +11,10 @@ import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.SuccessResponse
 import net.sourcebot.module.moderation.data.*
+import org.bson.Document
 import java.time.Duration
+import java.time.Instant
+import java.util.concurrent.TimeUnit
 
 class PunishmentHandler(
     private val configurationManager: GuildConfigurationManager,
@@ -222,4 +226,34 @@ class PunishmentHandler(
     ) = configurationManager[guild].optional<String>(
         "moderation.mute-role"
     )?.let(guild::getRoleById)
+
+    fun expireOldIncidents(
+        guilds: () -> Collection<Guild>
+    ) {
+        val reason = "The punishment has expired."
+        Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate({
+            for (guild in guilds()) {
+                val collection = getCollection(guild)
+                val query = Document().apply {
+                    this["expiry"] = Document().apply {
+                        this["\$exists"] = true
+                        this["\$lte"] = Instant.now().toEpochMilli()
+                    }
+                    this["resolved"] = Document("\$ne", true)
+                }
+                collection.find(query).forEach {
+                    when (Incident.Type.valueOf(it["type"] as String)) {
+                        Incident.Type.MUTE -> {
+                            val muted = (it["target"] as String).let(guild::getMemberById)!!
+                            unmuteIncident(guild, guild.selfMember, muted, reason)
+                        }
+                        Incident.Type.TEMPBAN -> {
+                            unbanIncident(guild, guild.selfMember, it["target"] as String, reason)
+                        }
+                    }
+                    collection.updateOne(it, Document("\$set", Document("resolved", true)))
+                }
+            }
+        }, 0, 1, TimeUnit.SECONDS)
+    }
 }
