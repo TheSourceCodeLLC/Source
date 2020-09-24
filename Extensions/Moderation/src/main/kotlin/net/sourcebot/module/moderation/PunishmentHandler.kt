@@ -212,7 +212,7 @@ class PunishmentHandler(
         }
     }
 
-    private fun getCollection(guild: Guild) = mongo.getCollection(guild.id, "punishments")
+    private fun getCollection(guild: Guild) = mongo.getCollection(guild.id, "incidents")
     private fun getNextId(guild: Guild) = getCollection(guild).countDocuments() + 1
 
     private fun getIncidentChannel(
