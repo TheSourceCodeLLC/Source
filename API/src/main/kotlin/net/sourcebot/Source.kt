@@ -40,8 +40,6 @@ import java.util.*
 import java.util.concurrent.Executors
 
 class Source(val properties: JsonConfiguration) {
-    private val logger: Logger = LoggerFactory.getLogger(Source::class.java)
-
     private val ignoredIntents = EnumSet.of(
         GUILD_MESSAGE_TYPING, DIRECT_MESSAGE_TYPING
     )
@@ -110,6 +108,8 @@ class Source(val properties: JsonConfiguration) {
     }
 
     companion object {
+        private val logger: Logger = LoggerFactory.getLogger(Source::class.java)
+
         @JvmField
         val TIME_ZONE: ZoneId = ZoneId.of("America/New_York")
 
@@ -149,7 +149,7 @@ class Source(val properties: JsonConfiguration) {
         fun start() {
             if (enabled) throw IllegalStateException("Source is already enabled!")
             enabled = true
-
+            logger.info("Starting Source...")
             JsonSerial.registerSerial(JsonConfiguration.Serial())
             val properties = File("config.json").apply {
                 if (!exists()) {
