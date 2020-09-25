@@ -20,6 +20,7 @@ class PunishmentHandler(
     private val configurationManager: GuildConfigurationManager,
     private val mongo: MongoDB
 ) {
+    //TODO: Punishment points
     private val ONE_DAY: Duration = Duration.ofSeconds(86400L)
     private val ONE_WEEK = ONE_DAY.multipliedBy(7)
     private val HALF_MONTH = ONE_WEEK.multipliedBy(2)
@@ -34,19 +35,22 @@ class PunishmentHandler(
             "Clear Success (#${it.id})",
             "You have cleared $amount messages in channel `${channel.name}`!"
         )
-    }, "Clear Failure!", "Could not execute clear incident!")
+    }, { ClearFailureResponse("Could not execute clear incident!") })
+
+    private class ClearFailureResponse(
+        description: String
+    ) : ErrorResponse("Clear Failure!", description)
 
     fun warnIncident(
         guild: Guild, sender: Member, warned: Member, reason: String
     ): Response {
-        if (sender == warned) return ErrorResponse(
-            "Warn Failure!", "You may not warn yourself!"
+        if (sender == warned) return WarnFailureResponse("You may not warn yourself!")
+        if (warned.user.isBot) return WarnFailureResponse("You may not warn bots!")
+        if (!guild.selfMember.canInteract(warned)) return WarnFailureResponse(
+            "I do not have permission to warn that member!"
         )
-        if (!sender.canInteract(warned)) return ErrorResponse(
-            "Warn Failure!", "You do not have permission to warn that member!"
-        )
-        if (warned.user.isBot) return ErrorResponse(
-            "Warn Failure!", "You may not warn bots!"
+        if (!sender.canInteract(warned)) return WarnFailureResponse(
+            "You do not have permission to warn that member!"
         )
         return submitIncident(guild, {
             WarnIncident(getNextId(guild), sender, warned, reason)
@@ -55,20 +59,23 @@ class PunishmentHandler(
                 "Warn Success (#${it.id})",
                 "You have successfully warned ${it.warned.formatted()}!"
             )
-        }, "Warn Failure", "Could not execute warn incident!")
+        }, { WarnFailureResponse("Could not execute warn incident!") })
     }
+
+    private class WarnFailureResponse(
+        description: String
+    ) : ErrorResponse("Warn Failure!", description)
 
     fun kickIncident(
         guild: Guild, sender: Member, kicked: Member, reason: String
     ): Response {
-        if (sender == kicked) return ErrorResponse(
-            "Kick Failure!", "You may not kick yourself!"
+        if (sender == kicked) return KickFailureResponse("You may not kick yourself!")
+        if (kicked.user.isBot) return KickFailureResponse("You may not kick bots!")
+        if (!guild.selfMember.canInteract(kicked)) return KickFailureResponse(
+            "I do not have permission to kick that member!"
         )
-        if (!sender.canInteract(kicked)) return ErrorResponse(
-            "Kick Failure!", "You do not have permission to kick that member!"
-        )
-        if (kicked.user.isBot) return ErrorResponse(
-            "Kick Failure!", "You may not kick bots!"
+        if (!sender.canInteract(kicked)) return KickFailureResponse(
+            "You do not have permission to kick that member!"
         )
         return submitIncident(guild, {
             KickIncident(getNextId(guild), sender, kicked, reason)
@@ -77,23 +84,26 @@ class PunishmentHandler(
                 "Kick Success (#${it.id})",
                 "You have successfully kicked ${it.kicked.formatted()}!"
             )
-        }, "Kick Failure", "Could not execute kick incident!")
+        }, { KickFailureResponse("Could not execute kick incident!") })
     }
+
+    private class KickFailureResponse(
+        description: String
+    ) : ErrorResponse("Kick Failure!", description)
 
     fun muteIncident(
         guild: Guild, sender: Member, muted: Member, duration: Duration, reason: String
     ): Response {
-        if (sender == muted) return ErrorResponse(
-            "Mute Failure!", "You may not mute yourself!"
+        if (sender == muted) return MuteFailureResponse("You may not mute yourself!")
+        if (muted.user.isBot) return MuteFailureResponse("You may not mute bots!")
+        if (!guild.selfMember.canInteract(muted)) return MuteFailureResponse(
+            "I do not have permission to mute that member!"
         )
-        if (!sender.canInteract(muted)) return ErrorResponse(
-            "Mute Failure!", "You do not have permission to mute that member!"
+        if (!sender.canInteract(muted)) return MuteFailureResponse(
+            "You do not have permission to mute that member!"
         )
-        if (muted.user.isBot) return ErrorResponse(
-            "Mute Failure!", "You may not mute bots!"
-        )
-        val muteRole = getMuteRole(guild) ?: return ErrorResponse(
-            "No Mute Role!", "The mute role has not been configured!"
+        val muteRole = getMuteRole(guild) ?: return MuteFailureResponse(
+            "The mute role has not been configured!"
         )
         return submitIncident(guild, {
             MuteIncident(getNextId(guild), muteRole, sender, muted, duration, reason)
@@ -102,20 +112,23 @@ class PunishmentHandler(
                 "Mute Success (#${it.id})",
                 "You have successfully muted ${it.muted.formatted()}!"
             )
-        }, "Mute Failure", "Could not execute mute incident!")
+        }, { MuteFailureResponse("Could not execute mute incident!") })
     }
+
+    private class MuteFailureResponse(
+        description: String
+    ) : ErrorResponse("Mute Failure!", description)
 
     fun tempbanIncident(
         guild: Guild, sender: Member, tempbanned: Member, delDays: Int, duration: Duration, reason: String
     ): Response {
-        if (sender == tempbanned) return ErrorResponse(
-            "Tempban Failure!", "You may not tempban yourself!"
+        if (sender == tempbanned) return TempbanFailureResponse("You may not tempban yourself!")
+        if (tempbanned.user.isBot) return TempbanFailureResponse("You may not tempban bots!")
+        if (!guild.selfMember.canInteract(tempbanned)) return TempbanFailureResponse(
+            "I do not have permission to tempban that member!"
         )
-        if (!sender.canInteract(tempbanned)) return ErrorResponse(
-            "Tempban Failure!", "You do not have permission to tempban that member!"
-        )
-        if (tempbanned.user.isBot) return ErrorResponse(
-            "Tempban Failure!", "You may not tempban bots!"
+        if (!sender.canInteract(tempbanned)) return TempbanFailureResponse(
+            "You do not have permission to tempban that member!"
         )
         return submitIncident(guild, {
             TempbanIncident(getNextId(guild), sender, tempbanned, delDays, duration, reason)
@@ -124,20 +137,23 @@ class PunishmentHandler(
                 "Tempban Success (#${it.id})",
                 "You have successfully tempbanned ${it.tempbanned.formatted()}!"
             )
-        }, "Tempban Failure", "Could not execute tempban incident!")
+        }, { TempbanFailureResponse("Could not execute tempban incident!") })
     }
+
+    private class TempbanFailureResponse(
+        description: String
+    ) : ErrorResponse("Tempban Failure!", description)
 
     fun banIncident(
         guild: Guild, sender: Member, banned: Member, delDays: Int, reason: String
     ): Response {
-        if (sender == banned) return ErrorResponse(
-            "Ban Failure!", "You may not ban yourself!"
+        if (sender == banned) return BanFailureResponse("You may not ban yourself!")
+        if (banned.user.isBot) return BanFailureResponse("You may not ban bots!")
+        if (!guild.selfMember.canInteract(banned)) return BanFailureResponse(
+            "I do not have permission to ban that member!"
         )
-        if (!sender.canInteract(banned)) return ErrorResponse(
-            "Ban Failure!", "You do not have permission to ban that member!"
-        )
-        if (banned.user.isBot) return ErrorResponse(
-            "Ban Failure!", "You may not ban bots!"
+        if (!sender.canInteract(banned)) return BanFailureResponse(
+            "You do not have permission to ban that member!"
         )
         return submitIncident(guild, {
             BanIncident(getNextId(guild), sender, banned, delDays, reason)
@@ -146,20 +162,23 @@ class PunishmentHandler(
                 "Ban Success (#${it.id})",
                 "You have successfully banned ${it.banned.formatted()}!"
             )
-        }, "Ban Failure", "Could not execute ban incident!")
+        }, { BanFailureResponse("Could not execute ban incident!") })
     }
+
+    private class BanFailureResponse(
+        description: String
+    ) : ErrorResponse("Ban Failure!", description)
 
     fun unmuteIncident(
         guild: Guild, sender: Member, unmuted: Member, reason: String
     ): Response {
-        if (sender == unmuted) return ErrorResponse(
-            "Unmute Failure!", "You may not unmute yourself!"
+        if (sender == unmuted) return UnmuteFailureResponse("You may not unmute yourself!")
+        if (unmuted.user.isBot) return UnmuteFailureResponse("You may not unmute bots!")
+        if (!guild.selfMember.canInteract(unmuted)) return UnmuteFailureResponse(
+            "I do not have permission to unmute that member!"
         )
-        if (!sender.canInteract(unmuted)) return ErrorResponse(
-            "Unmute Failure!", "You do not have permission to unban that member!"
-        )
-        if (unmuted.user.isBot) return ErrorResponse(
-            "Unmute Failure!", "You may not unmute bots!"
+        if (!sender.canInteract(unmuted)) return UnmuteFailureResponse(
+            "You do not have permission to unban that member!"
         )
         val muteRole = getMuteRole(guild) ?: return ErrorResponse(
             "No Mute Role!", "The mute role has not been configured!"
@@ -171,8 +190,12 @@ class PunishmentHandler(
                 "Unmute Success (#${it.id})",
                 "You have successfully unmuted ${it.unmuted.formatted()}!"
             )
-        }, "Unmute Failure", "Could not execute unmute incident!")
+        }, { UnmuteFailureResponse("Could not execute unmute incident!") })
     }
+
+    private class UnmuteFailureResponse(
+        description: String
+    ) : ErrorResponse("Unmute Failure!", description)
 
     fun unbanIncident(
         guild: Guild, sender: Member, unbanned: String, reason: String
@@ -189,15 +212,18 @@ class PunishmentHandler(
                 "Unban Success (#${it.id})",
                 "You have successfully unbanned ${it.unbanned.formatted()}!"
             )
-        }, "Unban Failure", "Could not execute unban incident!")
+        }, { UnbanFailureResponse("Could not execute unban incident!") })
     }
+
+    private class UnbanFailureResponse(
+        description: String
+    ) : ErrorResponse("Unban Failure!", description)
 
     private fun <T : ExecutableIncident> submitIncident(
         guild: Guild,
         supplier: () -> T,
-        onSuccess: (T) -> Response,
-        errTitle: String,
-        errDescription: String
+        onSuccess: (T) -> SuccessResponse,
+        onFailure: () -> ErrorResponse
     ): Response {
         val logChannel = getIncidentChannel(guild) ?: return ErrorResponse(
             "No Log Channel!", "The incident log has not been configured!"
@@ -209,10 +235,7 @@ class PunishmentHandler(
             incidentCollection(guild).insertOne(incident.asDocument())
             onSuccess(incident)
         } catch (err: Throwable) {
-            ErrorResponse(
-                errTitle,
-                errDescription
-            ).addField("Exception:", err.toString(), false) as Response
+            onFailure().apply { addField("Exception:", err.toString(), false) }
         }
     }
 
