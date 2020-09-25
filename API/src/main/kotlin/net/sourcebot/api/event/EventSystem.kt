@@ -7,8 +7,8 @@ import java.util.*
 
 class EventSystem<E : Any> {
     private val bus: SetMultimap<Class<out E>, RegisteredListener<out E>> = Multimaps.newSetMultimap(
-        IdentityHashMap()
-    ) { HashSet<RegisteredListener<out E>>() }
+        IdentityHashMap(), ::HashSet
+    )
 
     fun fireEvent(event: E) = bus[event.javaClass]?.forEach {
         try {

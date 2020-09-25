@@ -81,6 +81,8 @@ open class JsonConfiguration @JsonCreator constructor(
         }
     }
 
+    fun asMap(): Map<String, Any?> = JsonSerial.fromJson(json)
+
     companion object {
         @JvmStatic
         fun fromFile(
