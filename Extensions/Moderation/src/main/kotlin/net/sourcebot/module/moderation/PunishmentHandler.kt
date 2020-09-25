@@ -20,6 +20,10 @@ class PunishmentHandler(
     private val configurationManager: GuildConfigurationManager,
     private val mongo: MongoDB
 ) {
+    private val ONE_DAY: Duration = Duration.ofSeconds(86400L)
+    private val ONE_WEEK = ONE_DAY.multipliedBy(7)
+    private val HALF_MONTH = ONE_WEEK.multipliedBy(2)
+    private val ONE_MONTH = HALF_MONTH.multipliedBy(2)
 
     fun clearIncident(
         guild: Guild, sender: Member, channel: TextChannel, amount: Int, reason: String
@@ -188,7 +192,7 @@ class PunishmentHandler(
         }, "Unban Failure", "Could not execute unban incident!")
     }
 
-    private fun <T : Incident> submitIncident(
+    private fun <T : ExecutableIncident> submitIncident(
         guild: Guild,
         supplier: () -> T,
         onSuccess: (T) -> Response,
@@ -202,7 +206,7 @@ class PunishmentHandler(
             val incident = supplier()
             incident.execute()
             incident.sendLog(logChannel)
-            getCollection(guild).insertOne(incident.asDocument())
+            incidentCollection(guild).insertOne(incident.asDocument())
             onSuccess(incident)
         } catch (err: Throwable) {
             ErrorResponse(
@@ -212,8 +216,8 @@ class PunishmentHandler(
         }
     }
 
-    private fun getCollection(guild: Guild) = mongo.getCollection(guild.id, "incidents")
-    private fun getNextId(guild: Guild) = getCollection(guild).countDocuments() + 1
+    private fun incidentCollection(guild: Guild) = mongo.getCollection(guild.id, "incidents")
+    private fun getNextId(guild: Guild) = incidentCollection(guild).countDocuments() + 1
 
     private fun getIncidentChannel(
         guild: Guild
@@ -227,13 +231,17 @@ class PunishmentHandler(
         "moderation.mute-role"
     )?.let(guild::getRoleById)
 
+    fun getCase(
+        guild: Guild, id: Long
+    ): Case? = incidentCollection(guild).find(Document("id", id)).first()?.let(::Case)
+
     fun expireOldIncidents(
         guilds: () -> Collection<Guild>
     ) {
         val reason = "The punishment has expired."
         Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate({
             for (guild in guilds()) {
-                val collection = getCollection(guild)
+                val collection = incidentCollection(guild)
                 val query = Document().apply {
                     this["expiry"] = Document().apply {
                         this["\$exists"] = true

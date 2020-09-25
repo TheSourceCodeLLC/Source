@@ -30,6 +30,9 @@ abstract class EmbedResponse @JvmOverloads constructor(
         @JvmStatic
         var footer: String? = null
     }
+    init {
+        setDescription(description)
+    }
 
     override fun asMessage(
         user: User
@@ -37,7 +40,6 @@ abstract class EmbedResponse @JvmOverloads constructor(
 
     fun asEmbed(user: User): MessageEmbed {
         setAuthor(title ?: String.format("%#s", user), null, user.effectiveAvatarUrl)
-        setDescription(description)
         setTimestamp(Instant.now())
         setFooter(footer)
         return super.build()

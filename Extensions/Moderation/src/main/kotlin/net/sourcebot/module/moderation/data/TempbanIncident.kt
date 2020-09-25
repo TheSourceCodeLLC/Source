@@ -7,7 +7,6 @@ import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.ErrorResponse
 import java.time.Duration
-import java.time.Instant
 
 class TempbanIncident(
     override val id: Long,
@@ -16,9 +15,7 @@ class TempbanIncident(
     private val delDays: Int,
     duration: Duration,
     override val reason: String,
-) : SimpleIncident(
-    Instant.now().plus(duration)
-) {
+) : SimpleIncident(duration) {
     override val source = sender.id
     override val target = tempbanned.id
     override val type = Incident.Type.TEMPBAN

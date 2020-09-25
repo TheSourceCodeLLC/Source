@@ -8,7 +8,6 @@ import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.WarningResponse
 import java.time.Duration
-import java.time.Instant
 
 class MuteIncident(
     override val id: Long,
@@ -17,9 +16,7 @@ class MuteIncident(
     val muted: Member,
     duration: Duration,
     override val reason: String,
-) : SimpleIncident(
-    Instant.now().plus(duration)
-) {
+) : SimpleIncident(duration) {
     override val source = sender.id
     override val target = muted.id
     override val type = Incident.Type.MUTE
