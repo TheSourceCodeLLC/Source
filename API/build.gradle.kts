@@ -1,11 +1,8 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
-    application
     id("com.github.johnrengelman.shadow")
 }
-
-application { mainClassName = "net.sourcebot.Source" }
 
 dependencies {
     api(kotlin("stdlib", "1.4.10"))
@@ -22,8 +19,9 @@ dependencies {
 
 tasks {
     named<ShadowJar>("shadowJar") {
-        mergeServiceFiles()
         destinationDirectory.set(File(rootProject.projectDir, "target/bin"))
+        manifest.attributes(mapOf("Main-Class" to "net.sourcebot.Source"))
         archiveFileName.set("Source.jar")
+        mergeServiceFiles()
     }
 }
