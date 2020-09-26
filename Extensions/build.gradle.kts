@@ -9,13 +9,15 @@ subprojects {
         register<Delete>("deleteOld") {
             delete(
                 fileTree(File(targetFolder, "/bin/modules")).include(
-                    "${project.name}*.jar"
+                    "${project.name}-*.jar"
                 )
             )
         }
         named<ShadowJar>("shadowJar") {
             dependsOn("deleteOld")
             destinationDirectory.set(File(targetFolder, "/bin/modules"))
+            outputs.upToDateWhen { false }
+            classifier = ""
         }
     }
 }

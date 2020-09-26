@@ -2,10 +2,14 @@
 # This is the Gradle build system for JVM applications
 # https://gradle.org/
 # https://github.com/gradle/gradle
-image: gradle:6.6.1-jdk11
+image: openjdk:11.0.8-slim
 
 before_script:
   - export GRADLE_USER_HOME=`pwd`/.gradle
+  - chmod +x ./gradlew
+
+variables:
+  GRADLE_OPTS: "--build-cache"
 
 cache:
   paths:
@@ -14,8 +18,4 @@ cache:
 
 build:
   stage: build
-  script: gradle --build-cache install
-
-test:
-  stage: test
-  script: gradle check
+  script: ./gradlew $GRADLE_OPTS install

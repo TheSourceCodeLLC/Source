@@ -20,7 +20,7 @@ open class JsonConfiguration @JsonCreator constructor(
         map.forEach(::set)
     }
 
-    operator fun <T> set(path: String, obj: T?): T? {
+    operator fun <T> set(path: String, obj: T): T {
         if (path.isBlank()) throw IllegalArgumentException(
             "Argument 'path' may not be empty!"
         )

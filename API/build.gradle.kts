@@ -8,8 +8,8 @@ plugins {
 application { mainClassName = "net.sourcebot.Source" }
 
 dependencies {
-    api(kotlin("stdlib", "1.4.0"))
-    api(kotlin("reflect", "1.4.0"))
+    api(kotlin("stdlib", "1.4.10"))
+    api(kotlin("reflect", "1.4.10"))
     api("net.dv8tion:JDA:4.2.0_204")
     api("ch.qos.logback:logback-classic:1.2.3")
     api("com.google.guava:guava:28.2-jre")
@@ -23,7 +23,6 @@ dependencies {
 tasks {
     named<ShadowJar>("shadowJar") {
         mergeServiceFiles()
-        manifest { attributes(mapOf("Main-Class" to "net.sourcebot.Source")) }
         destinationDirectory.set(File(rootProject.projectDir, "target/bin"))
         archiveFileName.set("Source.jar")
     }
