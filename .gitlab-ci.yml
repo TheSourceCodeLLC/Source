@@ -8,9 +8,6 @@ before_script:
   - export GRADLE_USER_HOME=`pwd`/.gradle
   - chmod +x ./gradlew
 
-variables:
-  GRADLE_OPTS: "--build-cache"
-
 cache:
   paths:
     - target/output
@@ -18,4 +15,4 @@ cache:
 
 build:
   stage: build
-  script: ./gradlew $GRADLE_OPTS install
+  script: ./gradlew install
