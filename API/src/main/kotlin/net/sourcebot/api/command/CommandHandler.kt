@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.sourcebot.Source
 import net.sourcebot.api.command.PermissionCheck.Type.*
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.configuration.ConfigurationManager
@@ -129,10 +130,16 @@ class CommandHandler(
         message.channel.sendMessage(response.asMessage(message.author)).queue {
             command.postResponse(response, message.author, it)
             if (!command.cleanupResponse) return@queue
-            if (message.channelType == ChannelType.TEXT) {
-                message.delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)
-            }
-            it.delete().queueAfter(deleteSeconds, TimeUnit.SECONDS)
+            Source.SCHEDULED_EXECUTOR_SERVICE.schedule({
+                //Prevent error logging for failed message deletions
+                try {
+                    if (message.isFromGuild) {
+                        message.delete().complete()
+                    }
+                    it.delete().complete()
+                } catch (err: Throwable) {
+                }
+            }, deleteSeconds, TimeUnit.SECONDS)
         }
     }
 
