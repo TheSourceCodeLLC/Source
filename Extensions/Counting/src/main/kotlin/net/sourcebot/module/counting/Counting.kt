@@ -6,7 +6,8 @@ import net.sourcebot.module.counting.data.CountingListener
 
 class Counting : SourceModule() {
     override fun onEnable() {
-        CountingListener(source, source.guildConfigurationManager).listen(this)
-        registerCommands(CountingCommand(source.guildConfigurationManager))
+        val configManager = source.guildConfigurationManager
+        registerCommands(CountingCommand(configManager))
+        subscribeEvents(CountingListener(this, source.commandHandler, configManager))
     }
 }

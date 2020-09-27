@@ -1,23 +1,30 @@
 package net.sourcebot.module.counting.data
 
+import com.fasterxml.jackson.annotation.JsonCreator
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
-import net.sourcebot.Source
+import net.sourcebot.api.command.CommandHandler
 import net.sourcebot.api.configuration.GuildConfigurationManager
 import net.sourcebot.api.configuration.JsonConfiguration
+import net.sourcebot.api.event.EventSubscriber
+import net.sourcebot.api.event.EventSystem
+import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.module.SourceModule
 
 class CountingListener(
-    private val source: Source,
+    private val module: SourceModule,
+    private val commandHandler: CommandHandler,
     private val configurationManager: GuildConfigurationManager
-) {
-    fun listen(
-        module: SourceModule
+) : EventSubscriber {
+    override fun subscribe(
+        jdaEvents: EventSystem<GenericEvent>,
+        sourceEvents: EventSystem<SourceEvent>
     ) {
-        source.jdaEventSystem.listen(module, this::onReceive)
-        source.jdaEventSystem.listen(module, this::onEdit)
+        jdaEvents.listen(module, this::onReceive)
+        jdaEvents.listen(module, this::onEdit)
     }
 
     private val lastMessages = HashMap<String, CountingMessage>()
@@ -39,26 +46,38 @@ class CountingListener(
         } ?: return
         if (event.channel != channel) return
         val message = event.message
-        when (source.commandHandler.isValidCommand(message.contentRaw)) {
-            false -> {
-                event.message.delete().queue()
-                return restart(
-                    "Sorry, ${message.author.asMention}, that was not a valid command!", message, data
-                )
-            }
-            true -> return
+        if (commandHandler.isValidCommand(message.contentRaw) == false) {
+            message.delete().queue()
+            return restart(
+                "Sorry, ${message.author.asMention}, that was not a valid command!", message, data
+            )
+        } else if (commandHandler.isValidCommand(message.contentRaw) == true) return
+        var lastMessage = lastMessages[channel.id]
+        if (lastMessage == null) {
+            var unknown = false
+            lastMessage = data.required("lastMessage") {
+                unknown = true
+                message.delete().queue()
+                channel.sendMessage("Could not determine last number!\n1").queue()
+                CountingMessage(1L, event.jda.selfUser.id)
+            }.also { lastMessages[channel.id] = it }
+            if (unknown) return
         }
-        val lastMessage = lastMessages[channel.id] ?: return restart(
-            "Could not determine last number!", message, data
-        )
         val lastNumber = lastMessage.number
-        val nextNumber = event.message.contentRaw.toLongOrNull()
+        val input = message.contentRaw
         if (message.author.id == lastMessage.author) {
             message.delete().queue()
             return restart(
                 "Sorry, ${message.author.asMention}, you may not count twice in a row!", message, data
             )
         }
+        if (input.startsWith("0")) {
+            message.delete().queue()
+            return restart(
+                "No funny business, ${message.author.asMention}.", message, data
+            )
+        }
+        val nextNumber = input.toLongOrNull()
         if (nextNumber == null) {
             message.delete().queue()
             return restart(
@@ -68,10 +87,13 @@ class CountingListener(
         if (nextNumber != lastNumber + 1) return restart(
             "${message.author.asMention} is bad at counting.", message, data
         )
-        val toSave = CountingMessage(message)
-        lastMessages[channel.id] = toSave
+        CountingMessage(message).also {
+            lastMessages[channel.id] = it
+            data["lastMessage"] = it
+        }
         records[channel.id] = nextNumber
         configurationManager[channel.guild]["counting"] = data
+        configurationManager.saveData(channel.guild)
     }
 
     private fun onEdit(event: GuildMessageUpdateEvent) {
@@ -93,19 +115,21 @@ class CountingListener(
         val channel = message.channel as TextChannel
         var toSend = failMessage
         val current = records[channel.id] ?: 1
-        val record = data.required<Long>("record")
+        var record = data.required<Long>("record")
         if (current > record) {
             toSend += "\nNew Record! New: $current. Old: $record."
-            data["record"] = current
+            record = data.set("record", current)
         }
         channel.sendMessage(
             toSend + "\nRestarting... Current record: ${record}\n1"
         ).complete()
 
-        val lastMessage = CountingMessage(1, message.jda.selfUser.id)
-        configurationManager[channel.guild]["counting"] = data
-        configurationManager.saveData(channel.guild)
-        lastMessages[channel.id] = lastMessage
+        CountingMessage(1, message.jda.selfUser.id).also {
+            lastMessages[channel.id] = it
+            data["lastMessage"] = it
+        }
+        val config = configurationManager[channel.guild].also { it["counting"] = data }
+        configurationManager.saveData(channel.guild, config)
     }
 }
 
@@ -118,7 +142,7 @@ class CountingMessage {
         this.author = message.author.id
     }
 
-    constructor(number: Long, author: String) {
+    @JsonCreator constructor(number: Long, author: String) {
         this.number = number
         this.author = author
     }
