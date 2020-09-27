@@ -42,17 +42,7 @@ class HelpCommand(
                 "Module Index",
                 "There are currently no modules enabled."
             )
-            val available = enabled.filter {
-                val commands = commandHandler.getCommands(it)
-                commands.isNotEmpty() && commands.any { cmd ->
-                    commandHandler.checkPermissions(message, cmd).isValid()
-                }
-            }
-            if (available.isEmpty()) return InfoResponse(
-                "Module Index",
-                "You do not have access to any currently enabled modules."
-            )
-            val sorted = available.sortedBy { it.name }.joinToString("\n") {
+            val sorted = enabled.sortedBy { it.name }.joinToString("\n") {
                 "**${it.name}**: ${it.description}"
             }
             return InfoResponse(
@@ -99,17 +89,16 @@ class HelpCommand(
         }
         val asModule = moduleHandler.findModule(topic)
         if (asModule != null) {
-            val header = "${asModule.name} Module Assistance"
-            val response = InfoResponse(
-                header, "Information for the ${asModule.name} module:"
-            )
-            if (asModule.configurationInfo != null) {
-                val resolved = asModule.configurationInfo!!.resolved
-                val content = if (resolved.isNotEmpty()) {
-                    resolved.joinToString("\n") { (k, v) -> "`$k`: $v" }
-                } else "This module does not have any configuration info."
-                response.addField("Configuration", content, false)
-            }
+            val response = InfoResponse("${asModule.name} Module Assistance")
+            val config = when {
+                asModule.configurationInfo != null -> {
+                    asModule.configurationInfo!!.resolved.joinToString("\n") { (k, v) ->
+                        "`$k`: $v"
+                    }
+                }
+                else -> null
+            } ?: "This module does not have any configuration info."
+            response.addField("Configuration", config, false)
             val commands = commandHandler.getCommands(asModule)
             if (commands.isEmpty()) return response.apply {
                 addField("Commands", "This module does not have any commands.", false)
