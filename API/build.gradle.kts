@@ -1,9 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
-plugins {
-    id("com.github.johnrengelman.shadow")
-}
-
 dependencies {
     api(kotlin("stdlib", "1.4.10"))
     api(kotlin("reflect", "1.4.10"))
@@ -17,11 +11,9 @@ dependencies {
     api("org.fusesource.jansi:jansi:1.18")
 }
 
-tasks {
-    named<ShadowJar>("shadowJar") {
-        destinationDirectory.set(File(rootProject.projectDir, "target/bin"))
-        manifest.attributes(mapOf("Main-Class" to "net.sourcebot.Source"))
-        archiveFileName.set("Source.jar")
-        mergeServiceFiles()
-    }
+tasks.shadowJar {
+    destinationDirectory.set(File(rootProject.projectDir, "target/bin"))
+    manifest.attributes["Main-Class"] = "net.sourcebot.Source"
+    archiveFileName.set("Source.jar")
+    mergeServiceFiles()
 }

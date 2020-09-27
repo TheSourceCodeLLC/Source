@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "1.4.10"
-    id("com.github.johnrengelman.shadow") version "6.0.0"
+    id("org.jetbrains.kotlin.jvm").version("1.4.10")
+    id("com.github.johnrengelman.shadow").version("6.0.0")
 }
 
 allprojects {
@@ -8,7 +8,8 @@ allprojects {
     version = "5.0.9"
     buildDir = File(rootProject.projectDir, "target/output/$name")
 
-    apply { plugin("org.jetbrains.kotlin.jvm") }
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "com.github.johnrengelman.shadow")
 
     repositories {
         jcenter()
@@ -22,15 +23,10 @@ allprojects {
                 "-Xjvm-default=enable"
             }
         }
-        compileTestKotlin {
-            kotlinOptions.jvmTarget = "11"
-        }
-
         processResources {
             filesMatching("module.json") { expand("project" to project) }
             outputs.upToDateWhen { false }
         }
+        task("install").dependsOn(shadowJar)
     }
 }
-
-task("install").dependsOn(":API:shadowJar")
