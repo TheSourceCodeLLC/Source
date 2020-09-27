@@ -1,11 +1,11 @@
 package net.sourcebot.module.starboard.misc
 
 import net.dv8tion.jda.api.entities.Guild
-import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.configuration.JsonConfiguration
 
 class StarboardDataManager(
-    private val configurationManager: GuildConfigurationManager
+    private val configurationManager: ConfigurationManager
 ) {
     operator fun get(
         guild: Guild

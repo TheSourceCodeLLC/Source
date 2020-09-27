@@ -8,21 +8,21 @@ import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
-import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.SuccessResponse
 
 class ConfigurationCommand(
-    private val configurationManager: GuildConfigurationManager
+    private val configurationManager: ConfigurationManager
 ) : RootCommand() {
     override val name = "configuration"
     override val description = "Utilize the Guild Configuration."
     override val permission = name
     override val guildOnly = true
     override val aliases = arrayOf("config", "configure", "cfg")
-    override var cleanupResponse = true
+    override val cleanupResponse = true
 
     private inner class ConfigurationSetCommand : Bootstrap(
         "set", "Set a configuration value."
@@ -99,5 +99,5 @@ private abstract class Bootstrap(
 ) : Command() {
     final override val permission by lazy { "configuration.$name" }
     final override val guildOnly = true
-    override var cleanupResponse = false
+    override val cleanupResponse = false
 }

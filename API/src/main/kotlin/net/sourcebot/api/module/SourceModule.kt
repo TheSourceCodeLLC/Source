@@ -2,6 +2,7 @@ package net.sourcebot.api.module
 
 import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
+import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.event.EventSubscriber
@@ -41,6 +42,8 @@ abstract class SourceModule {
         if (!file.exists()) saveResource("/config.json")
         return@lazy file.let { JsonSerial.mapper.readValue(it, JsonConfiguration::class.java) }
     }
+
+    open val configurationInfo: ConfigurationInfo? = null
 
     fun saveResource(absPath: String): File {
         if (!absPath.startsWith("/")) throw IllegalArgumentException("Resource path must be absolute!")

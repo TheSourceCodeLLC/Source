@@ -4,14 +4,14 @@ import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
 
 class CountingCommand(
-    private val configurationManager: GuildConfigurationManager
+    private val configurationManager: ConfigurationManager
 ) : RootCommand() {
     override val name = "counting"
     override val description = "Various commands for Counting."

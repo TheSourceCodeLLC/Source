@@ -25,7 +25,7 @@ abstract class Command {
         )
     }
 
-    open var cleanupResponse = true
+    open val cleanupResponse = true
     open var parent: Command? = null
 
     open val requiresGlobal = false

@@ -100,25 +100,35 @@ class HelpCommand(
         val asModule = moduleHandler.findModule(topic)
         if (asModule != null) {
             val header = "${asModule.name} Module Assistance"
-            val commands = commandHandler.getCommands(asModule)
-            if (commands.isEmpty()) return InfoResponse(
-                header, "This module does not have any commands."
+            val response = InfoResponse(
+                header, "Information for the ${asModule.name} module:"
             )
+            if (asModule.configurationInfo != null) {
+                val resolved = asModule.configurationInfo!!.resolved
+                val content = if (resolved.isNotEmpty()) {
+                    resolved.joinToString("\n") { (k, v) -> "`$k`: $v" }
+                } else "This module does not have any configuration info."
+                response.addField("Configuration", content, false)
+            }
+            val commands = commandHandler.getCommands(asModule)
+            if (commands.isEmpty()) return response.apply {
+                addField("Commands", "This module does not have any commands.", false)
+            }
             val available = commands.filter {
                 commandHandler.checkPermissions(message, it).isValid()
             }
-            if (available.isEmpty()) return InfoResponse(
-                header, "You do not have access to any of this module's commands."
-            )
+            if (available.isEmpty()) return response.apply {
+                addField("Commands", "You do not have access to any of this module's commands.", false)
+            }
             val prefix =
                 if (message.isFromGuild) commandHandler.getPrefix(message.guild)
                 else commandHandler.getPrefix()
             val listing = available.sortedBy { it.name }.joinToString("\n") {
                 "**$prefix${it.name}**: ${it.description}"
             }
-            return InfoResponse(
-                header, "Below is a list of the commands provided by this module"
-            ).addField("Commands", listing, false) as Response
+            return response.apply {
+                addField("Commands", listing, false)
+            }
         }
         return ErrorResponse(
             "Unknown Topic!",

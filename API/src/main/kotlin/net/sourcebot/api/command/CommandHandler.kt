@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.sourcebot.api.command.PermissionCheck.Type.*
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.permission.PermissionHandler
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
 class CommandHandler(
     private val defaultPrefix: String,
     private val deleteSeconds: Long,
-    private val configManager: GuildConfigurationManager,
+    private val configManager: ConfigurationManager,
     private val permissionHandler: PermissionHandler
 ) : AbstractMessageHandler() {
     private var commandMap = CommandMap<RootCommand>()

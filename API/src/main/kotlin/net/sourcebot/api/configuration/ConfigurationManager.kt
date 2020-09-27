@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.Guild
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-class GuildConfigurationManager(
+class ConfigurationManager(
     private val dataFolder: File
 ) {
     private val dataCache = CacheBuilder.newBuilder().weakKeys()

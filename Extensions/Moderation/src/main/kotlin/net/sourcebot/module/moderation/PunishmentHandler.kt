@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.Source
-import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.ErrorResponse
@@ -17,7 +17,7 @@ import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 class PunishmentHandler(
-    private val configurationManager: GuildConfigurationManager,
+    private val configurationManager: ConfigurationManager,
     private val mongo: MongoDB
 ) {
     //TODO: Punishment points

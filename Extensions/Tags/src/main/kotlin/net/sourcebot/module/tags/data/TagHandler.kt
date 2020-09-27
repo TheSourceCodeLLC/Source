@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.AbstractMessageHandler
@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 
 class TagHandler(
     private val defaultPrefix: String,
-    private val configManager: GuildConfigurationManager,
+    private val configManager: ConfigurationManager,
     private val mongodb: MongoDB
 ) : AbstractMessageHandler() {
     private val tags = CacheBuilder.newBuilder().weakKeys()

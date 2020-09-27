@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.sourcebot.api.command.CommandHandler
-import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
@@ -17,7 +17,7 @@ import net.sourcebot.api.module.SourceModule
 class CountingListener(
     private val module: SourceModule,
     private val commandHandler: CommandHandler,
-    private val configurationManager: GuildConfigurationManager
+    private val configurationManager: ConfigurationManager
 ) : EventSubscriber {
     override fun subscribe(
         jdaEvents: EventSystem<GenericEvent>,

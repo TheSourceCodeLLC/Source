@@ -1,9 +1,15 @@
 package net.sourcebot.module.moderation
 
+import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.moderation.command.*
 
 class Moderation : SourceModule() {
+    override val configurationInfo = ConfigurationInfo("moderation") {
+        node("incident-log", "Channel ID for the incident log channel.")
+        node("mute-role", "Role ID for the mute role.")
+    }
+
     override fun onEnable() {
         punishmentHandler = PunishmentHandler(
             source.guildConfigurationManager,

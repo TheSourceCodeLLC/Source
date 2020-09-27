@@ -14,7 +14,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent.DIRECT_MESSAGE_TYPING
 import net.dv8tion.jda.api.requests.GatewayIntent.GUILD_MESSAGE_TYPING
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.sourcebot.api.command.CommandHandler
-import net.sourcebot.api.configuration.GuildConfigurationManager
+import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.database.MongoDB
@@ -47,7 +47,7 @@ class Source(val properties: JsonConfiguration) {
     val sourceEventSystem = EventSystem<SourceEvent>()
     val jdaEventSystem = EventSystem<GenericEvent>()
 
-    val guildConfigurationManager = GuildConfigurationManager(File("storage"))
+    val guildConfigurationManager = ConfigurationManager(File("storage"))
     val mongodb = MongoDB(properties.required("mongodb"))
     val permissionHandler = PermissionHandler(mongodb, properties.required("global-admins"))
     val moduleHandler = ModuleHandler(this)
