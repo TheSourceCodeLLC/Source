@@ -56,5 +56,10 @@ object DurationUtils {
         }.toLowerCase()
     }
 
+    @JvmStatic
+    fun formatMillis(millis: Long) = formatDuration(Duration.ofMillis(millis))
+    @JvmStatic
+    fun formatSeconds(seconds: Long) = formatDuration(Duration.ofSeconds(seconds))
+
     private fun ChronoUnit.seconds() = this.duration.seconds
 }
