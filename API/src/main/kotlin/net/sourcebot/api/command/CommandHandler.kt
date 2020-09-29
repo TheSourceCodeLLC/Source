@@ -91,28 +91,27 @@ class CommandHandler(
         val inGuild = message.channelType == ChannelType.TEXT
         var command: Command = root
         do {
-            if (!hasGlobal) {
-                if (command.requiresGlobal) return PermissionCheck(command, GLOBAL_ONLY)
-                if (command.permission != null) {
-                    val permission = command.permission!!
-                    if (inGuild) {
-                        val permissionData = permissionHandler.getData(message.guild)
-                        val guild = message.guild
-                        val member = message.member!!
-                        val roles = member.roles.toMutableList().apply {
-                            add(guild.publicRole)
-                        }
-                        if (roles.none { it.hasPermission(Permission.ADMINISTRATOR) }) {
-                            val sourceUser = permissionData.getUser(member)
-                            val sourceRoles = roles.map(permissionData::getRole).toSet()
-                            sourceUser.roles = sourceRoles
-                            val channel = message.channel as TextChannel
-                            if (!permissionHandler.hasPermission(
-                                    sourceUser, permission, channel
-                                )
-                            ) return PermissionCheck(command, NO_PERMISSION)
-                        }
-                    } else if (command.guildOnly) return PermissionCheck(command, GUILD_ONLY)
+            if (command.requiresGlobal && !hasGlobal) return PermissionCheck(command, GLOBAL_ONLY)
+            if (command.guildOnly && !inGuild) return PermissionCheck(command, GUILD_ONLY)
+            if (command.permission != null) {
+                val permission = command.permission!!
+                if (inGuild && !hasGlobal) {
+                    val permissionData = permissionHandler.getData(message.guild)
+                    val guild = message.guild
+                    val member = message.member!!
+                    val roles = member.roles.toMutableList().apply {
+                        add(guild.publicRole)
+                    }
+                    if (roles.none { it.hasPermission(Permission.ADMINISTRATOR) }) {
+                        val sourceUser = permissionData.getUser(member)
+                        val sourceRoles = roles.map(permissionData::getRole).toSet()
+                        sourceUser.roles = sourceRoles
+                        val channel = message.channel as TextChannel
+                        if (!permissionHandler.hasPermission(
+                                sourceUser, permission, channel
+                            )
+                        ) return PermissionCheck(command, NO_PERMISSION)
+                    }
                 }
             }
             val nextId = arguments.next() ?: break
