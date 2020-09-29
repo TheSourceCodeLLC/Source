@@ -6,6 +6,7 @@ import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.event.EventSubscriber
+import net.sourcebot.api.module.exception.ModuleLifecycleException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -57,10 +58,12 @@ abstract class SourceModule {
         }
     }
 
-    fun load(postLoad: () -> Unit) {
+    fun load(postLoad: () -> Unit) = try {
         onLoad()
         postLoad()
         logger.info("Loaded $name v$version by $author.")
+    } catch (err: Throwable) {
+        throw ModuleLifecycleException(name, err)
     }
 
     /**
@@ -69,10 +72,12 @@ abstract class SourceModule {
      */
     open fun onLoad() = Unit
 
-    fun enable(postEnable: () -> Unit) {
+    fun enable(postEnable: () -> Unit) = try {
         onEnable()
         postEnable()
         logger.info("Enabled $name v${version}.")
+    } catch (err: Throwable) {
+        throw ModuleLifecycleException(name, err)
     }
 
     /**
@@ -80,10 +85,12 @@ abstract class SourceModule {
      */
     open fun onEnable() = Unit
 
-    fun disable(postDisable: () -> Unit) {
+    fun disable(postDisable: () -> Unit) = try {
         onDisable()
         postDisable()
         logger.info("Disabled $name v${version}.")
+    } catch (err: Throwable) {
+        throw ModuleLifecycleException(name, err)
     }
 
     /**

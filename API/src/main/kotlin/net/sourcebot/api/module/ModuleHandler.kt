@@ -3,6 +3,10 @@ package net.sourcebot.api.module
 import com.fasterxml.jackson.databind.node.ObjectNode
 import net.sourcebot.Source
 import net.sourcebot.api.configuration.JsonSerial
+import net.sourcebot.api.module.exception.AmbiguousModuleException
+import net.sourcebot.api.module.exception.InvalidModuleException
+import net.sourcebot.api.module.exception.ModuleLoadException
+import net.sourcebot.api.module.exception.UnknownDependencyException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -32,7 +36,7 @@ class ModuleHandler(
         return found?.also { classCache[name] = it } ?: throw ClassNotFoundException(name)
     }
 
-    fun findClass(
+    private fun findClass(
         name: String,
         loader: JarModuleClassLoader
     ): Class<*> = classCache[name] ?: try {
@@ -41,11 +45,13 @@ class ModuleHandler(
         null
     }?.also { classCache[name] = it } ?: throw ClassNotFoundException(name)
 
-    fun loadDescriptor(file: File): ModuleDescriptor = JarFile(file).use { jar ->
+    private fun loadDescriptor(file: File): ModuleDescriptor = JarFile(file).use { jar ->
         jar.getJarEntry("module.json")?.let(jar::getInputStream)?.use {
             JsonSerial.mapper.readTree(it) as ObjectNode
         }
-    }?.let(::ModuleDescriptor) ?: throw InvalidModuleException("JAR does not contain module.json!")
+    }?.let(::ModuleDescriptor) ?: throw InvalidModuleException(
+        "Module '${file.path}' does not contain module.json!"
+    )
 
     fun loadModules(folder: File): List<SourceModule> {
         val loadOrder = ArrayList<File>()
@@ -98,7 +104,7 @@ class ModuleHandler(
         }
     }
 
-    fun loadModule(file: File): SourceModule = try {
+    private fun loadModule(file: File): SourceModule = try {
         val descriptor = loadDescriptor(file)
         val name = descriptor.name
         moduleIndex[name]?.let {
@@ -126,17 +132,38 @@ class ModuleHandler(
         throw ModuleLoadException(file, err)
     }
 
-    fun loadModule(
+    private fun loadModuleThrowing(
         module: SourceModule
     ) = module.load { moduleIndex[module.name] = module }
 
-    fun enableModule(
+    fun loadModule(
+        module: SourceModule
+    ) = performLifecycle(module, ::loadModuleThrowing)
+
+    private fun enableModuleThrowing(
         module: SourceModule
     ) = module.enable { module.enabled = true }
 
-    fun disableModule(
+    fun enableModule(
+        module: SourceModule
+    ) = performLifecycle(module, ::enableModuleThrowing)
+
+    private fun disableModuleThrowing(
         module: SourceModule
     ) = module.disable { module.enabled = false }
+
+    fun disableModule(
+        module: SourceModule
+    ) = performLifecycle(module, ::disableModuleThrowing)
+
+    private fun performLifecycle(
+        module: SourceModule,
+        lifecycleTask: (SourceModule) -> Unit
+    ) = try {
+        lifecycleTask(module)
+    } catch (err: Throwable) {
+        err.printStackTrace()
+    }
 
     fun findModule(name: String): SourceModule? = moduleIndex.values.find {
         it.name.startsWith(name, true)
@@ -145,19 +172,3 @@ class ModuleHandler(
     fun getModule(name: String): SourceModule? = moduleIndex[name]
     fun getModules() = moduleIndex.values
 }
-
-class InvalidModuleException(message: String) : Exception(message)
-class UnknownDependencyException(
-    dependencies: Set<String>
-) : RuntimeException("Unknown Dependencies: ${dependencies.joinToString()}")
-
-class AmbiguousModuleException(
-    name: String,
-    firstIndexed: File,
-    lastIndexed: File
-) : RuntimeException("Module '$name' from ${firstIndexed.path} is duplicated by ${lastIndexed.path}!")
-
-class ModuleLoadException(
-    file: File,
-    err: Throwable
-) : RuntimeException("Could not load module '${file.path}'", err)
