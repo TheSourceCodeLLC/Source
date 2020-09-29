@@ -3,6 +3,8 @@ package net.sourcebot.impl.command
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.CommandHandler
 import net.sourcebot.api.command.PermissionCheck
+import net.sourcebot.api.command.PermissionCheck.Type.GUILD_ONLY
+import net.sourcebot.api.command.PermissionCheck.Type.VALID
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
@@ -56,11 +58,11 @@ class HelpCommand(
         }
         val asCommand = commandHandler.getCommand(topic)
         if (asCommand != null) {
-            val permCheck = commandHandler.checkPermissions(message, asCommand)
+            val permCheck = commandHandler.checkPermissions(message, asCommand, args)
             val command = permCheck.command
             return when (permCheck.type) {
                 PermissionCheck.Type.GLOBAL_ONLY -> GlobalAdminOnlyResponse()
-                PermissionCheck.Type.GUILD_ONLY -> GuildOnlyCommandResponse()
+                GUILD_ONLY -> GuildOnlyCommandResponse()
                 PermissionCheck.Type.NO_PERMISSION -> {
                     val data = permissionHandler.getData(message.guild)
                     val permissible = data.getUser(message.member!!)
@@ -68,7 +70,7 @@ class HelpCommand(
                         command.guildOnly, message.jda, permissible, command.permission!!
                     )
                 }
-                PermissionCheck.Type.VALID -> {
+                VALID -> {
                     InfoResponse(
                         "Command Information:",
                         "Arguments surrounded by <> are required, those surrounded by () are optional."
@@ -83,6 +85,8 @@ class HelpCommand(
                         addField("Detail:", command.argumentInfo.getParameterDetail(), false)
                         if (command.aliases.isNotEmpty())
                             addField("Aliases:", command.aliases.joinToString(), false)
+                        if (command.permission != null)
+                            addField("Permission:", "`${command.permission}`", false)
                     }
                 }
             }
@@ -103,21 +107,30 @@ class HelpCommand(
             if (commands.isEmpty()) return response.apply {
                 addField("Commands", "This module does not have any commands.", false)
             }
-            val available = commands.filter {
-                commandHandler.checkPermissions(message, it).isValid()
+            val grouped = commands.groupBy {
+                commandHandler.checkPermissions(message, it).type
             }
-            if (available.isEmpty()) return response.apply {
+            val valid = grouped[VALID] ?: emptyList()
+            val guildOnly = grouped[GUILD_ONLY] ?: emptyList()
+            if (valid.isEmpty() && guildOnly.isEmpty()) return response.apply {
                 addField("Commands", "You do not have access to any of this module's commands.", false)
             }
             val prefix =
                 if (message.isFromGuild) commandHandler.getPrefix(message.guild)
                 else commandHandler.getPrefix()
-            val listing = available.sortedBy { it.name }.joinToString("\n") {
-                "**$prefix${it.name}**: ${it.description}"
+            if (valid.isNotEmpty()) {
+                val listing = valid.sortedBy { it.name }.joinToString("\n") {
+                    "**$prefix${it.name}**: ${it.description}"
+                }
+                response.addField("Usable Commands:", listing, false)
             }
-            return response.apply {
-                addField("Commands", listing, false)
+            if (guildOnly.isNotEmpty()) {
+                val listing = guildOnly.sortedBy { it.name }.joinToString("\n") {
+                    "**$prefix${it.name}**: ${it.description}"
+                }
+                response.addField("Guild Commands:", listing, false)
             }
+            return response
         }
         return ErrorResponse(
             "Unknown Topic!",
