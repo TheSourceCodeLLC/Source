@@ -16,7 +16,6 @@ class Music : SourceModule() {
             PauseCommand(),
             ResumeCommand(),
             SkipCommand(),
-            StopCommand(),
             PlayCommand(),
             VolumeCommand()
         )
