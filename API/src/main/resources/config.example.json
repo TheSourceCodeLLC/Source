@@ -13,6 +13,10 @@
     "type": "DEFAULT",
     "value": "Source - Shard %d"
   },
-  "restart-script": "./restart.sh",
+  "lifecycle": {
+    "restart-script": "./restart.sh",
+    "update-script": "./update.sh",
+    "stop-script": "./stop.sh"
+  },
   "token": ""
 }

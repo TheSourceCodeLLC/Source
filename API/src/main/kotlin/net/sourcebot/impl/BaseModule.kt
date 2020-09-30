@@ -37,8 +37,7 @@ class BaseModule(
             TimingsCommand(),
             PermissionsCommand(source.permissionHandler),
             ConfigurationCommand(source.guildConfigurationManager),
-
-            RestartCommand(source.properties.required("restart-script")),
+            *lifecycleCommands(source.properties.required("lifecycle"))
         )
     }
 }
