@@ -1,22 +1,19 @@
 package net.sourcebot.module.documentation.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.documentation.commands.bootstrap.DocumentationCommand
 import net.sourcebot.module.documentation.utility.DocResponse
 import org.jsoup.Connection
 import org.jsoup.Jsoup
 
-class DJSCommand : RootCommand() {
-    override val name: String = "djs"
-    override val description: String = "Allows the user to query the Discord.JS Documentation."
-    override var cleanupResponse: Boolean = false
-    override val permission = "documentation.$name"
-
+class DJSCommand : DocumentationCommand(
+    "djs", "Allows the user to query the Discord.JS Documentation."
+) {
     private val defaultSources: MutableList<String> = mutableListOf(
         "stable", "master", "rpc", "commando", "akairo", "akairo-master", "collection"
     )

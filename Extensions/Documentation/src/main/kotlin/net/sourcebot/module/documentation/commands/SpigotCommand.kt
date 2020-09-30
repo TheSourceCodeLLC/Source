@@ -1,25 +1,21 @@
 package net.sourcebot.module.documentation.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.User
-import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.documentation.commands.bootstrap.JavadocCommand
 import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
-import net.sourcebot.module.documentation.utility.SelectorModel
 
 
-class SpigotCommand : RootCommand() {
-    override val name: String = "spigot"
-    override val description: String = "Allows the user to query the Spigot Documentation."
-    override var cleanupResponse: Boolean = false
+class SpigotCommand : JavadocCommand(
+    "spigot", "Allows the user to query the Spigot Documentation."
+) {
     override val argumentInfo: ArgumentInfo = ArgumentInfo(
         Argument("query", "The item you are searching for in the Spigot documentation.")
     )
-    override val permission = "documentation.$name"
 
     private val jenkinsHandler = JenkinsHandler(
         "https://hub.spigotmc.org/javadocs/spigot/overview-tree.html",
@@ -38,11 +34,5 @@ class SpigotCommand : RootCommand() {
                 "You can find the Spigot Documentation at [hub.spigotmc.org](https://hub.spigotmc.org/javadocs/spigot/)"
             InfoResponse(authorName, description)
         }
-
-
-    }
-
-    override fun postResponse(response: Response, forWhom: User, message: Message) {
-        SelectorModel.selectorCache.updateSelector(forWhom, message)
     }
 }

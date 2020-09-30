@@ -42,10 +42,7 @@ class SelectorEventSubscriber(private val docModule: Documentation) : EventSubsc
         val message = event.message
         val messageContent = message.contentRaw
         if (messageContent.startsWith("!")) return
-
-        if (!selectorCache.hasSelector(user)) return
-
-        val docStorage: SelectorModel = selectorCache.getSelector(user) ?: return
+        val docStorage: SelectorModel = selectorCache[user] ?: return
         val docMessage = docStorage.docMessage ?: return
         val infoList = docStorage.infoList
         val jenkinsHandler = docStorage.jenkinsHandler
@@ -54,28 +51,19 @@ class SelectorEventSubscriber(private val docModule: Documentation) : EventSubsc
             message.delete().queue()
         }
 
-        if (messageContent.equals("cancel", true)) {
-            selectorCache.deleteMessagesAndRemove(user, 0)
-            return
-        }
+        if (messageContent.equals("cancel", true))
+            return selectorCache.deleteMessagesAndRemove(user, 0)
 
-        try {
-            val selectedId: Int = messageContent.toInt() - 1
-            if (selectedId > infoList.size) {
-                sendInvalidIdResponse(user, docMessage)
-                return
-            }
+        val selectedId = messageContent.toIntOrNull()?.minus(1)
+        if (selectedId == null || selectedId > infoList.size)
+            return sendInvalidIdResponse(user, docMessage)
 
-            var docResponse = DocResponse()
-            docResponse.setAuthor(jenkinsHandler.responseTitle, null, jenkinsHandler.iconUrl)
-            docResponse = jenkinsHandler.createDocResponse(docResponse, infoList[selectedId])
+        var docResponse = DocResponse()
+        docResponse.setAuthor(jenkinsHandler.responseTitle, null, jenkinsHandler.iconUrl)
+        docResponse = jenkinsHandler.createDocResponse(docResponse, infoList[selectedId])
 
-            docMessage.editMessage(docResponse.asMessage(user)).queue()
-            selectorCache.deleteMessagesAndRemove(user)
-        } catch (ex: Exception) {
-            sendInvalidIdResponse(user, docMessage)
-        }
-
+        docMessage.editMessage(docResponse.asMessage(user)).queue()
+        selectorCache.deleteMessagesAndRemove(user)
     }
 
     /**

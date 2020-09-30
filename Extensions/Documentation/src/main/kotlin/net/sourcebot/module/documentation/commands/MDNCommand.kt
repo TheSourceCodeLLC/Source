@@ -4,23 +4,20 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.utils.MarkdownUtil
-import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.documentation.commands.bootstrap.DocumentationCommand
 import net.sourcebot.module.documentation.utility.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 
-class MDNCommand : RootCommand() {
-    override val name: String = "mdn"
-    override val description: String = "Allows the user to query the MDN Documentation."
-    override var cleanupResponse: Boolean = false
+class MDNCommand : DocumentationCommand(
+    "mdn", "Allows the user to query the MDN Documentation."
+) {
     override val aliases: Array<String> = arrayOf("javascript", "js")
-    override val permission = "documentation.$name"
-
     private val baseUrl = "https://developer.mozilla.org"
     private val cache = MDNDocCache()
 

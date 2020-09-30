@@ -1,25 +1,22 @@
 package net.sourcebot.module.documentation.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.User
-import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.documentation.commands.bootstrap.JavadocCommand
 import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
-import net.sourcebot.module.documentation.utility.SelectorModel
 
-class BungeeCordCommand : RootCommand() {
-    override val name: String = "bungeecord"
-    override val description: String = "Allows the user to query the BungeeCord Documentation."
-    override var cleanupResponse: Boolean = false
+class BungeeCordCommand : JavadocCommand(
+    "bungeecord",
+    "Allows the user to query the BungeeCord Documentation."
+) {
     override val argumentInfo: ArgumentInfo = ArgumentInfo(
         Argument("query", "The item you are searching for in the BungeeCord documentation.")
     )
     override val aliases: Array<String> = arrayOf("bungee")
-    override val permission = "documentation.$name"
 
     private val jenkinsHandler = JenkinsHandler(
         "https://papermc.io/javadocs/waterfall/allclasses-noframe.html",
@@ -38,9 +35,5 @@ class BungeeCordCommand : RootCommand() {
                 "You can find the BungeeCord Documentation at [papermc.io](https://papermc.io/javadocs/waterfall/)"
             return InfoResponse(authorName, description)
         }
-    }
-
-    override fun postResponse(response: Response, forWhom: User, message: Message) {
-        SelectorModel.selectorCache.updateSelector(forWhom, message)
     }
 }

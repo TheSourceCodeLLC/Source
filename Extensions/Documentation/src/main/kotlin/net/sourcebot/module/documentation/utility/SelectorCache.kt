@@ -32,7 +32,7 @@ class SelectorCache {
      */
     fun updateSelector(user: User, message: Message) {
         if (message.embeds.size == 0) return
-        val selector = getSelector(user) ?: return
+        val selector = this[user] ?: return
 
         val newMessageEmbed = message.embeds[0]
         val selectTitle = "Type the id of the option you would like to select in chat:"
@@ -41,16 +41,6 @@ class SelectorCache {
 
         selector.docMessage = message
         docSelector[user] = selector
-    }
-
-    /**
-     * Checks if a [User] has a [SelectorModel] open currently
-     *
-     * @param user The [User] who created the [SelectorModel]
-     * @return true or false depending on whether the [User] has a [SelectorModel] open currently
-     */
-    fun hasSelector(user: User): Boolean {
-        return docSelector.containsKey(user)
     }
 
     /**
@@ -70,8 +60,7 @@ class SelectorCache {
      */
     fun deleteMessages(user: User, deleteAfter: Long = -1L) {
         if (deleteAfter == -1L) return
-
-        val selector = getSelector(user) ?: return
+        val selector = this[user] ?: return
         val channelType = selector.cmdMessage.channelType
 
         selector.docMessage?.delete()?.queueAfter(deleteAfter, TimeUnit.SECONDS)
@@ -100,8 +89,5 @@ class SelectorCache {
      * @param user The [User] to get the [SelectorModel] from
      * @return The found [SelectorModel] or null
      */
-    fun getSelector(user: User): SelectorModel? {
-        return docSelector[user]
-    }
-
+    operator fun get(user: User): SelectorModel? = docSelector[user]
 }

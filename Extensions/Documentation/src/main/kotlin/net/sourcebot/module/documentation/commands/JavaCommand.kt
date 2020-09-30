@@ -1,29 +1,23 @@
 package net.sourcebot.module.documentation.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.User
-import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.documentation.commands.bootstrap.JavadocCommand
 import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
-import net.sourcebot.module.documentation.utility.SelectorModel
 
-class JavaCommand : RootCommand() {
+class JavaCommand : JavadocCommand(
+    "java", "Allows the user to query the Java Documentation."
+) {
     private val defaultVersion = 14
-
-    override val name: String = "java"
-    override val description: String = "Allows the user to query the Java Documentation."
-    override var cleanupResponse: Boolean = false
     override val argumentInfo: ArgumentInfo = ArgumentInfo(
         Argument("version", "The version of the java docs you would like to query, default is $defaultVersion."),
         Argument("query", "The item you are searching for in the Java documentation.")
     )
-    override val permission = "documentation.$name"
-
     private val iconUrl =
         "https://upload.wikimedia.org/wikipedia/en/thumb/3/30/Java_programming_language_logo.svg/1200px-Java_programming_language_logo.svg.png"
 
@@ -73,11 +67,5 @@ class JavaCommand : RootCommand() {
                     "[docs.oracle.com](https://docs.oracle.com/javase/$defaultVersion/docs/)"
             return InfoResponse(authorName, description)
         }
-
-
-    }
-
-    override fun postResponse(response: Response, forWhom: User, message: Message) {
-        SelectorModel.selectorCache.updateSelector(forWhom, message)
     }
 }

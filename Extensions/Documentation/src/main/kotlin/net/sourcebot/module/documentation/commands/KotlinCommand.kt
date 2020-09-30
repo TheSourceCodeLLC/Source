@@ -1,23 +1,21 @@
 package net.sourcebot.module.documentation.commands
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.documentation.commands.bootstrap.DocumentationCommand
 import net.sourcebot.module.documentation.dochandlers.KotlinHandler
 
-class KotlinCommand : RootCommand() {
-    override val name: String = "kotlin"
-    override val description: String = "Allows the user to query the Kotlin Documentation"
+class KotlinCommand : DocumentationCommand(
+    "kotlin", "Allows the user to query the Kotlin Documentation"
+) {
     override val argumentInfo: ArgumentInfo = ArgumentInfo(
         Argument("query", "The item you are searching for in the BungeeCord documentation.")
     )
-    override var cleanupResponse: Boolean = false
-    override val permission = "documentation.$name"
 
     private val kotlinHandler = KotlinHandler()
 
