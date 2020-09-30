@@ -82,7 +82,7 @@ class Source(val properties: JsonConfiguration) {
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
                 moduleHandler.getModules().forEach(moduleHandler::disableModule)
-                shardManager.shards.forEach(JDA::shutdown)
+                shardManager.shards.forEach(JDA::shutdownNow)
                 guildConfigurationManager.saveAll()
             }
         })

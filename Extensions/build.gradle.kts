@@ -1,13 +1,17 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 subprojects {
     dependencies { compileOnly(project(":API")) }
 
     val targetFolder = File(rootProject.projectDir, "target")
     val modulesFolder = File(targetFolder, "/bin/modules")
-    tasks.named<ShadowJar>("shadowJar") {
-        destinationDirectory.set(modulesFolder)
-        archiveClassifier.set("")
-        mergeServiceFiles()
+    tasks {
+        register<Delete>("deleteOld") {
+            delete(fileTree(modulesFolder).include("${project.name}-*.jar"))
+        }
+        shadowJar {
+            destinationDirectory.set(modulesFolder)
+            dependsOn("deleteOld")
+            archiveClassifier.set("")
+            mergeServiceFiles()
+        }
     }
 }
