@@ -17,3 +17,7 @@ fun Member.formatted(): String = user.formatted()
 fun User.formatted(): String = "%#s".format(this)
 
 fun Response.asMessage(member: Member) = asMessage(member.user)
+
+@JvmOverloads
+fun String.truncate(limit: Int, ellipsis: String = "..."): String =
+    if (length <= limit) this else substring(0, limit - ellipsis.length) + ellipsis
