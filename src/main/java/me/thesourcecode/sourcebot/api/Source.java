@@ -175,7 +175,8 @@ public class Source {
                 new UpdateCommand(),
 
                 new ChangelogCommand(),
-                new AntiRaidCommand()
+                new AntiRaidCommand(),
+                new ColorCommand()
         ).forEach(commandHandler::registerCommand);
     }
 
