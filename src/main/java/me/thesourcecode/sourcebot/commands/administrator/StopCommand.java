@@ -26,7 +26,7 @@ public class StopCommand extends Command {
         try {
             Utility.safeStop();
 
-            String jarname = source.isBeta() ? "sourcebeta" : "sourcebot";
+            String jarname = source.isBeta() ? "source-beta" : "source-main";
             Runtime.getRuntime().exec("systemctl --user stop " + jarname);
         } catch (Exception ex) {
             ex.printStackTrace();
