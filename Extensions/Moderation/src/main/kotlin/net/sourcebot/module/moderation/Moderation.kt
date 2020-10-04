@@ -24,9 +24,10 @@ class Moderation : SourceModule() {
             BanCommand(),
             UnmuteCommand(),
             UnbanCommand(),
-            CaseCommand()
+            CaseCommand(),
+            HistoryCommand()
         )
-        punishmentHandler.expireOldIncidents {
+        punishmentHandler.performTasks {
             source.shardManager.guilds
         }
     }

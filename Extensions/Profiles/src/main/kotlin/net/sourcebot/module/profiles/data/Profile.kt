@@ -19,8 +19,9 @@ class Profile : JsonConfiguration {
         override fun queryDocument(obj: Profile) = Document("id", obj.id)
     }
 
-    companion object { init {
-        MongoSerial.register(Serial())
-    }
+    companion object {
+        init {
+            MongoSerial.register(Serial())
+        }
     }
 }

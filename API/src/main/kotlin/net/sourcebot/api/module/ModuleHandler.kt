@@ -53,7 +53,22 @@ class ModuleHandler(
         "Module '${file.path}' does not contain module.json!"
     )
 
-    fun loadModules(folder: File): List<SourceModule> {
+    fun loadAndEnable(
+        folder: File
+    ) = loadModules(folder).also {
+        logger.info("Enabling modules from '${folder.path}'...")
+        it.forEach(this::enableModule)
+    }
+
+    fun loadAndEnable(
+        module: SourceModule
+    ) {
+        loadModule(module)
+        enableModule(module)
+    }
+
+    private fun loadModules(folder: File): List<SourceModule> {
+        logger.info("Loading modules from '${folder.path}'...")
         val loadOrder = ArrayList<File>()
         val fileIndex = HashMap<String, File>()
         val hardDependencies = HashMap<String, MutableSet<String>>()
@@ -136,7 +151,7 @@ class ModuleHandler(
         module: SourceModule
     ) = module.load { moduleIndex[module.name] = module }
 
-    fun loadModule(
+    private fun loadModule(
         module: SourceModule
     ) = performLifecycle(module, ::loadModuleThrowing)
 
@@ -144,7 +159,7 @@ class ModuleHandler(
         module: SourceModule
     ) = module.enable { module.enabled = true }
 
-    fun enableModule(
+    private fun enableModule(
         module: SourceModule
     ) = performLifecycle(module, ::enableModuleThrowing)
 

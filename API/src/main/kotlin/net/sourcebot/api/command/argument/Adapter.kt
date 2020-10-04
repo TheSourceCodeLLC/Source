@@ -2,6 +2,7 @@ package net.sourcebot.api.command.argument
 
 import net.dv8tion.jda.api.entities.Guild
 import net.sourcebot.api.DurationUtils
+import net.sourcebot.api.command.InvalidSyntaxException
 
 /**
  * Represents an adapter to convert command [Arguments] to a desired [T]
@@ -19,19 +20,14 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
 
         @JvmStatic
         fun boolean() = ofSingleArg(String::toBoolean)
-
         @JvmStatic
         fun short() = ofSingleArg(String::toShort)
-
         @JvmStatic
         fun int() = ofSingleArg(String::toInt)
-
         @JvmStatic
         fun long() = ofSingleArg(String::toLong)
-
         @JvmStatic
         fun float() = ofSingleArg(String::toFloat)
-
         @JvmStatic
         fun double() = ofSingleArg(String::toDouble)
 
@@ -42,9 +38,12 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             if (byId != null) return@ofSingleArg byId
             val byTag = target.runCatching(guild::getMemberByTag).getOrNull()
             if (byTag != null) return@ofSingleArg byTag
-            val byEffective = target.runCatching { guild.getMembersByEffectiveName(this, true) }.getOrNull()
-            if (byEffective?.isNotEmpty() == true) return@ofSingleArg byEffective[0]
-            return@ofSingleArg null
+            val byName = target.runCatching {
+                guild.getMembersByEffectiveName(this, true)
+            }.getOrNull() ?: return@ofSingleArg null
+            if (byName.isEmpty()) return@ofSingleArg null
+            if (byName.size != 1) throw InvalidSyntaxException("Argument '${target}' matches multiple members!")
+            return@ofSingleArg byName[0]
         }
 
         @JvmStatic
@@ -52,9 +51,12 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             val target = it.replace("<@&(\\d+)>".toRegex(), "$1")
             val byId = target.runCatching(guild::getRoleById).getOrNull()
             if (byId != null) return@ofSingleArg byId
-            val byName = target.runCatching { guild.getRolesByName(this, true) }.getOrNull()
-            if (byName?.isNotEmpty() == true) return@ofSingleArg byName[0]
-            return@ofSingleArg null
+            val byName = target.runCatching {
+                guild.getRolesByName(this, true)
+            }.getOrNull() ?: return@ofSingleArg null
+            if (byName.isEmpty()) return@ofSingleArg null
+            if (byName.size != 1) throw InvalidSyntaxException("Argument '${target}' matches multiple roles!")
+            return@ofSingleArg byName[0]
         }
 
         @JvmStatic
@@ -62,23 +64,27 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             val target = it.replace("<#(\\d+)>".toRegex(), "$1")
             val byId = target.runCatching(guild::getTextChannelById).getOrNull()
             if (byId != null) return@ofSingleArg byId
-            val byName = target.runCatching { guild.getTextChannelsByName(this, true) }.getOrNull()
-            if (byName?.isNotEmpty() == true) return@ofSingleArg byName[0]
-            return@ofSingleArg null
+            val byName = target.runCatching {
+                guild.getTextChannelsByName(this, true)
+            }.getOrNull() ?: return@ofSingleArg null
+            if (byName.isEmpty()) return@ofSingleArg null
+            if (byName.size != 1) throw InvalidSyntaxException("Argument '${target}' matches multiple channels!")
+            return@ofSingleArg byName[0]
         }
 
         @JvmStatic
-        fun category(guild: Guild) = ofSingleArg {
-            val byId = it.runCatching(guild::getCategoryById).getOrNull()
+        fun category(guild: Guild) = ofSingleArg { target ->
+            val byId = target.runCatching(guild::getCategoryById).getOrNull()
             if (byId != null) return@ofSingleArg byId
-            val byName = it.runCatching { guild.getCategoriesByName(this, true) }.getOrNull()
-            if (byName?.isNotEmpty() == true) return@ofSingleArg byName[0]
-            return@ofSingleArg null
+            val byName = target.runCatching {
+                guild.getCategoriesByName(this, true)
+            }.getOrNull() ?: return@ofSingleArg null
+            if (byName.isEmpty()) return@ofSingleArg null
+            if (byName.size != 1) throw InvalidSyntaxException("Argument '${target}' matches multiple categories!")
+            return@ofSingleArg byName[0]
         }
 
         @JvmStatic
-        fun duration() = ofSingleArg {
-            it.runCatching(DurationUtils::parseDuration).getOrNull()
-        }
+        fun duration() = ofSingleArg { it.runCatching(DurationUtils::parseDuration).getOrNull() }
     }
 }

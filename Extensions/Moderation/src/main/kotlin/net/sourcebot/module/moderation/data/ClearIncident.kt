@@ -20,7 +20,7 @@ class ClearIncident(
         val channel = guild.getTextChannelById(target)!!
         val history = MessageHistory(channel)
         val messages = ArrayList<List<Message>>()
-        var toRetrieve = amount
+        var toRetrieve = amount + 1
         while (toRetrieve >= 100) {
             messages += history.retrievePast(100).complete()
             toRetrieve -= 100

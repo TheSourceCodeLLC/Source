@@ -45,7 +45,7 @@ abstract class SimpleIncident(
 ) : ExecutableIncident() {
     final override val expiry: Instant = time.plus(duration)
 
-    override fun asDocument() = Document("id", id).apply {
+    override fun asDocument() = Document("_id", id).apply {
         this["source"] = source
         this["target"] = target
         this["reason"] = reason
@@ -58,7 +58,7 @@ abstract class SimpleIncident(
 abstract class OneshotIncident : ExecutableIncident() {
     final override val expiry: Instant? = null
 
-    override fun asDocument() = Document("id", id).apply {
+    override fun asDocument() = Document("_id", id).apply {
         this["source"] = source
         this["target"] = target
         this["reason"] = reason
@@ -68,13 +68,14 @@ abstract class OneshotIncident : ExecutableIncident() {
 }
 
 class Case(private val document: Document) : Incident {
-    override val id: Long = document["id"] as Long
+    override val id: Long = document["_id"] as Long
     override val source: String = document["source"] as String
     override val target: String = document["target"] as String
     override val reason: String = document["reason"] as String
     override val type: Incident.Type = (document["type"] as String).let(Incident.Type::valueOf)
     override val time: Instant = (document["time"] as Long).let(Instant::ofEpochMilli)
     override val expiry: Instant? = (document["expiry"] as? Long)?.let(Instant::ofEpochMilli)
+    val points: Long? = (document["points.value"] as? Long)
 
     private val action = when {
         type.name.contains("ban", true) -> "${type.name}ned"

@@ -97,13 +97,8 @@ class Source(val properties: JsonConfiguration) {
     private fun loadModules() {
         val modulesFolder = File("modules")
         if (!modulesFolder.exists()) modulesFolder.mkdir()
-        logger.info("Loading modules...")
-        val baseModule = BaseModule(this)
-        moduleHandler.loadModule(baseModule)
-        val modules = moduleHandler.loadModules(modulesFolder)
-        logger.info("Enabling modules...")
-        moduleHandler.enableModule(baseModule)
-        modules.forEach(moduleHandler::enableModule)
+        moduleHandler.loadAndEnable(BaseModule(this))
+        moduleHandler.loadAndEnable(modulesFolder)
         logger.info("All modules have been enabled!")
     }
 

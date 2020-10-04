@@ -27,6 +27,8 @@ class Arguments(private val raw: Array<String>) : Iterator<String?> {
     fun <T> next(adapter: (Arguments) -> T?) =
         try {
             adapter(this)
+        } catch (ex: InvalidSyntaxException) {
+            throw InvalidSyntaxException(ex.message!!)
         } catch (ex: Throwable) {
             throw InvalidSyntaxException(ex)
         }

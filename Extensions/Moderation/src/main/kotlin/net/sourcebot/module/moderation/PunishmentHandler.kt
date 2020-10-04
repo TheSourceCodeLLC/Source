@@ -256,35 +256,63 @@ class PunishmentHandler(
 
     fun getCase(
         guild: Guild, id: Long
-    ): Case? = incidentCollection(guild).find(Document("id", id)).first()?.let(::Case)
+    ): Case? = incidentCollection(guild).find(Document("_id", id)).first()?.let(::Case)
 
-    fun expireOldIncidents(
+    fun getHistory(
+        guild: Guild, id: String
+    ): List<Case> = incidentCollection(guild).find(Document("target", id)).map(::Case).toList()
+
+    fun getHistory(
+        member: Member
+    ): List<Case> = getHistory(member.guild, member.id)
+
+    fun performTasks(
         guilds: () -> Collection<Guild>
     ) {
-        val reason = "The punishment has expired."
         Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate({
-            for (guild in guilds()) {
-                val collection = incidentCollection(guild)
-                val query = Document().apply {
-                    this["expiry"] = Document().apply {
-                        this["\$exists"] = true
-                        this["\$lte"] = Instant.now().toEpochMilli()
-                    }
-                    this["resolved"] = Document("\$ne", true)
-                }
-                collection.find(query).forEach {
-                    when (Incident.Type.valueOf(it["type"] as String)) {
-                        Incident.Type.MUTE -> {
-                            val muted = (it["target"] as String).let(guild::getMemberById)!!
-                            unmuteIncident(guild, guild.selfMember, muted, reason)
-                        }
-                        Incident.Type.TEMPBAN -> {
-                            unbanIncident(guild, guild.selfMember, it["target"] as String, reason)
-                        }
-                    }
-                    collection.updateOne(it, Document("\$set", Document("resolved", true)))
-                }
+            guilds().forEach { guild ->
+                expireOldIncidents(guild)
+                doPointDecay(guild)
             }
         }, 0, 1, TimeUnit.SECONDS)
+    }
+
+    private fun expireOldIncidents(guild: Guild) {
+        val reason = "The punishment has expired."
+        val collection = incidentCollection(guild)
+        val query = Document().apply {
+            this["expiry"] = Document().apply {
+                this["\$exists"] = true
+                this["\$lte"] = Instant.now().toEpochMilli()
+            }
+            this["resolved"] = Document("\$ne", true)
+        }
+        collection.find(query).forEach {
+            when (it["type"] as String) {
+                "MUTE" -> {
+                    val muted = (it["target"] as String).let(guild::getMemberById)!!
+                    unmuteIncident(guild, guild.selfMember, muted, reason)
+                }
+                "TEMPBAN" -> {
+                    unbanIncident(guild, guild.selfMember, it["target"] as String, reason)
+                }
+            }
+            collection.updateOne(it, Document("\$set", Document("resolved", true)))
+        }
+    }
+
+    private fun doPointDecay(guild: Guild) {
+        val collection = incidentCollection(guild)
+        val query = Document().apply {
+            this["points"] = Document().apply {
+                this["\$exists"] = true
+            }
+        }
+        collection.find(query).forEach {
+            val points = it["points"] as Document
+            var decay = points["decay"] as Long
+            if (--decay <= 0) collection.updateOne(it, Document("\$unset", Document("points", "")))
+            else collection.updateOne(it, Document("\$set", Document("points.decay", decay)))
+        }
     }
 }

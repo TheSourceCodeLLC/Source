@@ -20,7 +20,7 @@ class ClearCommand : ModerationCommand(
         if (amount < 2) throw InvalidSyntaxException("Amount to clear may not be less than 2!")
         val reason = args.slurp(" ", "You did not specify a reason for clearing the messages!")
         return punishmentHandler.clearIncident(
-            message.guild, message.member!!, channel, amount + 1, reason
+            message.guild, message.member!!, channel, amount, reason
         )
     }
 }
