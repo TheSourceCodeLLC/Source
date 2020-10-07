@@ -7,6 +7,7 @@ import net.sourcebot.module.moderation.command.*
 class Moderation : SourceModule() {
     override val configurationInfo = ConfigurationInfo("moderation") {
         node("incident-log", "Channel ID for the incident log channel.")
+        node("report-log", "Channel ID for the reports channel.")
         node("mute-role", "Role ID for the mute role.")
     }
 
@@ -25,7 +26,8 @@ class Moderation : SourceModule() {
             UnmuteCommand(),
             UnbanCommand(),
             CaseCommand(),
-            HistoryCommand()
+            HistoryCommand(),
+            ReportCommand()
         )
         punishmentHandler.performTasks {
             source.shardManager.guilds

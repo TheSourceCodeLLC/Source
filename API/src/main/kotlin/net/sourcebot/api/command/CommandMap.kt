@@ -9,11 +9,6 @@ class CommandMap<C : Command> {
         command.aliases.forEach { aliases[it] = command }
     }
 
-    fun unregister(command: C) {
-        labels.entries.removeIf { it.value == command }
-        aliases.entries.removeIf { it.value == command }
-    }
-
     operator fun get(identifier: String) = labels[identifier] ?: aliases[identifier]
 
     fun getCommands(): Collection<C> = labels.values

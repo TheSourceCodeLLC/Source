@@ -147,8 +147,8 @@ class CommandHandler(
         guild: Guild
     ) = configManager[guild].required("command-prefix") { defaultPrefix }
 
+    private fun getSyntax(prefix: String, command: Command) = "$prefix${command.getUsage()}".trim()
     fun getSyntax(guild: Guild, command: Command) = getSyntax(getPrefix(guild), command)
-    fun getSyntax(prefix: String, command: Command) = "$prefix${command.getUsage()}".trim()
     fun getSyntax(command: Command) = getSyntax(defaultPrefix, command)
 
     fun getCommands(

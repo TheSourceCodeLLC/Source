@@ -1,1 +1,0 @@
-description = "Provides access to Guild User Profiles."

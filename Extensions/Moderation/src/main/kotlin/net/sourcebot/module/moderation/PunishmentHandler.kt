@@ -29,7 +29,7 @@ class PunishmentHandler(
     fun clearIncident(
         guild: Guild, sender: Member, channel: TextChannel, amount: Int, reason: String
     ) = submitIncident(guild, {
-        ClearIncident(guild, getNextId(guild), sender, channel, amount, reason)
+        ClearIncident(guild, nextIncidentId(guild), sender, channel, amount, reason)
     }, {
         SuccessResponse(
             "Clear Success (#${it.id})",
@@ -53,7 +53,7 @@ class PunishmentHandler(
             "You do not have permission to warn that member!"
         )
         return submitIncident(guild, {
-            WarnIncident(getNextId(guild), sender, warned, reason)
+            WarnIncident(nextIncidentId(guild), sender, warned, reason)
         }, {
             SuccessResponse(
                 "Warn Success (#${it.id})",
@@ -78,7 +78,7 @@ class PunishmentHandler(
             "You do not have permission to kick that member!"
         )
         return submitIncident(guild, {
-            KickIncident(getNextId(guild), sender, kicked, reason)
+            KickIncident(nextIncidentId(guild), sender, kicked, reason)
         }, {
             SuccessResponse(
                 "Kick Success (#${it.id})",
@@ -106,7 +106,7 @@ class PunishmentHandler(
             "The mute role has not been configured!"
         )
         return submitIncident(guild, {
-            MuteIncident(getNextId(guild), muteRole, sender, muted, duration, reason)
+            MuteIncident(nextIncidentId(guild), muteRole, sender, muted, duration, reason)
         }, {
             SuccessResponse(
                 "Mute Success (#${it.id})",
@@ -131,7 +131,7 @@ class PunishmentHandler(
             "You do not have permission to tempban that member!"
         )
         return submitIncident(guild, {
-            TempbanIncident(getNextId(guild), sender, tempbanned, delDays, duration, reason)
+            TempbanIncident(nextIncidentId(guild), sender, tempbanned, delDays, duration, reason)
         }, {
             SuccessResponse(
                 "Tempban Success (#${it.id})",
@@ -156,7 +156,7 @@ class PunishmentHandler(
             "You do not have permission to ban that member!"
         )
         return submitIncident(guild, {
-            BanIncident(getNextId(guild), sender, banned, delDays, reason)
+            BanIncident(nextIncidentId(guild), sender, banned, delDays, reason)
         }, {
             SuccessResponse(
                 "Ban Success (#${it.id})",
@@ -184,7 +184,7 @@ class PunishmentHandler(
             "No Mute Role!", "The mute role has not been configured!"
         )
         return submitIncident(guild, {
-            UnmuteIncident(getNextId(guild), muteRole, sender, unmuted, reason)
+            UnmuteIncident(nextIncidentId(guild), muteRole, sender, unmuted, reason)
         }, {
             SuccessResponse(
                 "Unmute Success (#${it.id})",
@@ -206,7 +206,7 @@ class PunishmentHandler(
             return ErrorResponse("Unknown Ban!", "The specified user is not banned!")
         }
         return submitIncident(guild, {
-            UnbanIncident(getNextId(guild), sender, ban.user, reason)
+            UnbanIncident(nextIncidentId(guild), sender, ban.user, reason)
         }, {
             SuccessResponse(
                 "Unban Success (#${it.id})",
@@ -240,13 +240,41 @@ class PunishmentHandler(
     }
 
     private fun incidentCollection(guild: Guild) = mongo.getCollection(guild.id, "incidents")
-    private fun getNextId(guild: Guild) = incidentCollection(guild).countDocuments() + 1
+    private fun nextIncidentId(guild: Guild) = incidentCollection(guild).countDocuments() + 1
 
     private fun getIncidentChannel(
         guild: Guild
     ) = configurationManager[guild].optional<String>(
         "moderation.incident-log"
     )?.let(guild::getTextChannelById)
+
+    private fun reportCollection(guild: Guild) = mongo.getCollection(guild.id, "reports")
+    private fun getReportChannel(
+        guild: Guild
+    ) = configurationManager[guild].optional<String>(
+        "moderation.report-log"
+    )?.let(guild::getTextChannelById)
+
+    fun submitReport(
+        sender: Member,
+        target: Member,
+        reason: String
+    ): Response {
+        val guild = sender.guild
+        val channel = getReportChannel(guild) ?: return ErrorResponse(
+            "No Log Channel!", "The report log has not been configured!"
+        )
+        val collection = reportCollection(guild)
+        val id = collection.countDocuments() + 1
+        Report(id, sender, target, reason).also {
+            collection.insertOne(it.asDocument())
+            it.send(channel)
+        }
+        return SuccessResponse(
+            "Report Submit! #$id",
+            "You have submit a report against ${target.formatted()}!"
+        )
+    }
 
     private fun getMuteRole(
         guild: Guild
@@ -257,6 +285,16 @@ class PunishmentHandler(
     fun getCase(
         guild: Guild, id: Long
     ): Case? = incidentCollection(guild).find(Document("_id", id)).first()?.let(::Case)
+
+    fun deleteCase(
+        guild: Guild, id: Long
+    ): Response {
+        val collection = incidentCollection(guild)
+        return collection.find(Document("_id", id)).first()?.let {
+            collection.deleteOne(Document("_id", id))
+            SuccessResponse("Case Deleted!", "Case #$id has been deleted!")
+        } ?: ErrorResponse("Invalid Case ID!", "There is no case with ID #$id!")
+    }
 
     fun getHistory(
         guild: Guild, id: String
