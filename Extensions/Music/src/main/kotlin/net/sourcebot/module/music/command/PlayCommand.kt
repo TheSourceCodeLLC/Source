@@ -7,8 +7,8 @@ import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.EmptyResponse
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.api.response.error.ExceptionResponse
 import net.sourcebot.module.music.Music
 
@@ -25,12 +25,12 @@ class PlayCommand : MusicCommand(
         val subsystem = Music.getSubsystem(guild)
         val response = subsystem.scheduler.play(identifier, {
             when (it) {
-                is AudioTrack -> InfoResponse("Track Loaded")
-                is AudioPlaylist -> InfoResponse("Playlist Loaded")
+                is AudioTrack -> StandardInfoResponse("Track Loaded")
+                is AudioPlaylist -> StandardInfoResponse("Playlist Loaded")
                 else -> EmptyResponse()
             }
         }, {
-            InfoResponse("No Match!")
+            StandardInfoResponse("No Match!")
         }, {
             ExceptionResponse(it)
         })

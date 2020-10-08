@@ -6,9 +6,9 @@ import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.configuration.JsonConfiguration
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardErrorResponse
+import net.sourcebot.api.response.StandardInfoResponse
 
 class CountingCommand(
     private val configurationManager: ConfigurationManager
@@ -31,7 +31,7 @@ class CountingCommand(
         override fun execute(
             message: Message,
             args: Arguments
-        ) = InfoResponse(
+        ) = StandardInfoResponse(
             "Counting Rules",
             "**1.** Players may not increment multiple times in a row.\n" +
                     "**2.** Players may only send numbers.\n" +
@@ -44,11 +44,11 @@ class CountingCommand(
     ) {
         override fun execute(message: Message, args: Arguments): Response {
             val guildData = configurationManager[message.guild]
-            val data: JsonConfiguration = guildData.optional("counting") ?: return ErrorResponse(
+            val data: JsonConfiguration = guildData.optional("counting") ?: return StandardErrorResponse(
                 "Counting Record Error", "Counting has not been configured for this Guild!"
             )
             val record: Long = data.optional("record") ?: 0
-            return InfoResponse("Counting Record", "The current record is: $record")
+            return StandardInfoResponse("Counting Record", "The current record is: $record")
         }
     }
 

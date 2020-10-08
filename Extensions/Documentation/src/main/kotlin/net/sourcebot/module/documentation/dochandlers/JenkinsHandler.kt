@@ -5,8 +5,8 @@ import me.theforbiddenai.jenkinsparserkotlin.entities.*
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import net.dv8tion.jda.api.utils.MarkdownUtil
-import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.module.documentation.utility.*
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -36,11 +36,11 @@ class JenkinsHandler(
 
     /**
      * Retrieves the [Response] which may be a Selection Menu, the [DocResponse] filled with information
-     * from the given query, or an [ErrorResponse]
+     * from the given query, or an [StandardErrorResponse]
      *
      * @param cmdMessage The [Message] which invoked the command
      * @param query The [String] containing the information of which the user is looking to attempt to retrieve
-     * @return The selection menu, an [ErrorResponse], or the [DocResponse] containing the information attempting to be
+     * @return The selection menu, an [StandardErrorResponse], or the [DocResponse] containing the information attempting to be
      * retrieved
      */
     fun retrieveResponse(cmdMessage: Message, query: String): Response {
@@ -50,7 +50,7 @@ class JenkinsHandler(
             val infoList: List<Information> = jenkins.search(query)
 
             if (infoList.isEmpty()) {
-                return ErrorResponse(user.name, "Unable to find `$query` in the $responseTitle!")
+                return StandardErrorResponse(user.name, "Unable to find `$query` in the $responseTitle!")
             }
 
             val docResponse = DocResponse()
@@ -69,7 +69,7 @@ class JenkinsHandler(
         } catch (ex: Exception) {
             //ex.printStackTrace() // This is for debug purposes when enabled
             val errDesc = "Unable to find `$query` in the $responseTitle!"
-            return ErrorResponse(user.name, errDesc)
+            return StandardErrorResponse(user.name, errDesc)
         }
     }
 

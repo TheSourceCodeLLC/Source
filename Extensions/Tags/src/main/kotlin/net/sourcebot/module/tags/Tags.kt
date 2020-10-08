@@ -17,7 +17,7 @@ class Tags : SourceModule() {
 
         val tagHandler = TagHandler(
             config.required("prefix"),
-            source.guildConfigurationManager,
+            source.configurationManager,
             source.mongodb
         )
 

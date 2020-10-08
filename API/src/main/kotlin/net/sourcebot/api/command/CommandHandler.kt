@@ -14,8 +14,8 @@ import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.permission.PermissionHandler
 import net.sourcebot.api.response.EmptyResponse
-import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.error.ExceptionResponse
 import net.sourcebot.api.response.error.GlobalAdminOnlyResponse
 import net.sourcebot.api.response.error.GuildOnlyCommandResponse
@@ -53,7 +53,7 @@ class CommandHandler(
                     if (response !is EmptyResponse) return respond(command, message, response)
                 } catch (exception: Exception) {
                     val error = if (exception is InvalidSyntaxException) {
-                        ErrorResponse(
+                        StandardErrorResponse(
                             "Invalid Syntax!",
                             """
                                 ${exception.message!!}

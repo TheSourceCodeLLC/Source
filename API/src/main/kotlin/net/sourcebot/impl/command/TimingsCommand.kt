@@ -4,8 +4,8 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardInfoResponse
 import java.time.Instant
 import kotlin.math.abs
 
@@ -34,7 +34,7 @@ class TimingsResponse(
     private val execution: Long,
     private val gateway: Long,
     private val rest: Long
-) : InfoResponse(
+) : StandardInfoResponse(
     "Source Timings",
     """
       **Command Execution**: ${execution}ms
@@ -47,7 +47,7 @@ class TimingsResponse(
         val now = Instant.now().toEpochMilli()
         val response = abs(sent - now)
         message.editMessage(
-            InfoResponse(
+            StandardInfoResponse(
                 "Source Timings",
                 """
                     **Command Execution**: ${execution}ms

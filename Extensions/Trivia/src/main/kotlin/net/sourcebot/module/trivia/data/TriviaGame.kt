@@ -3,10 +3,10 @@ package net.sourcebot.module.trivia.data
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.requests.RestAction
 import net.sourcebot.Source
-import net.sourcebot.api.response.EmbedResponse
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.SuccessResponse
+import net.sourcebot.api.response.StandardEmbedResponse
+import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.module.trivia.Trivia
 import java.util.*
 import java.util.concurrent.ScheduledFuture
@@ -44,7 +44,7 @@ class Game(amount: Int, category: Int?) {
         return TriviaStartResponse()
     }
 
-    class TriviaStartResponse : InfoResponse(
+    class TriviaStartResponse : StandardInfoResponse(
         "Trivia Game Starting!",
         "A new game of Trivia will begin in 10 seconds."
     )
@@ -112,7 +112,7 @@ class Game(amount: Int, category: Int?) {
         question: OpenTDB.Question,
         topFive: List<Map.Entry<String, Int>>,
         hasNext: Boolean
-    ) : InfoResponse(
+    ) : StandardInfoResponse(
         "Round $round of $totalRounds",
         """
             [${question.category}] [${question.difficulty}]
@@ -131,7 +131,7 @@ class Game(amount: Int, category: Int?) {
 
     class ScoreResponse(
         topFive: List<Map.Entry<String, Int>>
-    ) : SuccessResponse(
+    ) : StandardSuccessResponse(
         "Trivia Over!",
         "The game of Trivia has concluded."
     ) {
@@ -148,7 +148,7 @@ class Game(amount: Int, category: Int?) {
         round: Int,
         totalRounds: Int,
         question: OpenTDB.Question
-    ) : EmbedResponse(
+    ) : StandardEmbedResponse(
         "Round $round of $totalRounds",
         """
             [${question.category}] [${question.difficulty}]

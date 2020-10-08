@@ -3,9 +3,9 @@ package net.sourcebot.module.documentation.commands
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.configuration.JsonSerial
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardErrorResponse
+import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.DocumentationCommand
 import net.sourcebot.module.documentation.utility.DocResponse
 import org.jsoup.Connection
@@ -23,7 +23,7 @@ class DJSCommand : DocumentationCommand(
 
         if (!args.hasNext()) {
             val description = "You can find the Discord.JS Documentation at [discord.js.org](https://discord.js.org/)"
-            return InfoResponse(user.name, description)
+            return StandardInfoResponse(user.name, description)
         }
 
         var query = args.next("Unable to find query w/o version!")
@@ -63,7 +63,7 @@ class DJSCommand : DocumentationCommand(
             JsonSerial.mapper.readValue(responseBody, DocResponse::class.java)
         } catch (ex: Exception) {
             //ex.printStackTrace()
-            ErrorResponse(user.name, "Unable to find `$query` in the DJS Documentation!")
+            StandardErrorResponse(user.name, "Unable to find `$query` in the DJS Documentation!")
         }
     }
 }

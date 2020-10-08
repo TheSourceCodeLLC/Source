@@ -12,14 +12,14 @@ import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
-import net.sourcebot.api.module.SourceModule
+import net.sourcebot.module.counting.Counting
 
 class CountingListener(
-    private val module: SourceModule,
     private val commandHandler: CommandHandler,
     private val configurationManager: ConfigurationManager
-) : EventSubscriber {
+) : EventSubscriber<Counting> {
     override fun subscribe(
+        module: Counting,
         jdaEvents: EventSystem<GenericEvent>,
         sourceEvents: EventSystem<SourceEvent>
     ) {

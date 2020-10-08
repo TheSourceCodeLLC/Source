@@ -1,6 +1,7 @@
 package net.sourcebot.impl.command
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
@@ -10,9 +11,9 @@ import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.configuration.JsonSerial
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.SuccessResponse
+import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.api.response.StandardSuccessResponse
 
 class ConfigurationCommand(
     private val configurationManager: ConfigurationManager
@@ -36,13 +37,54 @@ class ConfigurationCommand(
             val path = args.next("You did not specify a configuration path!")
             val value = args.next("You did not specify a value to set!")
             val config = configurationManager[message.guild]
-            value.runCatching {
+            val stored = value.runCatching {
                 JsonSerial.mapper.readTree(this)
-            }.getOrDefault(value).let { config[path] = it }
+            }.getOrDefault(
+                JsonSerial.mapper.readTree("\"$value\"")
+            )
+            config[path] = stored
             configurationManager.saveData(message.guild)
-            return SuccessResponse(
+            return StandardSuccessResponse(
                 "Configuration Updated",
-                "`$path` has been set to `$value`"
+                """
+                    `$path`:
+                    ```json
+                    ${stored.toPrettyString()}
+                    ```
+                """.trimIndent()
+            )
+        }
+    }
+
+    private inner class ConfigurationAddCommand : Bootstrap(
+        "add", "Append a value to a list within the configuration."
+    ) {
+        override val aliases = arrayOf("append")
+        override val argumentInfo = ArgumentInfo(
+            Argument("path", "The path of the list to append to."),
+            Argument("value", "The value to append into the list.")
+        )
+
+        override fun execute(message: Message, args: Arguments): Response {
+            val path = args.next("You did not specify a configuration path!")
+            val value = args.next("You did not specify a value to append!")
+            val config = configurationManager[message.guild]
+            val stored = config.required<JsonNode>(path, JsonSerial.Companion::newArray)
+            val array = if (stored.isArray) stored as ArrayNode else JsonSerial.newArray().also { it.add(stored) }
+            val toStore = value.runCatching {
+                JsonSerial.mapper.readTree(this)
+            }.getOrDefault(JsonSerial.mapper.readTree("\"$value\""))
+            array.add(toStore)
+            config[path] = array
+            configurationManager.saveData(message.guild, config)
+            return StandardSuccessResponse(
+                "Configuration Updated",
+                """
+                    `$path`:
+                    ```json
+                    ${array.toPrettyString()}
+                    ```
+                """.trimIndent()
             )
         }
     }
@@ -59,7 +101,7 @@ class ConfigurationCommand(
             val config = configurationManager[message.guild]
             config[path] = null
             configurationManager.saveData(message.guild)
-            return SuccessResponse(
+            return StandardSuccessResponse(
                 "Configuration Updated",
                 "The value at `$path` has been unset."
             )
@@ -75,7 +117,7 @@ class ConfigurationCommand(
 
         override fun execute(message: Message, args: Arguments): Response {
             val config = configurationManager[message.guild]
-            return InfoResponse(
+            return StandardInfoResponse(
                 "Configuration Query",
                 args.next()?.let {
                     "```json\n${config.optional<JsonNode>(it)?.toPrettyString()}\n```"
@@ -88,7 +130,8 @@ class ConfigurationCommand(
         addChildren(
             ConfigurationSetCommand(),
             ConfigurationUnsetCommand(),
-            ConfigurationGetCommand()
+            ConfigurationGetCommand(),
+            ConfigurationAddCommand()
         )
     }
 }

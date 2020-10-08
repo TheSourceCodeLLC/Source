@@ -13,7 +13,7 @@ class Moderation : SourceModule() {
 
     override fun onEnable() {
         punishmentHandler = PunishmentHandler(
-            source.guildConfigurationManager,
+            source.configurationManager,
             source.mongodb
         )
         registerCommands(

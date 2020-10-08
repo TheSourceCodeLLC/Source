@@ -6,8 +6,8 @@ import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardInfoResponse
 import java.util.*
 
 class Base64Command : RootCommand() {
@@ -34,7 +34,7 @@ class Base64Command : RootCommand() {
         override fun execute(message: Message, args: Arguments): Response {
             val input = args.slurp(" ", "You did not specify text to encode!")
             val encoded = encoder.encodeToString(input.toByteArray())
-            return InfoResponse("Base64 Encode Result", encoded)
+            return StandardInfoResponse("Base64 Encode Result", encoded)
         }
     }
 
@@ -50,7 +50,7 @@ class Base64Command : RootCommand() {
         override fun execute(message: Message, args: Arguments): Response {
             val input = args.slurp(" ", "You did not specify text to decode!")
             val decoded = String(decoder.decode(input))
-            return InfoResponse("Base64 Decode Result", decoded)
+            return StandardInfoResponse("Base64 Decode Result", decoded)
         }
     }
 }

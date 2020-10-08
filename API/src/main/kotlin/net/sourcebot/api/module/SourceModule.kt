@@ -102,10 +102,11 @@ abstract class SourceModule {
         source.commandHandler.registerCommands(this, *commands)
     }
 
-    fun subscribeEvents(
-        vararg subscribers: EventSubscriber
+    fun <M : SourceModule> subscribeEvents(
+        vararg subscribers: EventSubscriber<M>
     ) = subscribers.forEach {
         it.subscribe(
+            this as M,
             source.jdaEventSystem,
             source.sourceEventSystem
         )

@@ -11,9 +11,9 @@ import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.module.ModuleHandler
 import net.sourcebot.api.permission.PermissionHandler
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardErrorResponse
+import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.api.response.error.GlobalAdminOnlyResponse
 import net.sourcebot.api.response.error.GuildOnlyCommandResponse
 
@@ -40,14 +40,14 @@ class HelpCommand(
         if (topic == null) {
             val modules = moduleHandler.getModules()
             val enabled = modules.filter { it.enabled }
-            if (enabled.isEmpty()) return InfoResponse(
+            if (enabled.isEmpty()) return StandardInfoResponse(
                 "Module Index",
                 "There are currently no modules enabled."
             )
             val sorted = enabled.sortedBy { it.name }.joinToString("\n") {
                 "**${it.name}**: ${it.description}"
             }
-            return InfoResponse(
+            return StandardInfoResponse(
                 "Module Index",
                 """
                     Below are valid module names and descriptions.
@@ -71,7 +71,7 @@ class HelpCommand(
                     )
                 }
                 VALID -> {
-                    InfoResponse(
+                    StandardInfoResponse(
                         "Command Information:",
                         "Arguments surrounded by <> are required, those surrounded by () are optional."
                     ).apply {
@@ -93,10 +93,10 @@ class HelpCommand(
         }
         val asModule = moduleHandler.findModule(topic)
         if (asModule != null) {
-            val response = InfoResponse("${asModule.name} Module Assistance")
+            val response = StandardInfoResponse("${asModule.name} Module Assistance")
             val config = when {
                 asModule.configurationInfo != null -> {
-                    asModule.configurationInfo!!.resolved.joinToString("\n") { (k, v) ->
+                    asModule.configurationInfo!!.resolved.entries.joinToString("\n") { (k, v) ->
                         "`$k`: $v"
                     }
                 }
@@ -132,7 +132,7 @@ class HelpCommand(
             }
             return response
         }
-        return ErrorResponse(
+        return StandardErrorResponse(
             "Unknown Topic!",
             "There is no command or module named `$topic`!"
         )

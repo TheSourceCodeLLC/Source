@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
-import net.sourcebot.api.response.WarningResponse
+import net.sourcebot.api.response.StandardWarningResponse
 
 class KickIncident(
     override val id: Long,
@@ -15,7 +15,7 @@ class KickIncident(
     override val source = sender.id
     override val target = kicked.id
     override val type = Incident.Type.KICK
-    private val kick = WarningResponse(
+    private val kick = StandardWarningResponse(
         "Kick - Case #$id",
         """
             **Kicked By:** ${sender.formatted()} ($source)

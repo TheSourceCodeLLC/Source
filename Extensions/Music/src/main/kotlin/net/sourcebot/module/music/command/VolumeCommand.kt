@@ -6,7 +6,7 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.SuccessResponse
+import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.module.music.Music
 
 class VolumeCommand : MusicCommand(
@@ -22,9 +22,9 @@ class VolumeCommand : MusicCommand(
         val volume = args.next(Adapter.int())
         return if (volume != null) {
             subsystem.player.volume = volume
-            SuccessResponse("Volume Set!", "The volume is now `$volume%`!")
+            StandardSuccessResponse("Volume Set!", "The volume is now `$volume%`!")
         } else {
-            SuccessResponse("Current Volume", "The current volume is `${subsystem.player.volume}%`!")
+            StandardSuccessResponse("Current Volume", "The current volume is `${subsystem.player.volume}%`!")
         }
     }
 }

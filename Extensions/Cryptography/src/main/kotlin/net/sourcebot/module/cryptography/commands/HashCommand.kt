@@ -6,8 +6,8 @@ import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardInfoResponse
 import java.security.MessageDigest
 
 abstract class HashCommand(
@@ -25,7 +25,7 @@ abstract class HashCommand(
         val input = args.slurp(" ", "You did not provide text to hash!")
         val digested = digest.digest(input.toByteArray())
         val hexStr = HexUtils.toHex(digested)
-        return InfoResponse("$algorithm Hash Result", hexStr)
+        return StandardInfoResponse("$algorithm Hash Result", hexStr)
     }
 }
 

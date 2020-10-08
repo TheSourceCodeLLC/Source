@@ -4,9 +4,9 @@ import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardErrorResponse
+import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.DocumentationCommand
 import net.sourcebot.module.documentation.dochandlers.KotlinHandler
 
@@ -25,14 +25,14 @@ class KotlinCommand : DocumentationCommand(
         if (!args.hasNext()) {
             val description =
                 "You can find the Kotlin Documentation at [kotlinlang.org](https://kotlinlang.org/docs/reference/)"
-            return InfoResponse(user.name, description)
+            return StandardInfoResponse(user.name, description)
         }
 
         val query = args.next("Unable to find query w/o version!")
             .replace("#", ".").removeSuffix("()")
 
 
-        val notFoundResponse = ErrorResponse(user.name, "Unable to find `$query` in the Kotlin Documentation!")
+        val notFoundResponse = StandardErrorResponse(user.name, "Unable to find `$query` in the Kotlin Documentation!")
 
         val results = kotlinHandler.search(query)
         return if (results.size > 0) {

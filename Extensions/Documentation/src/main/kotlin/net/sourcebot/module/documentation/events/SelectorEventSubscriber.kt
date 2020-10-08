@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
-import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.module.documentation.Documentation
 import net.sourcebot.module.documentation.utility.DocResponse
 import net.sourcebot.module.documentation.utility.SelectorModel
@@ -18,18 +18,22 @@ import net.sourcebot.module.documentation.utility.SelectorModel
  *
  * @param docModule The main module class
  */
-class SelectorEventSubscriber(private val docModule: Documentation) : EventSubscriber {
+class SelectorEventSubscriber(private val docModule: Documentation) : EventSubscriber<Documentation> {
 
     private val selectorCache = SelectorModel.selectorCache
     private val deleteSeconds: Long = docModule.source.properties.required("commands.delete-seconds")
 
-    override fun subscribe(jdaEvents: EventSystem<GenericEvent>, sourceEvents: EventSystem<SourceEvent>) {
-        jdaEvents.listen(docModule, this::onMessageReceived)
+    override fun subscribe(
+        module: Documentation,
+        jdaEvents: EventSystem<GenericEvent>,
+        sourceEvents: EventSystem<SourceEvent>
+    ) {
+        jdaEvents.listen(module, this::onMessageReceived)
     }
 
     /**
      * Listens to the [MessageReceivedEvent] and checks if the user has a selector, if so it gets the id from the
-     * [Message], if it is malformed and invalid it sends an [ErrorResponse], if the [Message] text equals cancel
+     * [Message], if it is malformed and invalid it sends an [StandardErrorResponse], if the [Message] text equals cancel
      * it will delete the [Message]s and remove [SelectorModel] from the cache, if the given id is valid it will modify
      * the [Message] to contain the new [DocResponse]
      *
@@ -73,7 +77,7 @@ class SelectorEventSubscriber(private val docModule: Documentation) : EventSubsc
      * @param docMessage The [Message] that contains the selection menu
      */
     private fun sendInvalidIdResponse(user: User, docMessage: Message) {
-        val invalidIdResponse = ErrorResponse(user.name, "You entered an invalid selection id!")
+        val invalidIdResponse = StandardErrorResponse(user.name, "You entered an invalid selection id!")
 
         docMessage.editMessage(invalidIdResponse.asMessage(user)).queue()
         selectorCache.deleteMessagesAndRemove(user, deleteSeconds)

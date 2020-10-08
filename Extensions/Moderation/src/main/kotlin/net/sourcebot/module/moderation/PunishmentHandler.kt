@@ -7,9 +7,9 @@ import net.sourcebot.Source
 import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.formatted
-import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.SuccessResponse
+import net.sourcebot.api.response.StandardErrorResponse
+import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.module.moderation.data.*
 import org.bson.Document
 import java.time.Duration
@@ -31,7 +31,7 @@ class PunishmentHandler(
     ) = submitIncident(guild, {
         ClearIncident(guild, nextIncidentId(guild), sender, channel, amount, reason)
     }, {
-        SuccessResponse(
+        StandardSuccessResponse(
             "Clear Success (#${it.id})",
             "You have cleared $amount messages in channel `${channel.name}`!"
         )
@@ -39,7 +39,7 @@ class PunishmentHandler(
 
     private class ClearFailureResponse(
         description: String
-    ) : ErrorResponse("Clear Failure!", description)
+    ) : StandardErrorResponse("Clear Failure!", description)
 
     fun warnIncident(
         guild: Guild, sender: Member, warned: Member, reason: String
@@ -55,7 +55,7 @@ class PunishmentHandler(
         return submitIncident(guild, {
             WarnIncident(nextIncidentId(guild), sender, warned, reason)
         }, {
-            SuccessResponse(
+            StandardSuccessResponse(
                 "Warn Success (#${it.id})",
                 "You have successfully warned ${it.warned.formatted()}!"
             )
@@ -64,7 +64,7 @@ class PunishmentHandler(
 
     private class WarnFailureResponse(
         description: String
-    ) : ErrorResponse("Warn Failure!", description)
+    ) : StandardErrorResponse("Warn Failure!", description)
 
     fun kickIncident(
         guild: Guild, sender: Member, kicked: Member, reason: String
@@ -80,7 +80,7 @@ class PunishmentHandler(
         return submitIncident(guild, {
             KickIncident(nextIncidentId(guild), sender, kicked, reason)
         }, {
-            SuccessResponse(
+            StandardSuccessResponse(
                 "Kick Success (#${it.id})",
                 "You have successfully kicked ${it.kicked.formatted()}!"
             )
@@ -89,7 +89,7 @@ class PunishmentHandler(
 
     private class KickFailureResponse(
         description: String
-    ) : ErrorResponse("Kick Failure!", description)
+    ) : StandardErrorResponse("Kick Failure!", description)
 
     fun muteIncident(
         guild: Guild, sender: Member, muted: Member, duration: Duration, reason: String
@@ -108,7 +108,7 @@ class PunishmentHandler(
         return submitIncident(guild, {
             MuteIncident(nextIncidentId(guild), muteRole, sender, muted, duration, reason)
         }, {
-            SuccessResponse(
+            StandardSuccessResponse(
                 "Mute Success (#${it.id})",
                 "You have successfully muted ${it.muted.formatted()}!"
             )
@@ -117,7 +117,7 @@ class PunishmentHandler(
 
     private class MuteFailureResponse(
         description: String
-    ) : ErrorResponse("Mute Failure!", description)
+    ) : StandardErrorResponse("Mute Failure!", description)
 
     fun tempbanIncident(
         guild: Guild, sender: Member, tempbanned: Member, delDays: Int, duration: Duration, reason: String
@@ -133,7 +133,7 @@ class PunishmentHandler(
         return submitIncident(guild, {
             TempbanIncident(nextIncidentId(guild), sender, tempbanned, delDays, duration, reason)
         }, {
-            SuccessResponse(
+            StandardSuccessResponse(
                 "Tempban Success (#${it.id})",
                 "You have successfully tempbanned ${it.tempbanned.formatted()}!"
             )
@@ -142,7 +142,7 @@ class PunishmentHandler(
 
     private class TempbanFailureResponse(
         description: String
-    ) : ErrorResponse("Tempban Failure!", description)
+    ) : StandardErrorResponse("Tempban Failure!", description)
 
     fun banIncident(
         guild: Guild, sender: Member, banned: Member, delDays: Int, reason: String
@@ -158,7 +158,7 @@ class PunishmentHandler(
         return submitIncident(guild, {
             BanIncident(nextIncidentId(guild), sender, banned, delDays, reason)
         }, {
-            SuccessResponse(
+            StandardSuccessResponse(
                 "Ban Success (#${it.id})",
                 "You have successfully banned ${it.banned.formatted()}!"
             )
@@ -167,7 +167,7 @@ class PunishmentHandler(
 
     private class BanFailureResponse(
         description: String
-    ) : ErrorResponse("Ban Failure!", description)
+    ) : StandardErrorResponse("Ban Failure!", description)
 
     fun unmuteIncident(
         guild: Guild, sender: Member, unmuted: Member, reason: String
@@ -180,13 +180,13 @@ class PunishmentHandler(
         if (!sender.canInteract(unmuted)) return UnmuteFailureResponse(
             "You do not have permission to unban that member!"
         )
-        val muteRole = getMuteRole(guild) ?: return ErrorResponse(
+        val muteRole = getMuteRole(guild) ?: return StandardErrorResponse(
             "No Mute Role!", "The mute role has not been configured!"
         )
         return submitIncident(guild, {
             UnmuteIncident(nextIncidentId(guild), muteRole, sender, unmuted, reason)
         }, {
-            SuccessResponse(
+            StandardSuccessResponse(
                 "Unmute Success (#${it.id})",
                 "You have successfully unmuted ${it.unmuted.formatted()}!"
             )
@@ -195,7 +195,7 @@ class PunishmentHandler(
 
     private class UnmuteFailureResponse(
         description: String
-    ) : ErrorResponse("Unmute Failure!", description)
+    ) : StandardErrorResponse("Unmute Failure!", description)
 
     fun unbanIncident(
         guild: Guild, sender: Member, unbanned: String, reason: String
@@ -203,12 +203,12 @@ class PunishmentHandler(
         val ban = try {
             guild.retrieveBanById(unbanned).complete()
         } catch (err: Throwable) {
-            return ErrorResponse("Unknown Ban!", "The specified user is not banned!")
+            return StandardErrorResponse("Unknown Ban!", "The specified user is not banned!")
         }
         return submitIncident(guild, {
             UnbanIncident(nextIncidentId(guild), sender, ban.user, reason)
         }, {
-            SuccessResponse(
+            StandardSuccessResponse(
                 "Unban Success (#${it.id})",
                 "You have successfully unbanned ${it.unbanned.formatted()}!"
             )
@@ -217,15 +217,15 @@ class PunishmentHandler(
 
     private class UnbanFailureResponse(
         description: String
-    ) : ErrorResponse("Unban Failure!", description)
+    ) : StandardErrorResponse("Unban Failure!", description)
 
     private fun <T : ExecutableIncident> submitIncident(
         guild: Guild,
         supplier: () -> T,
-        onSuccess: (T) -> SuccessResponse,
-        onFailure: () -> ErrorResponse
+        onSuccess: (T) -> StandardSuccessResponse,
+        onFailure: () -> StandardErrorResponse
     ): Response {
-        val logChannel = getIncidentChannel(guild) ?: return ErrorResponse(
+        val logChannel = getIncidentChannel(guild) ?: return StandardErrorResponse(
             "No Log Channel!", "The incident log has not been configured!"
         )
         return try {
@@ -261,7 +261,7 @@ class PunishmentHandler(
         reason: String
     ): Response {
         val guild = sender.guild
-        val channel = getReportChannel(guild) ?: return ErrorResponse(
+        val channel = getReportChannel(guild) ?: return StandardErrorResponse(
             "No Log Channel!", "The report log has not been configured!"
         )
         val collection = reportCollection(guild)
@@ -270,7 +270,7 @@ class PunishmentHandler(
             collection.insertOne(it.asDocument())
             it.send(channel)
         }
-        return SuccessResponse(
+        return StandardSuccessResponse(
             "Report Submit! #$id",
             "You have submit a report against ${target.formatted()}!"
         )
@@ -292,8 +292,8 @@ class PunishmentHandler(
         val collection = incidentCollection(guild)
         return collection.find(Document("_id", id)).first()?.let {
             collection.deleteOne(Document("_id", id))
-            SuccessResponse("Case Deleted!", "Case #$id has been deleted!")
-        } ?: ErrorResponse("Invalid Case ID!", "There is no case with ID #$id!")
+            StandardSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
+        } ?: StandardErrorResponse("Invalid Case ID!", "There is no case with ID #$id!")
     }
 
     fun getHistory(

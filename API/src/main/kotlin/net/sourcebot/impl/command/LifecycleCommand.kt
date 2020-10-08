@@ -13,8 +13,8 @@ abstract class LifecycleCommand(
 ) : RootCommand() {
     final override val requiresGlobal = true
 
-    protected abstract val onScheduled: EmbedResponse
-    protected abstract val onFailure: EmbedResponse
+    protected abstract val onScheduled: StandardEmbedResponse
+    protected abstract val onFailure: StandardEmbedResponse
 
     final override fun execute(message: Message, args: Arguments): Response {
         message.channel.sendMessage(
@@ -32,10 +32,10 @@ abstract class LifecycleCommand(
 class RestartCommand(script: String) : LifecycleCommand(
     "restart", "Restart the bot.", script
 ) {
-    override val onScheduled = InfoResponse(
+    override val onScheduled = StandardInfoResponse(
         "Restart Scheduled", "The bot has been scheduled to restart."
     )
-    override val onFailure = ErrorResponse(
+    override val onFailure = StandardErrorResponse(
         "Restart Failure", "There was a problem restarting the bot."
     )
 }
@@ -43,10 +43,10 @@ class RestartCommand(script: String) : LifecycleCommand(
 class StopCommand(script: String) : LifecycleCommand(
     "stop", "Stop the bot.", script
 ) {
-    override val onScheduled = InfoResponse(
+    override val onScheduled = StandardInfoResponse(
         "Stop Scheduled", "The bot has been scheduled to stop."
     )
-    override val onFailure = ErrorResponse(
+    override val onFailure = StandardErrorResponse(
         "Stop Failure", "There was an error stopping the bot."
     )
 }
@@ -54,10 +54,10 @@ class StopCommand(script: String) : LifecycleCommand(
 class UpdateCommand(script: String) : LifecycleCommand(
     "update", "Update the bot.", script
 ) {
-    override val onScheduled = InfoResponse(
+    override val onScheduled = StandardInfoResponse(
         "Update Scheduled", "The bot has been scheduled to update."
     )
-    override val onFailure = ErrorResponse(
+    override val onFailure = StandardErrorResponse(
         "Update Failure", "There was an error updating the bot."
     )
 }

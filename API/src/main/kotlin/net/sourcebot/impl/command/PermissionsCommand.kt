@@ -8,9 +8,9 @@ import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.permission.PermissionHandler
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.SuccessResponse
+import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.api.response.StandardSuccessResponse
 
 class PermissionsCommand(
     private val permissionHandler: PermissionHandler
@@ -59,7 +59,7 @@ class PermissionsCommand(
                         permissible.setPermission(node, flag)
                         "Set permission for $asMention: `$node` = `$flag`"
                     }
-                    SuccessResponse("Permission Set!", description)
+                    StandardSuccessResponse("Permission Set!", description)
                 }
             }
             "unset" -> {
@@ -73,7 +73,7 @@ class PermissionsCommand(
                         permissible.unsetPermission(node)
                         "Unset `$node` for $asMention"
                     }
-                    SuccessResponse("Permission Unset!", description)
+                    StandardSuccessResponse("Permission Unset!", description)
                 }
             }
             "info" -> {
@@ -83,7 +83,7 @@ class PermissionsCommand(
                         if (it.context != null) "`${it.node}`: `${it.flag}` @ `${it.context}`"
                         else "`${it.node}`: `${it.flag}`"
                     }.ifEmpty { "No permissions set." }
-                    InfoResponse("Permission Information", "Permissions for $asMention:\n$infoOutput")
+                    StandardInfoResponse("Permission Information", "Permissions for $asMention:\n$infoOutput")
                 }
             }
             "check" -> {
@@ -97,7 +97,7 @@ class PermissionsCommand(
                         val has = permissible.hasPermission(node)
                         "Permission check for $asMention; `$node`: `$has`"
                     }
-                    InfoResponse("Permission Check", description)
+                    StandardInfoResponse("Permission Check", description)
                 }
             }
             "clear" -> {
@@ -110,7 +110,7 @@ class PermissionsCommand(
                         permissible.clearPermissions()
                         "Permissions cleared for $asMention"
                     }
-                    SuccessResponse("Permissions Cleared!", description)
+                    StandardSuccessResponse("Permissions Cleared!", description)
                 }
             }
             else -> throw InvalidSyntaxException(

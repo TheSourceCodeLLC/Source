@@ -6,8 +6,8 @@ import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardErrorResponse
 
 class CaseCommand : ModerationCommand(
     "case", "Manage incidents."
@@ -25,7 +25,7 @@ class CaseCommand : ModerationCommand(
 
         override fun execute(message: Message, args: Arguments): Response {
             val id = args.next(Adapter.long(), "You did not specify a valid case ID to view!")
-            return punishmentHandler.getCase(message.guild, id)?.render(message.guild) ?: return ErrorResponse(
+            return punishmentHandler.getCase(message.guild, id)?.render(message.guild) ?: return StandardErrorResponse(
                 "Invalid Case ID!", "There is no case with ID #$id!"
             )
         }

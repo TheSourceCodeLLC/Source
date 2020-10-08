@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
-import net.sourcebot.api.response.SuccessResponse
+import net.sourcebot.api.response.StandardSuccessResponse
 
 class UnmuteIncident(
     override val id: Long,
@@ -17,7 +17,7 @@ class UnmuteIncident(
     override val source = sender.id
     override val target = unmuted.id
     override val type = Incident.Type.UNMUTE
-    private val unmute = SuccessResponse(
+    private val unmute = StandardSuccessResponse(
         "Unmute - Case #$id",
         """
             **Unmuted By:** ${sender.formatted()} ($source)

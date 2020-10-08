@@ -6,8 +6,8 @@ import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardInfoResponse
 
 class OngCommand : RootCommand() {
     override val name = "ong"
@@ -32,7 +32,7 @@ class OngCommand : RootCommand() {
         override fun execute(message: Message, args: Arguments): Response {
             val input = args.slurp(" ", "You did not specify text to encode!")
             val encoded = input.replace("([^aeiou\\W\\d])".toRegex(), "$1ong")
-            return InfoResponse("Ong Encode Result", encoded)
+            return StandardInfoResponse("Ong Encode Result", encoded)
         }
     }
 
@@ -47,7 +47,7 @@ class OngCommand : RootCommand() {
         override fun execute(message: Message, args: Arguments): Response {
             val input = args.slurp(" ", "You did not specify text to decode!")
             val decoded = input.replace("ong", "")
-            return InfoResponse("Ong Decode Result", decoded)
+            return StandardInfoResponse("Ong Decode Result", decoded)
         }
     }
 }

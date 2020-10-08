@@ -4,9 +4,9 @@ import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardErrorResponse
+import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.JavadocCommand
 import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
 
@@ -57,7 +57,7 @@ class JavaCommand : JavadocCommand(
             }
 
             if (jenkinsHandler == null) {
-                return ErrorResponse(message.author.name, "Uh Oh, something went wrong! Please try again.")
+                return StandardErrorResponse(message.author.name, "Uh Oh, something went wrong! Please try again.")
             }
 
             return jenkinsHandler.retrieveResponse(message, query)
@@ -65,7 +65,7 @@ class JavaCommand : JavadocCommand(
             val authorName = message.author.name
             val description = "You can find the Java Documentation at " +
                     "[docs.oracle.com](https://docs.oracle.com/javase/$defaultVersion/docs/)"
-            return InfoResponse(authorName, description)
+            return StandardInfoResponse(authorName, description)
         }
     }
 }

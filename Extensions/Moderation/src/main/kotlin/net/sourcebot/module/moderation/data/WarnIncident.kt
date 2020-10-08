@@ -3,7 +3,7 @@ package net.sourcebot.module.moderation.data
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.formatted
-import net.sourcebot.api.response.WarningResponse
+import net.sourcebot.api.response.StandardWarningResponse
 
 class WarnIncident(
     override val id: Long,
@@ -15,7 +15,7 @@ class WarnIncident(
     override val target: String = warned.id
     override val type = Incident.Type.WARN
 
-    private val warning = WarningResponse(
+    private val warning = StandardWarningResponse(
         "Warning - Case #$id",
         """
             **Warned By:** ${sender.formatted()} ($source)

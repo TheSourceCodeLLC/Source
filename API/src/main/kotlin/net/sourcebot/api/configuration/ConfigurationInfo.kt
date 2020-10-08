@@ -2,8 +2,8 @@ package net.sourcebot.api.configuration
 
 class ConfigurationInfo(
     namespace: String,
-    init: ConfigurationNode.() -> Unit
-) : ConfigurationNode() {
+    init: ParentNode.() -> Unit
+) : ParentNode() {
     override val fullName = namespace
 
     init {
@@ -11,16 +11,22 @@ class ConfigurationInfo(
     }
 }
 
-abstract class ConfigurationNode internal constructor() {
+abstract class ParentNode internal constructor() : ConfigurationNode() {
     private val children = ArrayList<ConfigurationNode>()
-    val resolved: List<Pair<String, String>> by lazy {
-        children.filterIsInstance<ChildNode>().map { it.fullName to it.description }
+    val resolved: Map<String, String> by lazy {
+        val map = LinkedHashMap<String, String>()
+        children.forEach {
+            when (it) {
+                is ParentNode -> map += it.resolved
+                is ChildNode -> map[it.fullName] = it.description
+            }
+        }
+        map
     }
-    abstract val fullName: String
 
     fun section(
         name: String,
-        init: ConfigurationNode.() -> Unit
+        init: ParentNode.() -> Unit
     ) = registerNode(SectionNode(name).also(init))
 
     fun node(
@@ -33,14 +39,18 @@ abstract class ConfigurationNode internal constructor() {
 
     inner class SectionNode internal constructor(
         namespace: String
-    ) : ConfigurationNode() {
-        override val fullName = "${this@ConfigurationNode.fullName}.$namespace"
+    ) : ParentNode() {
+        override val fullName = "${this@ParentNode.fullName}.$namespace"
     }
 
     inner class ChildNode internal constructor(
         namespace: String,
         val description: String
     ) : ConfigurationNode() {
-        override val fullName = "${this@ConfigurationNode.fullName}.$namespace"
+        override val fullName = "${this@ParentNode.fullName}.$namespace"
     }
+}
+
+abstract class ConfigurationNode internal constructor() {
+    abstract val fullName: String
 }

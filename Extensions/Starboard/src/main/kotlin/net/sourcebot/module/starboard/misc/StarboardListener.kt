@@ -13,7 +13,7 @@ import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionRemove
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.module.SourceModule
-import net.sourcebot.api.response.WarningResponse
+import net.sourcebot.api.response.StandardWarningResponse
 import org.bson.Document
 
 class StarboardListener(
@@ -122,7 +122,7 @@ class StarboardListener(
 
     private class StarboardResponse(
         original: Message
-    ) : WarningResponse(
+    ) : StandardWarningResponse(
         "%#s".format(original.author),
         "${
             if (original.contentRaw.isBlank()) "${original.attachments[0].fileName}:"

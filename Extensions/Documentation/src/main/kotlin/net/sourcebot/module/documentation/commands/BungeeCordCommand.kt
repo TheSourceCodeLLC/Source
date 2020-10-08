@@ -4,8 +4,8 @@ import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.JavadocCommand
 import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
 
@@ -33,7 +33,7 @@ class BungeeCordCommand : JavadocCommand(
             val authorName = message.author.name
             val description =
                 "You can find the BungeeCord Documentation at [papermc.io](https://papermc.io/javadocs/waterfall/)"
-            return InfoResponse(authorName, description)
+            return StandardInfoResponse(authorName, description)
         }
     }
 }

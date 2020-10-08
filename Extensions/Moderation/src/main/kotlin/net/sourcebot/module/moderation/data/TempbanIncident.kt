@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
-import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.StandardErrorResponse
 import java.time.Duration
 
 class TempbanIncident(
@@ -19,7 +19,7 @@ class TempbanIncident(
     override val source = sender.id
     override val target = tempbanned.id
     override val type = Incident.Type.TEMPBAN
-    private val tempban = ErrorResponse(
+    private val tempban = StandardErrorResponse(
         "Tempban - Case #$id",
         """
             **Tempbanned By:** ${sender.formatted()} ($source)

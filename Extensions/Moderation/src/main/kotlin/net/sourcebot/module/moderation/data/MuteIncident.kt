@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
-import net.sourcebot.api.response.WarningResponse
+import net.sourcebot.api.response.StandardWarningResponse
 import java.time.Duration
 
 class MuteIncident(
@@ -20,7 +20,7 @@ class MuteIncident(
     override val source = sender.id
     override val target = muted.id
     override val type = Incident.Type.MUTE
-    private val mute = WarningResponse(
+    private val mute = StandardWarningResponse(
         "Mute - Case #$id",
         """
             **Muted By:** ${sender.formatted()} ($source)

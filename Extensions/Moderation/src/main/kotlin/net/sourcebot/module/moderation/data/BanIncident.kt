@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
-import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.StandardErrorResponse
 
 class BanIncident(
     override val id: Long,
@@ -16,7 +16,7 @@ class BanIncident(
     override val source = sender.id
     override val target = banned.id
     override val type = Incident.Type.BAN
-    private val ban = ErrorResponse(
+    private val ban = StandardErrorResponse(
         "Ban - Case #$id",
         """
             **Banned By:** ${sender.formatted()} ($source)

@@ -4,10 +4,9 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.Source
 import net.sourcebot.api.DurationUtils
-import net.sourcebot.api.DurationUtils.formatDuration
 import net.sourcebot.api.formatted
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardInfoResponse
 import org.bson.Document
 import java.time.Duration
 import java.time.Instant
@@ -94,7 +93,7 @@ class Case(private val document: Document) : Incident {
         } ?: source
         val time = Source.DATE_TIME_FORMAT.format(this.time)
         val header = "${type.name.toLowerCase().capitalize()} - #$id"
-        return InfoResponse(header).apply {
+        return StandardInfoResponse(header).apply {
             appendDescription("**$action By:** $sender\n")
             appendDescription("**$action $targetType:** ")
             appendDescription(

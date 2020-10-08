@@ -2,9 +2,9 @@ package net.sourcebot.module.music.command
 
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
-import net.sourcebot.api.response.SuccessResponse
+import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.module.music.Music
 
 class SkipCommand : MusicCommand(
@@ -16,9 +16,9 @@ class SkipCommand : MusicCommand(
         val scheduler = subsystem.scheduler
         return if (scheduler.skip()) {
             val track = subsystem.player.playingTrack
-            InfoResponse(track.toString())
+            StandardInfoResponse(track.toString())
         } else {
-            SuccessResponse("Queue Empty!", "There are no more songs in the queue!")
+            StandardSuccessResponse("Queue Empty!", "There are no more songs in the queue!")
         }
     }
 }

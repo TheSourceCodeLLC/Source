@@ -2,7 +2,7 @@ package net.sourcebot.module.moderation.data
 
 import net.dv8tion.jda.api.entities.*
 import net.sourcebot.api.formatted
-import net.sourcebot.api.response.InfoResponse
+import net.sourcebot.api.response.StandardInfoResponse
 
 class ClearIncident(
     private val guild: Guild,
@@ -30,7 +30,7 @@ class ClearIncident(
     }
 
     override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(
-        InfoResponse(
+        StandardInfoResponse(
             "Clear - Case #$id",
             """
                 **Cleared By:** ${sender.formatted()} ($source)

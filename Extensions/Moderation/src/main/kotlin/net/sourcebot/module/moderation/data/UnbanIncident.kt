@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
-import net.sourcebot.api.response.SuccessResponse
+import net.sourcebot.api.response.StandardSuccessResponse
 
 class UnbanIncident(
     override val id: Long,
@@ -17,7 +17,7 @@ class UnbanIncident(
     override val target = unbanned.id
     override val type = Incident.Type.UNBAN
 
-    private val unban = SuccessResponse(
+    private val unban = StandardSuccessResponse(
         "Unban - Case #$id",
         """
             **Unbanned By:** ${sender.formatted()} ($source)

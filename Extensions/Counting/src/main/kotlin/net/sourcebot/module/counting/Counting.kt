@@ -11,8 +11,8 @@ class Counting : SourceModule() {
     }
 
     override fun onEnable() {
-        val configManager = source.guildConfigurationManager
+        val configManager = source.configurationManager
         registerCommands(CountingCommand(configManager))
-        subscribeEvents(CountingListener(this, source.commandHandler, configManager))
+        subscribeEvents(CountingListener(source.commandHandler, configManager))
     }
 }

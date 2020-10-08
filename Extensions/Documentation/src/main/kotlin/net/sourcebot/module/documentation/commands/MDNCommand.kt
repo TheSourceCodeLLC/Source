@@ -6,9 +6,9 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.configuration.JsonSerial
-import net.sourcebot.api.response.ErrorResponse
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardErrorResponse
+import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.DocumentationCommand
 import net.sourcebot.module.documentation.utility.*
 import org.jsoup.Jsoup
@@ -28,7 +28,7 @@ class MDNCommand : DocumentationCommand(
         if (!args.hasNext()) {
             val description =
                 "You can find the MDN Documentation at [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/)"
-            return InfoResponse(user.name, description)
+            return StandardInfoResponse(user.name, description)
         }
 
         val query = args.next("Unable to find query!").replace("#", ".").removeSuffix("()")
@@ -45,7 +45,7 @@ class MDNCommand : DocumentationCommand(
                 .maxBodySize(0)
                 .get()
 
-            val notFoundResponse = ErrorResponse(user.name, "Unable to find `$query` in the MDN Documentation!")
+            val notFoundResponse = StandardErrorResponse(user.name, "Unable to find `$query` in the MDN Documentation!")
 
 
             val jsonObject = JsonSerial.mapper.readTree(searchDocument.body().text())
@@ -99,7 +99,7 @@ class MDNCommand : DocumentationCommand(
             wikiElement.html(wikiElement.html().replace("<p></p>", ""))
 
             val descriptionElement = wikiElement.selectFirst("article > p")
-                ?: return ErrorResponse(user.name, "Unable to find article description!")
+                ?: return StandardErrorResponse(user.name, "Unable to find article description!")
 
             val description = descriptionElement.anchorsToHyperlinks(baseUrl)
                 .toMarkdown()
@@ -129,7 +129,7 @@ class MDNCommand : DocumentationCommand(
             return docResponse
         } catch (ex: Exception) {
             ex.printStackTrace()
-            return ErrorResponse(user.name, "Something went wrong, please try again!")
+            return StandardErrorResponse(user.name, "Something went wrong, please try again!")
         }
 
     }

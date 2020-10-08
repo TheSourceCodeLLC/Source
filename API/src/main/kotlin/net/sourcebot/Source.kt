@@ -27,7 +27,7 @@ import net.sourcebot.api.permission.PermissionHandler
 import net.sourcebot.api.permission.SourcePermission
 import net.sourcebot.api.permission.SourceRole
 import net.sourcebot.api.permission.SourceUser
-import net.sourcebot.api.response.EmbedResponse
+import net.sourcebot.api.response.StandardEmbedResponse
 import net.sourcebot.impl.BaseModule
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -47,7 +47,7 @@ class Source(val properties: JsonConfiguration) {
     val sourceEventSystem = EventSystem<SourceEvent>()
     val jdaEventSystem = EventSystem<GenericEvent>()
 
-    val guildConfigurationManager = ConfigurationManager(File("storage"))
+    val configurationManager = ConfigurationManager(File("storage"))
     val mongodb = MongoDB(properties.required("mongodb"))
     val permissionHandler = PermissionHandler(mongodb, properties.required("global-admins"))
     val moduleHandler = ModuleHandler(this)
@@ -55,7 +55,7 @@ class Source(val properties: JsonConfiguration) {
     val commandHandler = CommandHandler(
         properties.required("commands.prefix"),
         properties.required("commands.delete-seconds"),
-        guildConfigurationManager,
+        configurationManager,
         permissionHandler
     )
 
@@ -75,7 +75,7 @@ class Source(val properties: JsonConfiguration) {
     }
 
     init {
-        EmbedResponse.footer = properties.required("embed-response.footer")
+        StandardEmbedResponse.footer = properties.required("embed-response.footer")
         registerSerial()
         loadModules()
         logger.info("Source is now online!")
@@ -83,7 +83,7 @@ class Source(val properties: JsonConfiguration) {
             override fun run() {
                 moduleHandler.getModules().forEach(moduleHandler::disableModule)
                 shardManager.shards.forEach(JDA::shutdownNow)
-                guildConfigurationManager.saveAll()
+                configurationManager.saveAll()
             }
         })
     }

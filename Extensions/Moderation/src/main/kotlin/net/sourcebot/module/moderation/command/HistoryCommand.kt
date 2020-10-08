@@ -6,8 +6,8 @@ import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardInfoResponse
 
 class HistoryCommand : ModerationCommand(
     "history", "Show punishment histories."
@@ -21,7 +21,7 @@ class HistoryCommand : ModerationCommand(
         val target = args.next(Adapter.member(message.guild)) ?: message.member!!
         val header = "${target.user.asTag}'s History"
         val history = punishmentHandler.getHistory(target)
-        if (history.isEmpty()) return InfoResponse(
+        if (history.isEmpty()) return StandardInfoResponse(
             header, "This user does not have any history."
         )
         val points = history.filter {
@@ -30,7 +30,7 @@ class HistoryCommand : ModerationCommand(
         val pageNum = args.next(Adapter.int()) ?: 1
         val pages = Lists.partition(history, 5)
         val page = pages[pageNum - 1]
-        return InfoResponse(
+        return StandardInfoResponse(
             header,
             """
                 **Punishment Points:** $points

@@ -5,8 +5,8 @@ import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardInfoResponse
 
 class GuildInfoCommand : RootCommand() {
     override val name = "guildinfo"
@@ -34,7 +34,7 @@ class GuildInfoCommand : RootCommand() {
         val boosters = guild.boosters.count()
 
 
-        return InfoResponse(
+        return StandardInfoResponse(
             "$name Guild Information:",
             "**Creation Date**: $created\n" +
                     "**Owner**: ${owner.asMention}\n"

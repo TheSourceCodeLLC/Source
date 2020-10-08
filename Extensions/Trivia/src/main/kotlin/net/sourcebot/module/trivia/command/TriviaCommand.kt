@@ -48,13 +48,13 @@ class TriviaCommand : RootCommand() {
             )
             val category = args.next(Adapter.int())
             if (category != null && !OpenTDB.isValidCategory(category)) {
-                return ErrorResponse(
+                return StandardErrorResponse(
                     "Unknown Trivia Category ID '$category'",
                     "Available Categories:\n" + OpenTDB.categories.joinToString("\n") { "**${it.id}**: ${it.name.urlDecoded()}" }
                 )
             }
             val activeGame = activeGames[message.guild.id]
-            if (activeGame != null) return WarningResponse(
+            if (activeGame != null) return StandardWarningResponse(
                 "Trivia In Progress!",
                 "There is already an active game! [[Jump](${activeGame.getJumpUrl()})]"
             )
@@ -73,7 +73,7 @@ class TriviaCommand : RootCommand() {
         "stop", "Stop the active Trivia game."
     ) {
         override fun execute(message: Message, args: Arguments): Response {
-            val activeGame = activeGames.remove(message.guild.id) ?: return ErrorResponse(
+            val activeGame = activeGames.remove(message.guild.id) ?: return StandardErrorResponse(
                 "Trivia Stop", "There is no active Trivia game!"
             )
             activeGame.stop()
@@ -89,7 +89,7 @@ class TriviaCommand : RootCommand() {
         override fun execute(
             message: Message,
             args: Arguments
-        ) = InfoResponse(
+        ) = StandardInfoResponse(
             "Trivia Categories",
             OpenTDB.categories.joinToString("\n") { "**${it.id}**: ${it.name.urlDecoded()}" }
         )
