@@ -22,4 +22,6 @@ class MongoDB(uri: String) : Closeable {
     fun getDatabase(it: String): MongoDatabase = client.getDatabase(it)
     fun getCollection(db: String, name: String): MongoCollection<Document> =
         getDatabase(db).getCollection(name)
+
+    fun getGlobalCollection(collection: String) = getCollection("global", collection)
 }

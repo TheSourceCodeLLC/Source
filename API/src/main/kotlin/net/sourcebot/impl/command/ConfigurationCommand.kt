@@ -43,7 +43,7 @@ class ConfigurationCommand(
                 JsonSerial.mapper.readTree("\"$value\"")
             )
             config[path] = stored
-            configurationManager.saveData(message.guild)
+            configurationManager.saveData(message.guild, config)
             return StandardSuccessResponse(
                 "Configuration Updated",
                 """
@@ -100,7 +100,7 @@ class ConfigurationCommand(
             val path = args.next("You did not specify a configuration path!")
             val config = configurationManager[message.guild]
             config[path] = null
-            configurationManager.saveData(message.guild)
+            configurationManager.saveData(message.guild, config)
             return StandardSuccessResponse(
                 "Configuration Updated",
                 "The value at `$path` has been unset."
@@ -117,11 +117,16 @@ class ConfigurationCommand(
 
         override fun execute(message: Message, args: Arguments): Response {
             val config = configurationManager[message.guild]
+            val queryPath = args.next()
+            val value: JsonNode = queryPath?.let { config.optional(it) } ?: config.json
+            val render = if (value.isObject) {
+                value.fields().asSequence().joinToString(",\n", "{\n", "\n}") { (name, node) ->
+                    "  \"$name\" : " + if (node.isObject) "{ ... }" else node.toPrettyString()
+                }
+            } else value.toPrettyString()
             return StandardInfoResponse(
                 "Configuration Query",
-                args.next()?.let {
-                    "```json\n${config.optional<JsonNode>(it)?.toPrettyString()}\n```"
-                } ?: "```json\n${config.json.toPrettyString()}\n```"
+                "```json\n$render\n```"
             )
         }
     }

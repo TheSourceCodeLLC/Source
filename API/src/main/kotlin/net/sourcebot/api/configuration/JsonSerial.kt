@@ -23,17 +23,17 @@ interface JsonSerial<T> {
         )
 
         @JvmStatic
-        fun <T> registerSerial(type: Class<T>, serial: JsonSerial<T>) {
-            val module = SimpleModule()
-            module.addSerializer(type, serial.serializer)
-            module.addDeserializer(type, serial.deserializer)
-            mapper.registerModule(module)
+        fun <T> register(type: Class<T>, serial: JsonSerial<T>) {
+            mapper.registerModule(SimpleModule().apply {
+                addSerializer(type, serial.serializer)
+                addDeserializer(type, serial.deserializer)
+            })
         }
 
         @JvmStatic
-        inline fun <reified T> registerSerial(
+        inline fun <reified T> register(
             serial: JsonSerial<T>
-        ) = registerSerial(T::class.java, serial)
+        ) = register(T::class.java, serial)
 
         @JvmStatic
         fun <T> toJson(obj: T): JsonNode = mapper.valueToTree(obj)

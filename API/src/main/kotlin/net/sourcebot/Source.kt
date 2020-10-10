@@ -107,7 +107,6 @@ class Source(val properties: JsonConfiguration) {
 
         @JvmField
         val TIME_ZONE: ZoneId = ZoneId.of("America/New_York")
-
         @JvmField
         val DATE_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
             "MM/dd/yyyy hh:mm:ss a z"
@@ -124,9 +123,10 @@ class Source(val properties: JsonConfiguration) {
         ).withZone(TIME_ZONE)
 
         private val numCores = Runtime.getRuntime().availableProcessors()
-
         @JvmField
-        val SCHEDULED_EXECUTOR_SERVICE = Executors.newScheduledThreadPool(2 * numCores)
+        val SCHEDULED_EXECUTOR_SERVICE = Executors.newScheduledThreadPool(
+            2 * numCores
+        )
 
         @JvmField
         val EXECUTOR_SERVICE = Executors.newFixedThreadPool(2 * numCores)
@@ -145,16 +145,15 @@ class Source(val properties: JsonConfiguration) {
             if (enabled) throw IllegalStateException("Source is already enabled!")
             enabled = true
             logger.info("Starting Source...")
-            JsonSerial.registerSerial(JsonConfiguration.Serial())
-            val properties = File("config.json").apply {
+            JsonSerial.register(JsonConfiguration.JsonSerialization())
+            MongoSerial.register(JsonConfiguration.MongoSerialization())
+            val properties: JsonConfiguration = File("config.json").apply {
                 if (!exists()) {
                     Source::class.java.getResourceAsStream("/config.example.json").use {
                         Files.copy(it, this.toPath())
                     }
                 }
-            }.let {
-                JsonSerial.mapper.readValue(it, JsonConfiguration::class.java)
-            }
+            }.let { JsonSerial.fromFile(it) }
             val logLevelName = properties.required<String>("log-level")
             val logLevel = Level.toLevel(logLevelName, Level.INFO)
             LoggerConfiguration.LOG_LEVEL = logLevel

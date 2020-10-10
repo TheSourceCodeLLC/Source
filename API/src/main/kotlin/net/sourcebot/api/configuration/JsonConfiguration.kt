@@ -10,8 +10,9 @@ import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.typeRefOf
-import java.io.File
+import org.bson.Document
 
 open class JsonConfiguration @JsonCreator constructor(
     internal val json: ObjectNode = JsonSerial.newObject()
@@ -65,7 +66,7 @@ open class JsonConfiguration @JsonCreator constructor(
         noinline supplier: () -> T? = { null }
     ): T = required(path, typeRefOf(), supplier)
 
-    class Serial : JsonSerial<JsonConfiguration> {
+    class JsonSerialization : JsonSerial<JsonConfiguration> {
         override val serializer = object : StdSerializer<JsonConfiguration>(JsonConfiguration::class.java) {
             override fun serialize(
                 value: JsonConfiguration,
@@ -81,14 +82,10 @@ open class JsonConfiguration @JsonCreator constructor(
         }
     }
 
-    fun asMap(): Map<String, Any?> = JsonSerial.fromJson(json)
-
-    companion object {
-        @JvmStatic
-        fun fromFile(
-            file: File
-        ): JsonConfiguration = file.apply {
-            if (!exists()) JsonSerial.toFile(this, JsonSerial.newObject())
-        }.let { JsonSerial.fromFile(it) }
+    class MongoSerialization : MongoSerial<JsonConfiguration> {
+        override fun deserialize(document: Document) = JsonConfiguration(document)
+        override fun serialize(obj: JsonConfiguration) = Document(obj.asMap())
     }
+
+    fun asMap(): Map<String, Any?> = JsonSerial.fromJson(json)
 }

@@ -92,8 +92,10 @@ class CountingListener(
             data["lastMessage"] = it
         }
         records[channel.id] = nextNumber
-        configurationManager[channel.guild]["counting"] = data
-        configurationManager.saveData(channel.guild)
+        configurationManager[channel.guild].let {
+            it["counting"] = data
+            configurationManager.saveData(channel.guild, it)
+        }
     }
 
     private fun onEdit(event: GuildMessageUpdateEvent) {
