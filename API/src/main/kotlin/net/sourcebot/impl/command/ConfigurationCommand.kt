@@ -145,7 +145,7 @@ private abstract class Bootstrap(
     final override val name: String,
     final override val description: String
 ) : Command() {
-    final override val permission by lazy { "configuration.$name" }
+    final override val permission = "configuration.$name"
     final override val guildOnly = true
     override val cleanupResponse = false
 }

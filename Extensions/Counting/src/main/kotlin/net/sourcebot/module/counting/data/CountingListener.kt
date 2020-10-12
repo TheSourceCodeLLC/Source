@@ -121,6 +121,7 @@ class CountingListener(
         if (current > record) {
             toSend += "\nNew Record! New: $current. Old: $record."
             record = data.set("record", current)
+            channel.manager.setTopic("Record: $current").queue()
         }
         channel.sendMessage(
             toSend + "\nRestarting... Current record: ${record}\n1"
