@@ -1,1 +1,1 @@
-description = "Module responsible for role app."
+description = "Module responsible for role applications."
