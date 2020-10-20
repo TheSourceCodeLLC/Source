@@ -8,16 +8,27 @@ abstract class Menu<T>(
     private val descriptor: (List<T>) -> String
 ) {
     private val pages: List<List<T>> = Lists.partition(options, optsPerPage)
-    protected val iterator = pages.listIterator()
+    protected val iterator = object : ListIterator<List<T>> {
+        private var index = -1
+
+        override fun nextIndex() = index + 1
+        override fun hasNext() = nextIndex() < pages.size
+        override fun next() = pages[++index]
+
+        override fun previousIndex() = index - 1
+        override fun hasPrevious() = previousIndex() >= 0
+        override fun previous() = pages[--index]
+
+    }
     protected var page = iterator.next()
 
-    fun hasNext() = iterator.nextIndex() < pages.size
+    fun hasNext() = iterator.hasNext()
     fun next(): Menu<T> {
         page = iterator.next()
         return this
     }
 
-    fun hasPrev() = iterator.previousIndex() > 0
+    fun hasPrev() = iterator.hasPrevious()
     fun previous(): Menu<T> {
         page = iterator.previous()
         return this

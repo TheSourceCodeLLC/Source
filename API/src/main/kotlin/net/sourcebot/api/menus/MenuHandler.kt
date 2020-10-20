@@ -56,10 +56,10 @@ class MenuHandler : ListenerAdapter() {
         fun link(message: Message, menu: Menu<*>) {
             messageCache[message.id] = message
             menus[message.id] = menu
-            if (menu.hasPrev()) message.addReaction(prevPage).queue()
-            repeat(menu.numOptions()) { message.addReaction(options[it]).queue() }
-            if (menu.hasNext()) message.addReaction(nextPage).queue()
-            if (menu.closable()) message.addReaction(cancel).queue()
+            if (menu.hasPrev()) message.addReaction(prevPage).queue({}, {})
+            repeat(menu.numOptions()) { message.addReaction(options[it]).queue({}, {}) }
+            if (menu.hasNext()) message.addReaction(nextPage).queue({}, {})
+            if (menu.closable()) message.addReaction(cancel).queue({}, {})
         }
     }
 
