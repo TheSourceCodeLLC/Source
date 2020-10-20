@@ -7,7 +7,7 @@ import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.JavadocCommand
-import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
+import net.sourcebot.module.documentation.handler.JenkinsHandler
 
 class BungeeCordCommand : JavadocCommand(
     "bungeecord",
@@ -25,15 +25,11 @@ class BungeeCordCommand : JavadocCommand(
     )
 
     override fun execute(message: Message, args: Arguments): Response {
-        return if (args.hasNext()) {
-            val query = args.next("Unable to find query w/o version!")
-
-            jenkinsHandler.retrieveResponse(message, query)
-        } else {
-            val authorName = message.author.name
-            val description =
-                "You can find the BungeeCord Documentation at [papermc.io](https://papermc.io/javadocs/waterfall/)"
-            return StandardInfoResponse(authorName, description)
-        }
+        return args.next()?.let { query ->
+            jenkinsHandler.retrieveResponse(message.author, query)
+        } ?: StandardInfoResponse(
+            message.author.name,
+            "You can find the BungeeCord Documentation at [papermc.io](https://papermc.io/javadocs/waterfall/)"
+        )
     }
 }

@@ -8,7 +8,7 @@ import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.JavadocCommand
-import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
+import net.sourcebot.module.documentation.handler.JenkinsHandler
 
 class JavaCommand : JavadocCommand(
     "java", "Allows the user to query the Java Documentation."
@@ -60,7 +60,7 @@ class JavaCommand : JavadocCommand(
                 return StandardErrorResponse(message.author.name, "Uh Oh, something went wrong! Please try again.")
             }
 
-            return jenkinsHandler.retrieveResponse(message, query)
+            return jenkinsHandler.retrieveResponse(message.author, query)
         } else {
             val authorName = message.author.name
             val description = "You can find the Java Documentation at " +

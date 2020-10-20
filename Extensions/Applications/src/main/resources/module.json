@@ -1,5 +1,5 @@
 {
-  "main": "net.sourcebot.module.roleapplications.RoleApplications",
+  "main": "net.sourcebot.module.applications.Applications",
   "name": "${project.name}",
   "version": "${project.version}",
   "description": "${project.description}",

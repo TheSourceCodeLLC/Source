@@ -1,4 +1,4 @@
-package net.sourcebot.module.roleapplications.data
+package net.sourcebot.module.applications.data
 
 import net.dv8tion.jda.api.entities.User
 

@@ -8,7 +8,7 @@ import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.DocumentationCommand
-import net.sourcebot.module.documentation.dochandlers.KotlinHandler
+import net.sourcebot.module.documentation.handler.KotlinHandler
 
 class KotlinCommand : DocumentationCommand(
     "kotlin", "Allows the user to query the Kotlin Documentation"

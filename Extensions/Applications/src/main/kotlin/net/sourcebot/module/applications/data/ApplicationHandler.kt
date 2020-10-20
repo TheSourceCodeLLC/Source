@@ -1,4 +1,4 @@
-package net.sourcebot.module.roleapplications.data
+package net.sourcebot.module.applications.data
 
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
@@ -14,14 +14,14 @@ import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.response.StandardErrorResponse
-import net.sourcebot.module.roleapplications.RoleApplications
+import net.sourcebot.module.applications.Applications
 import java.util.concurrent.TimeUnit
 
 class ApplicationHandler(
-    private val roleApplications: RoleApplications,
+    private val applications: Applications,
     private val mongodb: MongoDB,
     private val configurationManager: ConfigurationManager
-) : EventSubscriber<RoleApplications> {
+) : EventSubscriber<Applications> {
 
     private val activeApplicationCache = CacheBuilder.newBuilder().weakKeys()
         .expireAfterWrite(45, TimeUnit.MINUTES)
@@ -34,11 +34,11 @@ class ApplicationHandler(
         })
 
     override fun subscribe(
-        module: RoleApplications,
+        module: Applications,
         jdaEvents: EventSystem<GenericEvent>,
         sourceEvents: EventSystem<SourceEvent>
     ) {
-        jdaEvents.listen(roleApplications, this::onMessageReceived)
+        jdaEvents.listen(applications, this::onMessageReceived)
     }
 
     fun getApplicationChannel(guild: Guild): TextChannel? {

@@ -1,4 +1,4 @@
-package net.sourcebot.module.roleapplications.command
+package net.sourcebot.module.applications.command
 
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Message
@@ -12,8 +12,8 @@ import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.api.response.StandardSuccessResponse
-import net.sourcebot.module.roleapplications.data.ActiveApplicationModel
-import net.sourcebot.module.roleapplications.data.ApplicationHandler
+import net.sourcebot.module.applications.data.ActiveApplicationModel
+import net.sourcebot.module.applications.data.ApplicationHandler
 import java.time.Instant
 
 class ApplicationsCommand(

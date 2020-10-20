@@ -1,6 +1,6 @@
-package net.sourcebot.module.documentation.dochandlers
+package net.sourcebot.module.documentation.handler
 
-import net.sourcebot.module.documentation.dochandlers.KotlinHandler.KotlinCache
+import net.sourcebot.module.documentation.handler.KotlinHandler.KotlinCache
 import net.sourcebot.module.documentation.objects.KotlinInformation
 import net.sourcebot.module.documentation.objects.impl.KotlinMember
 import net.sourcebot.module.documentation.objects.impl.KotlinType

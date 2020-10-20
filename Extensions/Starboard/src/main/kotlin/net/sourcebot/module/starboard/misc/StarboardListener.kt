@@ -80,12 +80,10 @@ class StarboardListener(
     }
 
     private fun listenReaction(event: GenericGuildMessageReactionEvent): Message? {
+        if (event.reactionEmote.name != UNICODE_STAR) return null
         val message = event.retrieveMessage().complete()
-        return when {
-            message.author.isBot -> null
-            event.reactionEmote.name != UNICODE_STAR -> null
-            else -> message
-        }
+        if (message.author.isBot) return null
+        return message
     }
 
     private fun onMessageDelete(event: GuildMessageDeleteEvent) {

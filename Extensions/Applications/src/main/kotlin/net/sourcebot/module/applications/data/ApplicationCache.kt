@@ -1,4 +1,4 @@
-package net.sourcebot.module.roleapplications.data
+package net.sourcebot.module.applications.data
 
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
@@ -13,26 +13,18 @@ class ApplicationCache(
 
     private val appCache = CacheBuilder.newBuilder()
         .expireAfterWrite(10, TimeUnit.MINUTES)
-        .build(object : CacheLoader<String, ApplicationModel>() {
+        .build(object : CacheLoader<String, ApplicationModel?>() {
             override fun load(
                 name: String
-            ): ApplicationModel =
-                applications.find(Document("name", name)).first()!!.let { MongoSerial.fromDocument(it) }
+            ): ApplicationModel? =
+                applications.find(Document("name", name)).first()?.let { MongoSerial.fromDocument(it) }
         })
 
-    fun getApplication(name: String): ApplicationModel? {
-        return try {
-            appCache[name]
-        } catch (ex: Exception) {
-            null
-        }
-    }
+    fun getApplication(name: String): ApplicationModel? = appCache[name]
 
-    fun getApplications(): List<ApplicationModel> {
-        return applications.find()
-            .map { MongoSerial.fromDocument<ApplicationModel>(it) }
-            .filterNotNull()
-    }
+    fun getApplications() = applications.find()
+        .map { MongoSerial.fromDocument<ApplicationModel>(it) }
+        .filterNotNull()
 
     fun createApplication(name: String, questions: List<String>, creator: String) {
         val appModel = ApplicationModel(name, questions, creator)
@@ -51,6 +43,4 @@ class ApplicationCache(
             Document("\$set", MongoSerial.toDocument(appModel))
         )
     }
-
-
 }

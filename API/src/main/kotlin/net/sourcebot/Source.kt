@@ -22,6 +22,7 @@ import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.logger.LoggerConfiguration
+import net.sourcebot.api.menus.MenuHandler
 import net.sourcebot.api.module.ModuleHandler
 import net.sourcebot.api.permission.PermissionHandler
 import net.sourcebot.api.permission.SourcePermission
@@ -46,7 +47,6 @@ class Source(val properties: JsonConfiguration) {
 
     val sourceEventSystem = EventSystem<SourceEvent>()
     val jdaEventSystem = EventSystem<GenericEvent>()
-
     val configurationManager = ConfigurationManager(File("storage"))
     val mongodb = MongoDB(properties.required("mongodb"))
     val permissionHandler = PermissionHandler(mongodb, properties.required("global-admins"))
@@ -69,7 +69,8 @@ class Source(val properties: JsonConfiguration) {
             override fun onMessageReceived(
                 event: MessageReceivedEvent
             ) = commandHandler.onMessageReceived(event)
-        }
+        },
+        MenuHandler()
     ).setActivityProvider(activityProvider::asActivity).build().also {
         it.shards.forEach(JDA::awaitReady)
     }

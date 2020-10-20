@@ -1,10 +1,12 @@
-package net.sourcebot.module.documentation.dochandlers
+package net.sourcebot.module.documentation.handler
 
 import me.theforbiddenai.jenkinsparserkotlin.Jenkins
 import me.theforbiddenai.jenkinsparserkotlin.entities.*
-import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import net.dv8tion.jda.api.utils.MarkdownUtil
+import net.sourcebot.api.formatted
+import net.sourcebot.api.menus.MenuHandler
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.module.documentation.utility.*
@@ -18,17 +20,14 @@ import java.util.stream.Collectors
  * @param url The url to the Jenkins JavaDocs tree or allclasses page
  * @property iconUrl The icon url for the [DocResponse]
  * @property responseTitle The title for the [DocResponse]
- * @property selectorCache The [SelectorModel.selectorCache] cache object
  * @property jenkins The [Jenkins] object which handles the searching aspect of this class
  * @property baseUrl The base url to the Jenkins JavaDocs site
  */
 class JenkinsHandler(
     url: String,
-    val iconUrl: String,
-    val responseTitle: String
+    private val iconUrl: String,
+    private val responseTitle: String
 ) {
-
-    private val selectorCache = SelectorModel.selectorCache
     private val jenkins: Jenkins = Jenkins(url)
     private val baseUrl: String by lazy {
         url.substring(0, url.lastIndexOf("/") + 1).trim()
@@ -38,58 +37,50 @@ class JenkinsHandler(
      * Retrieves the [Response] which may be a Selection Menu, the [DocResponse] filled with information
      * from the given query, or an [StandardErrorResponse]
      *
-     * @param cmdMessage The [Message] which invoked the command
+     * @param user The [User] the doc response should be built for
      * @param query The [String] containing the information of which the user is looking to attempt to retrieve
      * @return The selection menu, an [StandardErrorResponse], or the [DocResponse] containing the information attempting to be
      * retrieved
      */
-    fun retrieveResponse(cmdMessage: Message, query: String): Response {
-        val user = cmdMessage.author
-
+    fun retrieveResponse(user: User, query: String): Response {
+        val error = StandardErrorResponse(user.formatted(), "Unable to find `$query` in the $responseTitle!")
         try {
-            val infoList: List<Information> = jenkins.search(query)
-
-            if (infoList.isEmpty()) {
-                return StandardErrorResponse(user.name, "Unable to find `$query` in the $responseTitle!")
-            }
-
-            val docResponse = DocResponse()
-            docResponse.setAuthor(responseTitle, null, iconUrl)
-
-            return if (infoList.size == 1) {
-                createDocResponse(docResponse, infoList[0])
-            } else {
-                val docStorage = SelectorModel(null, cmdMessage, infoList, this)
-                selectorCache.addSelector(user, docStorage)
-
-                createSelectionResponse(docResponse, infoList)
-
-            }
-
+            val infoList = jenkins.search(query)
+            if (infoList.isEmpty()) return error
+            return if (infoList.size == 1)
+                createDocResponse(infoList[0])
+            else MenuHandler.createSelectionMenu(
+                infoList, 5, { info ->
+                    val name = "${info.type} " + if (info is MethodInformation) {
+                        val className = info.classInfo.name.substringBefore("<")
+                        "$className#${info.name}"
+                    } else info.name
+                    val link = MarkdownUtil.maskedLink(name, info.url)
+                    if (link.length > 200) name else link
+                }, this::createDocResponse
+            ).render().apply { setAuthor(responseTitle, null, iconUrl) }
         } catch (ex: Exception) {
-            //ex.printStackTrace() // This is for debug purposes when enabled
-            val errDesc = "Unable to find `$query` in the $responseTitle!"
-            return StandardErrorResponse(user.name, errDesc)
+            ex.printStackTrace()
+            return error
         }
     }
 
     /**
      * Creates the [DocResponse] containing the information being searched for
      *
-     * @param docResponse The [DocResponse] the information is being added to
      * @param information The [Information] found from searching the Jenkins JavaDocs
      * @return The modified [DocResponse] containing the information
      * @throws Error If an object was added to the information list that isn't [ClassInformation], [MethodInformation],
      * [FieldInformation], or [EnumInformation]
      */
-    fun createDocResponse(docResponse: DocResponse, information: Information): DocResponse {
+    private fun createDocResponse(information: Information): DocResponse {
+        val docResponse = DocResponse()
         var infoName: String = MarkdownSanitizer.sanitize(information.name)
         val infoRawDescription: String = information.rawDescription
         val infoUrl: String = MarkdownSanitizer.sanitize(information.url)
 
         when (information) {
             is ClassInformation -> {
-
                 val nestedClassList: List<String> = information.nestedClassList.stream()
                     .map { it.replace("$infoName.", "") }
                     .collect(Collectors.toList())
@@ -117,11 +108,7 @@ class JenkinsHandler(
                 infoName = getInfoName(information.classInfo.name, information.name)
             }
 
-            else -> {
-                throw Error("Found an object that does not belong.")
-            }
-
-
+            else -> throw Error("Found an object that does not belong.")
         }
 
         val infoDescElement: Element = Jsoup.parse("<div>$infoRawDescription</div>").selectFirst("div")
@@ -146,50 +133,10 @@ class JenkinsHandler(
 
                 val fieldValue = if (key.equals("Parameters:", true)) {
                     convertedValue.truncate(250)
-                } else {
-                    convertedValue
-                }
+                } else convertedValue
 
                 docResponse.addField(key, fieldValue.truncate(500), false)
             }
-        }
-
-        return docResponse
-    }
-
-    /**
-     * Creates the selection [Response] from the given [Information]
-     *
-     * @param docResponse The [DocResponse] the selection menu is being put into
-     * @param infoList The [List] of [Information] being added to the selection menu
-     * @return The modified [DocResponse] containing the selection menu
-     */
-    private fun createSelectionResponse(docResponse: DocResponse, infoList: List<Information>): DocResponse {
-        docResponse.setTitle("Type the id of the option you would like to select in chat:")
-        docResponse.setFooter("Type cancel to delete this message.")
-
-        infoList.sortedByDescending { it.name }
-
-        for (i in infoList.indices) {
-
-            if (docResponse.descriptionBuilder.length >= 712) {
-                val format = "\n\nIds not shown above: %d to %d"
-                docResponse.appendDescription(String.format(format, i + 1, infoList.size))
-                break
-            }
-
-            val info = infoList[i]
-
-            val name = if (info is MethodInformation) {
-                val className = info.classInfo.name.substringBefore("<")
-                "${info.type} $className#${info.name}"
-            } else {
-                "${info.type} ${info.name}"
-            }
-
-            val optionText = MarkdownUtil.maskedLink(name, info.url)
-            docResponse.appendDescription("\n\n**${i + 1}** - $optionText")
-
         }
 
         return docResponse
@@ -225,10 +172,11 @@ class JenkinsHandler(
      * @param infoName The name of the info
      * @return The combined name
      */
-    private fun getInfoName(className: String, infoName: String): String {
-        return "$className#${infoName.substringAfter("(" + 1)}"
-            .replace("<.*?>+".toRegex(), "")
-    }
+    private fun getInfoName(
+        className: String,
+        infoName: String
+    ) = "$className#${infoName.substringAfter("(" + 1)}"
+        .replace("<.*?>+".toRegex(), "")
 
     /**
      * Converts anchor elements to their markdown equivalent
@@ -238,12 +186,9 @@ class JenkinsHandler(
      * @return The raw html of the element, but does not contain the anchor elements, but rather their markdown
      * equivalent
      */
-    private fun convertHyperlinksToMarkdown(element: Element, url: String): String {
-        val html = element.anchorsToHyperlinks(url)
-
-
+    private fun convertHyperlinksToMarkdown(
+        element: Element, url: String
+    ) = element.anchorsToHyperlinks(url)
         // Removes code tags that surround a hyperlink
-        return html.replace("<code>(\\[.*?\\).*?)</code>".toRegex(), "$1")
-    }
-
+        .replace("<code>(\\[.*?\\).*?)</code>".toRegex(), "$1")
 }

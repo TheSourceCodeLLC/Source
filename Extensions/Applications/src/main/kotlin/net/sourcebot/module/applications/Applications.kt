@@ -1,13 +1,13 @@
-package net.sourcebot.module.roleapplications
+package net.sourcebot.module.applications
 
 import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.module.SourceModule
-import net.sourcebot.module.roleapplications.command.ApplicationsCommand
-import net.sourcebot.module.roleapplications.data.ApplicationHandler
-import net.sourcebot.module.roleapplications.data.ApplicationModel
+import net.sourcebot.module.applications.command.ApplicationsCommand
+import net.sourcebot.module.applications.data.ApplicationHandler
+import net.sourcebot.module.applications.data.ApplicationModel
 
-class RoleApplications : SourceModule() {
+class Applications : SourceModule() {
     override val configurationInfo = ConfigurationInfo("applications") {
         node("channel", "The channel in which completed applications are sent")
     }
@@ -30,10 +30,6 @@ class RoleApplications : SourceModule() {
             ApplicationsCommand(appHandler)
         )
 
-        subscribeEvents(
-            appHandler
-        )
-
-
+        subscribeEvents(appHandler)
     }
 }

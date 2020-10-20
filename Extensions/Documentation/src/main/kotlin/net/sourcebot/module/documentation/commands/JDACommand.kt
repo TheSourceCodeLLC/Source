@@ -7,7 +7,7 @@ import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.JavadocCommand
-import net.sourcebot.module.documentation.dochandlers.JenkinsHandler
+import net.sourcebot.module.documentation.handler.JenkinsHandler
 
 class JDACommand : JavadocCommand(
     "jda", "Allows the user to query the JDA Documentation."
@@ -25,7 +25,7 @@ class JDACommand : JavadocCommand(
         return if (args.hasNext()) {
             val query = args.next("Unable to find query w/o version!")
 
-            jenkinsHandler.retrieveResponse(message, query)
+            jenkinsHandler.retrieveResponse(message.author, query)
         } else {
             val authorName = message.author.name
             val description =

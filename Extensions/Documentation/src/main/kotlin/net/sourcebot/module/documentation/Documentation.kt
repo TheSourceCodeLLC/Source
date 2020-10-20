@@ -2,7 +2,6 @@ package net.sourcebot.module.documentation
 
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.documentation.commands.*
-import net.sourcebot.module.documentation.events.SelectorEventSubscriber
 
 class Documentation : SourceModule() {
 
@@ -15,10 +14,6 @@ class Documentation : SourceModule() {
             DJSCommand(),
             MDNCommand(),
             KotlinCommand()
-        )
-
-        subscribeEvents(
-            SelectorEventSubscriber(this)
         )
     }
 
