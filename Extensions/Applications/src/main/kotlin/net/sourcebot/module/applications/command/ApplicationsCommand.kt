@@ -90,7 +90,7 @@ class ApplicationsCommand(
         override fun execute(message: Message, args: Arguments): Response {
 
             val appCache = appHandler[message.guild]
-            val name = args.next("You did not enter a name for the application being created!").toLowerCase()
+            val name = args.next("You did not enter a name for the new application!").toLowerCase()
             if (appCache.getApplication(name) != null) {
                 return StandardErrorResponse(
                     "Application already exists!",

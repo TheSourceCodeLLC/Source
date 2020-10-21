@@ -8,59 +8,51 @@ import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 
 class MenuHandler : ListenerAdapter() {
-    companion object {
-        private val messageCache = HashMap<String, Message>()
-        private val menus = HashMap<String, Menu<*>>()
+    private val messageCache = HashMap<String, Message>()
+    private val menus = HashMap<String, Menu<*>>()
 
-        val options = arrayOf("1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣")
+    companion object {
+        private val options = arrayOf("1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣")
         private const val prevPage = "◀"
         private const val nextPage = "▶"
         private const val cancel = "⏹"
+    }
 
-        @JvmStatic
-        @JvmOverloads
-        fun <T> createSelectionMenu(
-            choices: List<T>,
-            optsPerPage: Int = 5,
-            transformer: (T) -> String,
-            choiceRenderer: (T) -> Response
-        ) = SelectionMenu(choices, optsPerPage, { page ->
-            """
-                React to choose one of the following options:
-                
-                ${
-                options.zip(page).joinToString("\n\n") { (emoji, option) ->
-                    "$emoji ${transformer(option)}"
-                }
-            }
-            """.trimIndent()
-        }, choiceRenderer)
+    @JvmOverloads
+    fun <T> createSelectionMenu(
+        choices: List<T>,
+        optsPerPage: Int = 5,
+        transformer: (T) -> String,
+        choiceRenderer: (T) -> Response
+    ) = SelectionMenu(choices, optsPerPage, { page ->
+        """
+            React to choose one of the following options:
+            
+            ${options.zip(page).joinToString("\n\n") { (emoji, option) -> "$emoji ${transformer(option)}" }}
+        """.trimIndent()
+    }, choiceRenderer)
 
-        @JvmStatic
-        @JvmOverloads
-        fun createSelectionMenu(
-            options: List<String>,
-            optsPerPage: Int = 5,
-            choiceRenderer: (String) -> Response
-        ) = createSelectionMenu(options, optsPerPage, { it }, choiceRenderer)
+    @JvmOverloads
+    fun createSelectionMenu(
+        options: List<String>,
+        optsPerPage: Int = 5,
+        choiceRenderer: (String) -> Response
+    ) = createSelectionMenu(options, optsPerPage, { it }, choiceRenderer)
 
-        @JvmStatic
-        @JvmOverloads
-        fun <T> createSlideMenu(
-            options: List<T>,
-            optsPerPage: Int = 5,
-            descriptor: (List<T>) -> String
-        ) = SlideMenu(options, optsPerPage, descriptor)
+    @JvmOverloads
+    fun <T> createSlideMenu(
+        options: List<T>,
+        optsPerPage: Int = 5,
+        descriptor: (List<T>) -> String
+    ) = SlideMenu(options, optsPerPage, descriptor)
 
-        @JvmStatic
-        fun link(message: Message, menu: Menu<*>) {
-            messageCache[message.id] = message
-            menus[message.id] = menu
-            if (menu.hasPrev()) message.addReaction(prevPage).queue({}, {})
-            repeat(menu.numOptions()) { message.addReaction(options[it]).queue({}, {}) }
-            if (menu.hasNext()) message.addReaction(nextPage).queue({}, {})
-            if (menu.closable()) message.addReaction(cancel).queue({}, {})
-        }
+    fun link(message: Message, menu: Menu<*>) {
+        messageCache[message.id] = message
+        menus[message.id] = menu
+        if (menu.hasPrev()) message.addReaction(prevPage).queue({}, {})
+        repeat(menu.numOptions()) { message.addReaction(options[it]).queue({}, {}) }
+        if (menu.hasNext()) message.addReaction(nextPage).queue({}, {})
+        if (menu.closable()) message.addReaction(cancel).queue({}, {})
     }
 
     override fun onMessageReactionAdd(event: MessageReactionAddEvent) {

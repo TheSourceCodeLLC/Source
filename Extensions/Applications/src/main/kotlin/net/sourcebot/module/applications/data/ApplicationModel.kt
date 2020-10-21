@@ -32,8 +32,6 @@ data class ApplicationModel
             append("cooldown", obj.cooldown)
             append("created", obj.created)
         }
-
     }
-
 }
 

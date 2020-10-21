@@ -7,9 +7,9 @@ import net.sourcebot.api.menus.MenuResponse
 import net.sourcebot.api.response.Response
 
 abstract class JavadocCommand(
-    name: String, description: String
+    name: String, description: String, private val menuHandler: MenuHandler
 ) : DocumentationCommand(name, description) {
     final override fun postResponse(response: Response, forWhom: User, message: Message) {
-        if (response is MenuResponse) MenuHandler.link(message, response.menu)
+        if (response is MenuResponse) menuHandler.link(message, response.menu)
     }
 }

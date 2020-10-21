@@ -59,6 +59,7 @@ class Source(val properties: JsonConfiguration) {
         permissionHandler
     )
 
+    val menuHandler = MenuHandler()
     private val activityProvider = properties.required<ActivityProvider>("activity")
     val shardManager = DefaultShardManagerBuilder.create(
         properties.required("token"),
@@ -70,7 +71,7 @@ class Source(val properties: JsonConfiguration) {
                 event: MessageReceivedEvent
             ) = commandHandler.onMessageReceived(event)
         },
-        MenuHandler()
+        menuHandler
     ).setActivityProvider(activityProvider::asActivity).build().also {
         it.shards.forEach(JDA::awaitReady)
     }

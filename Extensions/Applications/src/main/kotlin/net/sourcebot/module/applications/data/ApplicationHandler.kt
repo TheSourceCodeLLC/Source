@@ -4,7 +4,6 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent
@@ -18,7 +17,6 @@ import net.sourcebot.module.applications.Applications
 import java.util.concurrent.TimeUnit
 
 class ApplicationHandler(
-    private val applications: Applications,
     private val mongodb: MongoDB,
     private val configurationManager: ConfigurationManager
 ) : EventSubscriber<Applications> {
@@ -37,15 +35,12 @@ class ApplicationHandler(
         module: Applications,
         jdaEvents: EventSystem<GenericEvent>,
         sourceEvents: EventSystem<SourceEvent>
-    ) {
-        jdaEvents.listen(applications, this::onMessageReceived)
-    }
+    ) = jdaEvents.listen(module, this::onMessageReceived)
 
-    fun getApplicationChannel(guild: Guild): TextChannel? {
-        val channelId: String = configurationManager[guild].required("applications.channel") { "" }
-
-        if (channelId.isEmpty()) return null
-        return guild.getTextChannelById(channelId)
+    fun getApplicationChannel(
+        guild: Guild
+    ) = configurationManager[guild].optional<String>("applications.channel")?.let {
+        guild.getTextChannelById(it)
     }
 
     fun hasActiveApplication(user: User): Boolean = activeApplicationCache.getIfPresent(user) != null

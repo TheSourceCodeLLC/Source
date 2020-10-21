@@ -4,14 +4,19 @@ import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.menus.MenuHandler
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.JavadocCommand
 import net.sourcebot.module.documentation.handler.JenkinsHandler
 
 
-class SpigotCommand : JavadocCommand(
-    "spigot", "Allows the user to query the Spigot Documentation."
+class SpigotCommand(
+    menuHandler: MenuHandler
+) : JavadocCommand(
+    "spigot",
+    "Allows the user to query the Spigot Documentation.",
+    menuHandler
 ) {
     override val argumentInfo: ArgumentInfo = ArgumentInfo(
         Argument("query", "The item you are searching for in the Spigot documentation.")
@@ -19,8 +24,7 @@ class SpigotCommand : JavadocCommand(
 
     private val jenkinsHandler = JenkinsHandler(
         "https://hub.spigotmc.org/javadocs/spigot/overview-tree.html",
-        "https://avatars0.githubusercontent.com/u/4350249?s=200&v=4",
-        "Spigot Javadocs"
+        "Spigot Javadocs", menuHandler
     )
 
     override fun execute(message: Message, args: Arguments): Response {

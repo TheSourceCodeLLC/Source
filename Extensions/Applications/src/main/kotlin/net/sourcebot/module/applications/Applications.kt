@@ -16,7 +16,6 @@ class Applications : SourceModule() {
         MongoSerial.register(ApplicationModel.Serial())
 
         val appHandler = ApplicationHandler(
-            this,
             source.mongodb,
             source.configurationManager
         )
