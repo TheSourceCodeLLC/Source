@@ -19,7 +19,26 @@ class ModuleHandler(
 ) : ClassLoader() {
     private val logger: Logger = LoggerFactory.getLogger(ModuleHandler::class.java)
     private val classCache = ConcurrentHashMap<String, Class<*>>()
-    private val moduleIndex = HashMap<String, SourceModule>()
+
+    companion object {
+        private val moduleIndex = HashMap<String, SourceModule>()
+
+        @JvmStatic
+        fun getModules() = moduleIndex.values
+
+        @JvmStatic
+        fun <T : SourceModule> findModule(
+            name: String
+        ) = moduleIndex.values.find { it.name.startsWith(name, true) } as T?
+
+        @JvmStatic
+        fun <T : SourceModule> getModule(
+            type: Class<T>
+        ) = moduleIndex.values.find { it.javaClass == type } as T?
+
+        @JvmStatic
+        inline fun <reified T : SourceModule> getModule() = getModule(T::class.java)
+    }
 
     public override fun findClass(
         name: String
@@ -179,11 +198,4 @@ class ModuleHandler(
     } catch (err: Throwable) {
         err.printStackTrace()
     }
-
-    fun findModule(name: String): SourceModule? = moduleIndex.values.find {
-        it.name.startsWith(name, true)
-    }
-
-    fun getModule(name: String): SourceModule? = moduleIndex[name]
-    fun getModules() = moduleIndex.values
 }

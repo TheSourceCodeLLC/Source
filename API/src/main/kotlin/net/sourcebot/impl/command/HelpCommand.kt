@@ -10,6 +10,7 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.module.ModuleHandler
+import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.permission.PermissionHandler
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
@@ -18,7 +19,6 @@ import net.sourcebot.api.response.error.GlobalAdminOnlyResponse
 import net.sourcebot.api.response.error.GuildOnlyCommandResponse
 
 class HelpCommand(
-    private val moduleHandler: ModuleHandler,
     private val permissionHandler: PermissionHandler,
     private val commandHandler: CommandHandler
 ) : RootCommand() {
@@ -38,7 +38,7 @@ class HelpCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val topic = args.next()
         if (topic == null) {
-            val modules = moduleHandler.getModules()
+            val modules = ModuleHandler.getModules()
             val enabled = modules.filter { it.enabled }
             if (enabled.isEmpty()) return StandardInfoResponse(
                 "Module Index",
@@ -91,7 +91,7 @@ class HelpCommand(
                 }
             }
         }
-        val asModule = moduleHandler.findModule(topic)
+        val asModule: SourceModule? = ModuleHandler.findModule(topic)
         if (asModule != null) {
             val response = StandardInfoResponse("${asModule.name} Module Assistance")
             val config = when {

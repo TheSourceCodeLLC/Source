@@ -24,6 +24,7 @@ import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.logger.LoggerConfiguration
 import net.sourcebot.api.menus.MenuHandler
 import net.sourcebot.api.module.ModuleHandler
+import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.permission.PermissionHandler
 import net.sourcebot.api.permission.SourcePermission
 import net.sourcebot.api.permission.SourceRole
@@ -83,7 +84,7 @@ class Source(val properties: JsonConfiguration) {
         logger.info("Source is now online!")
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
-                moduleHandler.getModules().forEach(moduleHandler::disableModule)
+                ModuleHandler.getModules().forEach(moduleHandler::disableModule)
                 shardManager.shards.forEach(JDA::shutdownNow)
                 configurationManager.saveAll()
             }
@@ -161,6 +162,19 @@ class Source(val properties: JsonConfiguration) {
             LoggerConfiguration.LOG_LEVEL = logLevel
             Source(properties)
         }
+
+        @JvmStatic
+        fun <T : SourceModule> findModule(
+            name: String
+        ) = ModuleHandler.findModule<T>(name)
+
+        @JvmStatic
+        fun <T : SourceModule> getModule(
+            type: Class<T>
+        ) = ModuleHandler.getModule(type)
+
+        @JvmStatic
+        inline fun <reified T : SourceModule> getModule() = ModuleHandler.getModule(T::class.java)
     }
 
     class ActivityProvider @JsonCreator constructor(
