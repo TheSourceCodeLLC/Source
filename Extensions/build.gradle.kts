@@ -8,8 +8,8 @@ subprojects {
             delete(fileTree(modulesFolder).include("${project.name}-*.jar"))
         }
         shadowJar {
-            destinationDirectory.set(modulesFolder)
             dependsOn("deleteOld")
+            destinationDirectory.set(modulesFolder)
             archiveClassifier.set("")
             mergeServiceFiles()
         }

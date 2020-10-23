@@ -8,7 +8,7 @@ import net.sourcebot.api.database.MongoSerial
 import org.bson.Document
 import java.util.concurrent.TimeUnit
 
-class ProfileHandler(private val collection: MongoCollection<Document>) {
+internal class ProfileHandler(private val collection: MongoCollection<Document>) {
     private val cache = CacheBuilder.newBuilder()
         .expireAfterWrite(10, TimeUnit.MINUTES)
         .removalListener<String, JsonConfiguration> { (id, profile) -> save(id, profile) }
