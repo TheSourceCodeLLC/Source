@@ -61,7 +61,7 @@ class JenkinsHandler(
                         "$className#${info.name}"
                     } else info.name
                     val link = MarkdownUtil.maskedLink(name, info.url)
-                    if (link.length > 200) name else link
+                    if (link.length > 300) name else link
                 }, this::createDocResponse
             ).render().apply { setAuthor(title) }
         } catch (ex: Exception) {
