@@ -19,7 +19,9 @@ class ConfigurationManager(
         .build(object : CacheLoader<Guild, JsonConfiguration>() {
             override fun load(
                 key: Guild
-            ) = JsonSerial.fromFile<JsonConfiguration>(File(dataFolder, "${key.id}.json"))
+            ) = File(dataFolder, "${key.id}.json").apply {
+                if (!exists()) createNewFile()
+            }.let<File, JsonConfiguration>(JsonSerial.Companion::fromFile)
         })
 
     operator fun get(guild: Guild): JsonConfiguration = dataCache[guild]
