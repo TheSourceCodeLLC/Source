@@ -3,9 +3,14 @@
 # Build Instructions:
 **Notice:** You need Java **11** to run Source. </br>
 
-* Compile Source on your local machine:
+* Clone Source to your local machine:
   - `git clone https://github.com/TheSourceCodeLLC/Source.git`
   - `cd Source`
+* Tell the compiler what modules to install:
+  - Rename `INSTALL.example` to `INSTALL`
+  - Modify the `INSTALL` file to change what modules will be installed.__
+  - Note: Module names that are not in this list will not be installed.
+* Compile Source and its modules:
   - `./gradlew install`
 * Binary files (Main JAR & Modules) are located in the `target/bin` folder
 

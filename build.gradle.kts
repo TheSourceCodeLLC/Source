@@ -27,6 +27,11 @@ allprojects {
             filesMatching("module.json") { expand("project" to project) }
             outputs.upToDateWhen { false }
         }
-        task("install").dependsOn(shadowJar)
     }
+}
+
+task("install") {
+    dependsOn(":API:shadowJar")
+    val toInstall = File("INSTALL").readLines()
+    dependsOn(toInstall.map { ":Extensions:${it}:shadowJar" })
 }
