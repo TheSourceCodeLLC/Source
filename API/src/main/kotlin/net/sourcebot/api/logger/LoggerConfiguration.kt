@@ -2,9 +2,7 @@ package net.sourcebot.api.logger
 
 import ch.qos.logback.classic.*
 import ch.qos.logback.classic.spi.ILoggingEvent
-import ch.qos.logback.core.Appender
 import ch.qos.logback.core.ConsoleAppender
-import ch.qos.logback.core.encoder.Encoder
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
@@ -32,49 +30,45 @@ class LoggerConfiguration : BasicConfigurator() {
         }
     }
 
-    private fun consoleAppender(context: LoggerContext): Appender<ILoggingEvent> {
-        val encoder = encoder(context, "[%highlight(%d{hh:mm:ss a z} %-5level)] [%highlight(%logger)] %msg%n")
-        return ConsoleAppender<ILoggingEvent>().apply {
-            this.isWithJansi = System.getProperty("useJansi")?.toBoolean() ?: false
-            this.context = context
-            this.name = "STDOUT"
-            setEncoder(encoder)
-            start()
-        }
+    private fun consoleAppender(
+        context: LoggerContext
+    ) = ConsoleAppender<ILoggingEvent>().apply {
+        this.encoder = encoder(context, "[%highlight(%d{hh:mm:ss a z} %-5level)] [%highlight(%logger)] %msg%n")
+        this.isWithJansi = System.getProperty("useJansi")?.toBoolean() ?: false
+        this.context = context
+        this.name = "STDOUT"
+        start()
     }
 
-    private fun fileAppender(context: LoggerContext): Appender<ILoggingEvent> {
-        val encoder = encoder(context, "[%d{hh:mm:ss a z} %-5level] [%logger] %msg%n")
-        val rollingPolicy = TimeBasedRollingPolicy<ILoggingEvent>().apply {
-            this.fileNamePattern = "logs/%d{yyyy-MM-dd}.log.gz"
-            this.isCleanHistoryOnStart = true
-            this.context = context
-            this.maxHistory = 7
+    private fun fileAppender(
+        context: LoggerContext
+    ) = RollingFileAppender<ILoggingEvent>().apply {
+        this.encoder = encoder(context, "[%d{hh:mm:ss a z} %-5level] [%logger] %msg%n")
+        this.rollingPolicy = TimeBasedRollingPolicy<ILoggingEvent>().also {
+            it.fileNamePattern = "logs/%d{yyyy-MM-dd}.log.gz"
+            it.isCleanHistoryOnStart = true
+            it.context = context
+            it.maxHistory = 7
+            it.setParent(this)
+            it.start()
         }
-        return RollingFileAppender<ILoggingEvent>().apply {
-            this.rollingPolicy = rollingPolicy.also {
-                it.setParent(this)
-                it.start()
-            }
-            this.context = context
-            this.encoder = encoder
-            this.name = "FILE"
-            start()
-        }
+        this.context = context
+        this.name = "FILE"
+        start()
     }
 
-    private fun encoder(context: LoggerContext, pattern: String): Encoder<ILoggingEvent> {
-        val layout = PatternLayout().apply {
+    private fun encoder(
+        context: LoggerContext,
+        pattern: String
+    ) = LayoutWrappingEncoder<ILoggingEvent>().apply {
+        this.charset = StandardCharsets.UTF_8
+        this.layout = PatternLayout().apply {
             this.pattern = pattern
             this.context = context
             start()
         }
-        return LayoutWrappingEncoder<ILoggingEvent>().apply {
-            this.charset = StandardCharsets.UTF_8
-            this.context = context
-            this.layout = layout
-            start()
-        }
+        this.context = context
+        start()
     }
 
     companion object {
