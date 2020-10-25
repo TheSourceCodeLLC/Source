@@ -20,7 +20,7 @@ class ConfigurationManager(
             override fun load(
                 key: Guild
             ) = File(dataFolder, "${key.id}.json").apply {
-                JsonSerial.toFile(this, JsonSerial.newObject())
+                if (!exists()) JsonSerial.toFile(this, JsonSerial.newObject())
             }.let<File, JsonConfiguration>(JsonSerial.Companion::fromFile)
         })
 
