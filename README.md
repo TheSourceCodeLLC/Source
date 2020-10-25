@@ -6,7 +6,7 @@
 * Clone Source to your local machine:
   - `git clone https://github.com/TheSourceCodeLLC/Source.git`
   - `cd Source`
-* Tell the compiler what modules to install:
+* Tell the compiler what modules to install (optional):
   - Rename `INSTALL.example` to `INSTALL`
   - Modify the `INSTALL` file to change what modules will be installed.__
   - Note: Module names that are not in this list will not be installed.

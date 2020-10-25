@@ -32,6 +32,12 @@ allprojects {
 
 task("install") {
     dependsOn(":API:shadowJar")
-    val toInstall = File("INSTALL").readLines()
-    dependsOn(toInstall.map { ":Extensions:${it}:shadowJar" })
+    val installFile = File("INSTALL")
+    if (!installFile.exists()) {
+        val extensions = project(":Extensions")
+        dependsOn(extensions.subprojects.map { ":Extensions:${it.name}:shadowJar" })
+    } else {
+        val toInstall = installFile.readLines()
+        dependsOn(toInstall.map { ":Extensions:${it}:shadowJar" })
+    }
 }
