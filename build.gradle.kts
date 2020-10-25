@@ -1,15 +1,17 @@
 plugins {
     id("org.jetbrains.kotlin.jvm").version("1.4.10")
     id("com.github.johnrengelman.shadow").version("6.0.0")
+    id("maven-publish")
 }
 
 allprojects {
     group = "net.sourcebot"
-    version = "5.1.1"
+    version = "5.1.2-SNAPSHOT"
     buildDir = File(rootProject.projectDir, "target/output/$name")
 
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "com.github.johnrengelman.shadow")
+    apply(plugin = "maven-publish")
 
     repositories {
         jcenter()
@@ -26,6 +28,37 @@ allprojects {
         processResources {
             filesMatching("module.json") { expand("project" to project) }
             outputs.upToDateWhen { false }
+        }
+    }
+
+    publishing {
+        repositories {
+            maven {
+                if (project.version.toString().endsWith("-SNAPSHOT")) {
+                    setUrl("https://nexus.dveloped.net/repository/dveloped-snapshots/")
+                    mavenContent { snapshotsOnly() }
+                } else {
+                    setUrl("https://nexus.dveloped.net/repository/dveloped-releases/")
+                    mavenContent { releasesOnly() }
+                }
+                credentials {
+                    username = System.getenv("NEXUS_USERNAME")
+                    password = System.getenv("NEXUS_PASSWORD")
+                }
+            }
+        }
+        publications {
+            create<MavenPublication>("maven") {
+                artifact(tasks.shadowJar.get())
+                versionMapping {
+                    usage("java-api") {
+                        fromResolutionOf("runtimeClasspath")
+                    }
+                    usage("java-runtime") {
+                        fromResolutionResult()
+                    }
+                }
+            }
         }
     }
 }
