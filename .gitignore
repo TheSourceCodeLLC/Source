@@ -2,5 +2,4 @@
 .gradle/
 target/
 *.iml
-config.json
 INSTALL
