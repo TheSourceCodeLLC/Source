@@ -13,7 +13,7 @@ class PauseCommand : MusicCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val guild = message.guild
         val subsystem = Music.getSubsystem(guild)
-        return if (subsystem.scheduler.pause()) {
+        return if (subsystem.pause()) {
             StandardSuccessResponse("Playback Paused!")
         } else {
             StandardErrorResponse(

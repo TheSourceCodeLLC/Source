@@ -13,7 +13,7 @@ class ResumeCommand : MusicCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val guild = message.guild
         val subsystem = Music.getSubsystem(guild)
-        return if (subsystem.scheduler.resume()) {
+        return if (subsystem.resume()) {
             StandardSuccessResponse("Playback Resumed!")
         } else {
             StandardErrorResponse(

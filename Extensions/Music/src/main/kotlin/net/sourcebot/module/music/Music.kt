@@ -20,7 +20,7 @@ class Music : SourceModule() {
             SkipCommand(),
             PlayCommand(),
             VolumeCommand(),
-            SearchCommand()
+            SearchCommand(source.menuHandler)
         )
     }
 

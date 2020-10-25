@@ -33,15 +33,16 @@ class SearchListItem @JsonCreator constructor(
     val etag = node["etag"].asText()
     val idKind = node["id"]["kind"].asText()
     val id = when (idKind) {
-        "youtube#video" -> node["id"]["videoId"]
-        "youtube#channel" -> node["id"]["channelId"]
-        "youtube#playlist" -> node["id"]["playlistId"]
+        "youtube#video" -> node["id"]["videoId"].asText()
+        "youtube#channel" -> node["id"]["channelId"].asText()
+        "youtube#playlist" -> node["id"]["playlistId"].asText()
         else -> throw IllegalArgumentException("Misunderstood item ID type from Search query!")
     }
-    val snippet: Snippet = JsonSerial.fromJson(node["snippet"])
+    val snippet = Snippet(this, node["snippet"] as ObjectNode)
 }
 
 class Snippet @JsonCreator constructor(
+    val item: SearchListItem,
     node: ObjectNode
 ) {
     val publishedAt = node["publishedAt"].asText().let {
@@ -53,6 +54,7 @@ class Snippet @JsonCreator constructor(
     val thumbnails: Map<String, Thumbnail> = JsonSerial.fromJson(node["thumbnails"])
     val channelTitle = node["channelTitle"].asText()
     val liveBroadcastContent = node["liveBroadcastContent"].asText()
+    val url = "https://youtu.be/${item.id}"
 }
 
 class Thumbnail @JsonCreator constructor(

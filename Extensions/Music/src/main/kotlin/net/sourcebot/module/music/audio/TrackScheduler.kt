@@ -9,6 +9,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.error.ExceptionResponse
 import net.sourcebot.module.music.Music
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.LinkedBlockingQueue
@@ -29,30 +30,14 @@ class TrackScheduler(
 
     fun skip() = player.startTrack(queue.poll(), false)
 
-    fun stop() {
-        queue.clear()
-        player.stopTrack()
-    }
+    fun clear() = queue.clear()
 
-    fun pause(): Boolean {
-        return if (player.isPaused) false
-        else {
-            player.isPaused = true; true
-        }
-    }
-
-    fun resume(): Boolean {
-        return if (!player.isPaused) false
-        else {
-            player.isPaused = false; true
-        }
-    }
-
+    @JvmOverloads
     fun play(
         identifier: String,
         onLoad: (AudioItem) -> Response,
         noMatch: () -> Response,
-        onFail: (FriendlyException) -> Response
+        onFail: (FriendlyException) -> Response = { ExceptionResponse(it) }
     ): Response {
         val future = CompletableFuture<Response>()
         Music.PLAYER_MANAGER.loadItem(identifier, object : AudioLoadResultHandler {
@@ -74,6 +59,7 @@ class TrackScheduler(
                 future.complete(onFail(exception))
             }
         })
+
         return future.get()
     }
 

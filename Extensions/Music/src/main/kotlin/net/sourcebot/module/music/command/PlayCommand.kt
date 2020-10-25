@@ -9,7 +9,6 @@ import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.EmptyResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
-import net.sourcebot.api.response.error.ExceptionResponse
 import net.sourcebot.module.music.Music
 
 class PlayCommand : MusicCommand(
@@ -23,18 +22,14 @@ class PlayCommand : MusicCommand(
         val identifier = args.next("You did not specify a track identifier!")
         val guild = message.guild
         val subsystem = Music.getSubsystem(guild)
-        val response = subsystem.scheduler.play(identifier, {
+        val response = subsystem.load(identifier, {
             when (it) {
                 is AudioTrack -> StandardInfoResponse("Track Loaded")
                 is AudioPlaylist -> StandardInfoResponse("Playlist Loaded")
                 else -> EmptyResponse()
             }
-        }, {
-            StandardInfoResponse("No Match!")
-        }, {
-            ExceptionResponse(it)
-        })
-        guild.audioManager.openAudioConnection(message.member?.voiceState?.channel!!)
+        }, { StandardInfoResponse("No Match!") })
+        subsystem.connect(message.member?.voiceState?.channel!!)
         return response
     }
 }
