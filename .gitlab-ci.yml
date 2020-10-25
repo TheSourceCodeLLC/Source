@@ -13,6 +13,12 @@ cache:
     - target/output
     - .gradle
 
+stages: [ "build", "deploy" ]
+
 build:
   stage: build
   script: ./gradlew install
+
+deploy:
+  stage: deploy
+  script: ./gradlew publish
