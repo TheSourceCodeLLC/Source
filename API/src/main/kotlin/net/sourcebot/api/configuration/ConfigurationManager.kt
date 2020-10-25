@@ -6,9 +6,7 @@ import net.dv8tion.jda.api.entities.Guild
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-class ConfigurationManager(
-    private val dataFolder: File
-) {
+class ConfigurationManager(private val dataFolder: File) {
     init {
         if (!dataFolder.exists()) dataFolder.mkdirs()
     }
@@ -17,11 +15,7 @@ class ConfigurationManager(
         .expireAfterWrite(10, TimeUnit.MINUTES)
         .removalListener<Guild, JsonConfiguration> { saveData(it.key, it.value) }
         .build(object : CacheLoader<Guild, JsonConfiguration>() {
-            override fun load(
-                key: Guild
-            ) = File(dataFolder, "${key.id}.json").apply {
-                if (!exists()) JsonSerial.toFile(this, JsonSerial.newObject())
-            }.let<File, JsonConfiguration>(JsonSerial.Companion::fromFile)
+            override fun load(key: Guild) = File(dataFolder, "${key.id}.json").let(JsonConfiguration::fromFile)
         })
 
     operator fun get(guild: Guild): JsonConfiguration = dataCache[guild]

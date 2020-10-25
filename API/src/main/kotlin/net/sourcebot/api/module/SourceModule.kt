@@ -4,7 +4,6 @@ import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.configuration.JsonConfiguration
-import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.module.exception.ModuleLifecycleException
 import org.slf4j.Logger
@@ -41,7 +40,7 @@ abstract class SourceModule {
     val config: JsonConfiguration by lazy {
         val file = File(dataFolder, "config.json")
         if (!file.exists()) saveResource("/config.json")
-        return@lazy file.let { JsonSerial.mapper.readValue(it, JsonConfiguration::class.java) }
+        return@lazy file.let(JsonConfiguration::fromFile)
     }
 
     open val configurationInfo: ConfigurationInfo? = null

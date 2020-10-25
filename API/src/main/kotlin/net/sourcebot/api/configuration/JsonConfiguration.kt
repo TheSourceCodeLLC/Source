@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.typeRefOf
 import org.bson.Document
+import java.io.File
 
 open class JsonConfiguration @JsonCreator constructor(
     internal val json: ObjectNode = JsonSerial.newObject()
@@ -34,17 +35,18 @@ open class JsonConfiguration @JsonCreator constructor(
             config[parts.subList(1, parts.size).joinToString(".")] = obj
             set(parts[0], config)
         }
+        onChange()
         return obj
     }
 
     @JvmOverloads
-    fun <T> optional(path: String, typeRef: TypeReference<T>, supplier: () -> T? = { null }): T? {
+    fun <T> optional(path: String, typeReference: TypeReference<T>, supplier: () -> T? = { null }): T? {
         val levels = path.split(".").iterator()
         var lastElem: JsonNode? = json[levels.next()]
         while (lastElem != null && levels.hasNext()) {
             lastElem = lastElem[levels.next()]
         }
-        return lastElem?.let { JsonSerial.fromJson(it, typeRef) } ?: supplier()?.let { set(path, it) }
+        return lastElem?.let { JsonSerial.fromJson(it, typeReference) } ?: supplier()?.let { set(path, it) }
     }
 
     @JvmOverloads
@@ -56,9 +58,9 @@ open class JsonConfiguration @JsonCreator constructor(
     @JvmOverloads
     fun <T> required(
         path: String,
-        type: TypeReference<T>,
+        typeReference: TypeReference<T>,
         supplier: () -> T? = { null }
-    ): T = optional(path, type, supplier) ?: throw IllegalArgumentException("Could not load value at '$path'!")
+    ): T = optional(path, typeReference, supplier) ?: throw IllegalArgumentException("Could not load value at '$path'!")
 
     @JvmOverloads
     inline fun <reified T> required(
@@ -88,4 +90,16 @@ open class JsonConfiguration @JsonCreator constructor(
     }
 
     fun asMap(): Map<String, Any?> = JsonSerial.fromJson(json)
+
+    open fun onChange() = Unit
+
+    companion object {
+        @JvmStatic
+        fun fromFile(file: File): JsonConfiguration = file.let {
+            if (!it.exists()) JsonSerial.toFile(it, JsonSerial.newObject())
+            object : JsonConfiguration(JsonSerial.fromFile<ObjectNode>(it)) {
+                override fun onChange() = JsonSerial.toFile(it, this)
+            }
+        }
+    }
 }

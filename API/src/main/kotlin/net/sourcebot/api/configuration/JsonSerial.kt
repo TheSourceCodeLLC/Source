@@ -81,6 +81,5 @@ interface JsonSerial<T> {
         inline fun <reified T> fromUrl(
             url: String
         ): T = fromUrl(url, typeRefOf())
-
     }
 }

@@ -14,6 +14,7 @@ import java.io.FileFilter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.jar.JarFile
 
+@Suppress("DEPRECATION", "UNCHECKED_CAST", "UNUSED")
 class ModuleHandler(
     private val source: Source
 ) : ClassLoader() {
