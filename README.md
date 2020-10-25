@@ -39,3 +39,36 @@ Configuration Values:
   - `source.connections.channel`: The channel ID join / leave messages will be sent to.
   - `source.connections.joinMessages`: Messages to be sent when Members join
   - `source.connections.leaveMessages`: Messages to be sent when Members leave
+  
+# Artifact Information
+Note: `x.y.z` must be replaced with the version of Source you wish to use!
+
+## Gradle
+```kotlin
+repository {
+  maven("https://nexus.dveloped.net/repository/dveloped/")
+}
+
+dependency {
+  compileOnly("net.sourcebot:API:x.y.z")
+}
+```
+
+## Maven
+```xml
+<repositories>
+  <repository>
+    <id>dveloped</id>
+    <url>https://nexus.dveloped.net/repository/dveloped/</url>
+  </repository>
+</repositories>
+<dependencies>
+  <dependency>
+    <groupId>net.sourcebot</groupId>
+    <artifactId>API</artifactId>
+    <version>x.y.z</version>
+    <type>jar</type>
+    <scope>provided</scope>
+  </dependency>
+</dependencies>
+```
