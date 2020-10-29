@@ -24,16 +24,15 @@ class HistoryCommand : ModerationCommand(
         if (history.isEmpty()) return StandardInfoResponse(
             header, "This user does not have any history."
         )
-        val points = history.filter {
-            it.points != null
-        }.map { it.points!! }.sum()
-        val pageNum = args.next(Adapter.int()) ?: 1
         val pages = Lists.partition(history, 5)
+        val pageNum = args.next(
+            Adapter.int(1, pages.size, "You specified an invalid page number!")
+        ) ?: 1
         val page = pages[pageNum - 1]
         return StandardInfoResponse(
             header,
             """
-                **Punishment Points:** $points
+                **Punishment Points:** ${punishmentHandler.getPoints(target)}
                 
                 **Incidents:**
                 ${
@@ -41,6 +40,8 @@ class HistoryCommand : ModerationCommand(
                     "**${it.id}:** ${it.type.name.toLowerCase().capitalize()}: _${it.reason}_"
                 }
             }
+            
+            Page $pageNum / ${pages.size}
             """.trimIndent()
         )
     }

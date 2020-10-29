@@ -74,7 +74,6 @@ class Case(private val document: Document) : Incident {
     override val type: Incident.Type = (document["type"] as String).let(Incident.Type::valueOf)
     override val time: Instant = (document["time"] as Long).let(Instant::ofEpochMilli)
     override val expiry: Instant? = (document["expiry"] as? Long)?.let(Instant::ofEpochMilli)
-    val points: Long? = (document["points.value"] as? Long)
 
     private val action = when {
         type.name.contains("ban", true) -> "${type.name}ned"
@@ -114,6 +113,8 @@ class Case(private val document: Document) : Incident {
                 }
                 Incident.Type.CLEAR -> {
                     appendDescription("**Amount Cleared:** ${document["amount"] as Int}\n")
+                }
+                else -> {
                 }
             }
             appendDescription("**Reason:** $reason\n")

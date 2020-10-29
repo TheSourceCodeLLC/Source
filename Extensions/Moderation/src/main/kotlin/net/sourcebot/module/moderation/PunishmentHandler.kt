@@ -30,16 +30,18 @@ class PunishmentHandler(
         guild: Guild, sender: Member, channel: TextChannel, amount: Int, reason: String
     ) = submitIncident(guild, {
         ClearIncident(guild, nextIncidentId(guild), sender, channel, amount, reason)
-    }, {
-        StandardSuccessResponse(
-            "Clear Success (#${it.id})",
-            "You have cleared $amount messages in channel `${channel.name}`!"
-        )
-    }, { ClearFailureResponse("Could not execute clear incident!") })
+    }, { ClearSuccessResponse(it.id, amount, channel.name) }, ::ClearFailureResponse)
 
-    private class ClearFailureResponse(
-        description: String
-    ) : StandardErrorResponse("Clear Failure!", description)
+    private class ClearSuccessResponse(
+        id: Long, amount: Int, channel: String
+    ) : StandardSuccessResponse(
+        "Clear Success (#$id)",
+        "You have cleared $amount messages in channel `$channel`!"
+    )
+
+    private class ClearFailureResponse : StandardErrorResponse(
+        "Clear Failure!", "Could not execute clear incident!"
+    )
 
     fun warnIncident(
         guild: Guild, sender: Member, warned: Member, reason: String
@@ -55,11 +57,11 @@ class PunishmentHandler(
         return submitIncident(guild, {
             WarnIncident(nextIncidentId(guild), sender, warned, reason)
         }, {
-            StandardSuccessResponse(
-                "Warn Success (#${it.id})",
-                "You have successfully warned ${it.warned.formatted()}!"
-            )
-        }, { WarnFailureResponse("Could not execute warn incident!") })
+                                  StandardSuccessResponse(
+                                      "Warn Success (#${it.id})",
+                                      "You have successfully warned ${it.warned.formatted()}!"
+                                  )
+                              }, { WarnFailureResponse("Could not execute warn incident!") })
     }
 
     private class WarnFailureResponse(
@@ -80,11 +82,11 @@ class PunishmentHandler(
         return submitIncident(guild, {
             KickIncident(nextIncidentId(guild), sender, kicked, reason)
         }, {
-            StandardSuccessResponse(
-                "Kick Success (#${it.id})",
-                "You have successfully kicked ${it.kicked.formatted()}!"
-            )
-        }, { KickFailureResponse("Could not execute kick incident!") })
+                                  StandardSuccessResponse(
+                                      "Kick Success (#${it.id})",
+                                      "You have successfully kicked ${it.kicked.formatted()}!"
+                                  )
+                              }, { KickFailureResponse("Could not execute kick incident!") })
     }
 
     private class KickFailureResponse(
@@ -108,11 +110,11 @@ class PunishmentHandler(
         return submitIncident(guild, {
             MuteIncident(nextIncidentId(guild), muteRole, sender, muted, duration, reason)
         }, {
-            StandardSuccessResponse(
-                "Mute Success (#${it.id})",
-                "You have successfully muted ${it.muted.formatted()}!"
-            )
-        }, { MuteFailureResponse("Could not execute mute incident!") })
+                                  StandardSuccessResponse(
+                                      "Mute Success (#${it.id})",
+                                      "You have successfully muted ${it.muted.formatted()}!"
+                                  )
+                              }, { MuteFailureResponse("Could not execute mute incident!") })
     }
 
     private class MuteFailureResponse(
@@ -133,11 +135,11 @@ class PunishmentHandler(
         return submitIncident(guild, {
             TempbanIncident(nextIncidentId(guild), sender, tempbanned, delDays, duration, reason)
         }, {
-            StandardSuccessResponse(
-                "Tempban Success (#${it.id})",
-                "You have successfully tempbanned ${it.tempbanned.formatted()}!"
-            )
-        }, { TempbanFailureResponse("Could not execute tempban incident!") })
+                                  StandardSuccessResponse(
+                                      "Tempban Success (#${it.id})",
+                                      "You have successfully tempbanned ${it.tempbanned.formatted()}!"
+                                  )
+                              }, { TempbanFailureResponse("Could not execute tempban incident!") })
     }
 
     private class TempbanFailureResponse(
@@ -158,11 +160,11 @@ class PunishmentHandler(
         return submitIncident(guild, {
             BanIncident(nextIncidentId(guild), sender, banned, delDays, reason)
         }, {
-            StandardSuccessResponse(
-                "Ban Success (#${it.id})",
-                "You have successfully banned ${it.banned.formatted()}!"
-            )
-        }, { BanFailureResponse("Could not execute ban incident!") })
+                                  StandardSuccessResponse(
+                                      "Ban Success (#${it.id})",
+                                      "You have successfully banned ${it.banned.formatted()}!"
+                                  )
+                              }, { BanFailureResponse("Could not execute ban incident!") })
     }
 
     private class BanFailureResponse(
@@ -186,11 +188,11 @@ class PunishmentHandler(
         return submitIncident(guild, {
             UnmuteIncident(nextIncidentId(guild), muteRole, sender, unmuted, reason)
         }, {
-            StandardSuccessResponse(
-                "Unmute Success (#${it.id})",
-                "You have successfully unmuted ${it.unmuted.formatted()}!"
-            )
-        }, { UnmuteFailureResponse("Could not execute unmute incident!") })
+                                  StandardSuccessResponse(
+                                      "Unmute Success (#${it.id})",
+                                      "You have successfully unmuted ${it.unmuted.formatted()}!"
+                                  )
+                              }, { UnmuteFailureResponse("Could not execute unmute incident!") })
     }
 
     private class UnmuteFailureResponse(
@@ -208,11 +210,11 @@ class PunishmentHandler(
         return submitIncident(guild, {
             UnbanIncident(nextIncidentId(guild), sender, ban.user, reason)
         }, {
-            StandardSuccessResponse(
-                "Unban Success (#${it.id})",
-                "You have successfully unbanned ${it.unbanned.formatted()}!"
-            )
-        }, { UnbanFailureResponse("Could not execute unban incident!") })
+                                  StandardSuccessResponse(
+                                      "Unban Success (#${it.id})",
+                                      "You have successfully unbanned ${it.unbanned.formatted()}!"
+                                  )
+                              }, { UnbanFailureResponse("Could not execute unban incident!") })
     }
 
     private class UnbanFailureResponse(
@@ -276,19 +278,14 @@ class PunishmentHandler(
         )
     }
 
-    private fun getMuteRole(
-        guild: Guild
-    ) = configurationManager[guild].optional<String>(
+    private fun getMuteRole(guild: Guild) = configurationManager[guild].optional<String>(
         "moderation.mute-role"
     )?.let(guild::getRoleById)
 
-    fun getCase(
-        guild: Guild, id: Long
-    ): Case? = incidentCollection(guild).find(Document("_id", id)).first()?.let(::Case)
+    fun getCase(guild: Guild, id: Long): Case? =
+        incidentCollection(guild).find(Document("_id", id)).first()?.let(::Case)
 
-    fun deleteCase(
-        guild: Guild, id: Long
-    ): Response {
+    fun deleteCase(guild: Guild, id: Long): Response {
         val collection = incidentCollection(guild)
         return collection.find(Document("_id", id)).first()?.let {
             collection.deleteOne(Document("_id", id))
@@ -296,23 +293,21 @@ class PunishmentHandler(
         } ?: StandardErrorResponse("Invalid Case ID!", "There is no case with ID #$id!")
     }
 
-    fun getHistory(
-        guild: Guild, id: String
-    ): List<Case> = incidentCollection(guild).find(Document("target", id)).map(::Case).toList()
+    private fun getHistory(guild: Guild, id: String): List<Case> = incidentCollection(guild).find(Document("target", id))
+        .map(::Case)
+        .toList()
 
-    fun getHistory(
-        member: Member
-    ): List<Case> = getHistory(member.guild, member.id)
+    fun getHistory(member: Member): List<Case> = getHistory(member.guild, member.id)
 
-    fun performTasks(
-        guilds: () -> Collection<Guild>
-    ) {
-        Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate({
-            guilds().forEach { guild ->
-                expireOldIncidents(guild)
-                doPointDecay(guild)
-            }
-        }, 0, 1, TimeUnit.SECONDS)
+    fun performTasks(guilds: () -> Collection<Guild>) {
+        Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(
+            {
+                guilds().forEach { guild ->
+                    expireOldIncidents(guild)
+                    doPointDecay(guild)
+                }
+            }, 0, 1, TimeUnit.SECONDS
+        )
     }
 
     private fun expireOldIncidents(guild: Guild) {
@@ -331,26 +326,28 @@ class PunishmentHandler(
                     val muted = (it["target"] as String).let(guild::getMemberById)!!
                     unmuteIncident(guild, guild.selfMember, muted, reason)
                 }
-                "TEMPBAN" -> {
-                    unbanIncident(guild, guild.selfMember, it["target"] as String, reason)
-                }
+                "TEMPBAN" -> unbanIncident(guild, guild.selfMember, it["target"] as String, reason)
             }
             collection.updateOne(it, Document("\$set", Document("resolved", true)))
         }
     }
 
-    private fun doPointDecay(guild: Guild) {
-        val collection = incidentCollection(guild)
-        val query = Document().apply {
-            this["points"] = Document().apply {
-                this["\$exists"] = true
-            }
-        }
-        collection.find(query).forEach {
+    private fun doPointDecay(guild: Guild) = incidentCollection(guild).let { incidents ->
+        incidents.find(Document("points", Document("\$exists", true))).forEach {
             val points = it["points"] as Document
             var decay = points["decay"] as Long
-            if (--decay <= 0) collection.updateOne(it, Document("\$unset", Document("points", "")))
-            else collection.updateOne(it, Document("\$set", Document("points.decay", decay)))
+            if (--decay <= 0) incidents.updateOne(it, Document("\$unset", Document("points", "")))
+            else incidents.updateOne(it, Document("\$set", Document("points.decay", decay)))
         }
     }
+
+    private fun getPoints(guild: Guild, id: String): Double =
+        incidentCollection(guild).find(Document().also {
+            it["target"] = id
+            it["points"] = Document("\$exists", true)
+        }).sumByDouble {
+            it["points.value"] as Double
+        }
+
+    fun getPoints(member: Member) = getPoints(member.guild, member.id)
 }

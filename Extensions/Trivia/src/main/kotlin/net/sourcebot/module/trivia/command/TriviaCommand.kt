@@ -3,7 +3,6 @@ package net.sourcebot.module.trivia.command
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.command.Command
-import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.ArgumentInfo
@@ -42,10 +41,9 @@ class TriviaCommand : RootCommand() {
         )
 
         override fun execute(message: Message, args: Arguments): Response {
-            val amount = args.next(Adapter.int()) ?: 5
-            if (amount < 1 || amount > 50) throw InvalidSyntaxException(
-                "Amount of questions must be between 1 and 50!"
-            )
+            val amount = args.next(
+                Adapter.int(1, 50, "Amount of questions must be between 1 and 50!")
+            ) ?: 5
             val category = args.next(Adapter.int())
             if (category != null && !OpenTDB.isValidCategory(category)) {
                 return StandardErrorResponse(
