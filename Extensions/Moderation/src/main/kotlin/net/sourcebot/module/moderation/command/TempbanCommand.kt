@@ -5,7 +5,7 @@ import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.argument.*
 import net.sourcebot.api.response.Response
 
-class TempbanCommand : ModerationCommand(
+class TempbanCommand : ModerationRootCommand(
     "tempban", "Temporarily ban a member for a specific reason."
 ) {
     override val argumentInfo = ArgumentInfo(

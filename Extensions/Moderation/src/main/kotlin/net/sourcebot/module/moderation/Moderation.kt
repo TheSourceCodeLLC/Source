@@ -3,7 +3,6 @@ package net.sourcebot.module.moderation
 import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.moderation.command.*
-import net.sourcebot.module.moderation.data.PunishCommand
 
 class Moderation : SourceModule() {
     override val configurationInfo = ConfigurationInfo("moderation") {
@@ -29,7 +28,8 @@ class Moderation : SourceModule() {
             CaseCommand(),
             HistoryCommand(),
             ReportCommand(),
-            PunishCommand()
+            PunishCommand(),
+            OffensesCommand()
         )
         punishmentHandler.performTasks {
             source.shardManager.guilds

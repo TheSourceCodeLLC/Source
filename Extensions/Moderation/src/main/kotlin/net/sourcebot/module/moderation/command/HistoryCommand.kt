@@ -9,7 +9,7 @@ import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 
-class HistoryCommand : ModerationCommand(
+class HistoryCommand : ModerationRootCommand(
     "history", "Show punishment histories."
 ) {
     override val argumentInfo = ArgumentInfo(

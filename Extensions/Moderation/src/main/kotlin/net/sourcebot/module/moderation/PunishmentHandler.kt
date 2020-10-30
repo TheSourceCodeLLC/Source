@@ -257,19 +257,13 @@ class PunishmentHandler(
         if (!sender.canInteract(target)) return WarnFailureResponse(
             "You do not have permission to punish that member!"
         )
-        val punishment = getPunishment(sender.guild, id) ?: return StandardErrorResponse(
+        val offense = getOffenses(sender.guild)[id] ?: return StandardErrorResponse(
             "Invalid Punishment!", "There is no punishment with the ID `$id`!"
         )
         val points = getPoints(target)
-        val toAdd = when (punishment["level"] as Int) {
-            1 -> 2.5
-            2 -> 10.0
-            3 -> 65.0
-            4 -> 100.0
-            else -> 0.0
-        }
+        val toAdd = getPoints(offense["level"] as Int)
         val effective = points + toAdd
-        val reason = "${punishment["reason"] as String} (Punishments vary based on your history)"
+        val reason = "${offense["name"] as String} (Punishments vary based on your history)"
         val (type, duration) = pointMap.ceilingEntry(effective.toInt()).value
         return when (type) {
             Type.WARN -> submitIncident(guild, {
@@ -317,11 +311,51 @@ class PunishmentHandler(
         description: String
     ) : StandardErrorResponse("Punish Failure!", description)
 
-    private fun getPunishment(guild: Guild, id: Int) =
-        punishmentCollection(guild).find(Document("_id", id)).first()
+    fun getOffenses(
+        guild: Guild
+    ) = offensesCollection(guild).find().withIndex().associateByTo(
+        HashMap(),
+        IndexedValue<Document>::index,
+        IndexedValue<Document>::value
+    )
 
-    private fun punishmentCollection(guild: Guild) =
-        mongo.getCollection(guild.id, "punishments")
+    fun addOffense(guild: Guild, level: Int, name: String): Response {
+        val offenses = offensesCollection(guild)
+        val offense = Document().also {
+            it["level"] = level
+            it["name"] = name
+        }
+        offenses.insertOne(offense)
+        return StandardSuccessResponse(
+            "Offense Added!",
+            "Added Level `$level` offense: `$name`!"
+        )
+    }
+
+    fun removeOffense(guild: Guild, id: Int): Response {
+        val offenses = getOffenses(guild)
+        val toRemove = offenses[id] ?: return StandardErrorResponse(
+            "Invalid Offense!", "There is no offense with the ID `$id`!"
+        )
+        val level = toRemove["level"] as Int
+        val name = toRemove["name"] as String
+        offensesCollection(guild).deleteOne(toRemove)
+        return StandardSuccessResponse(
+            "Offense Removed!",
+            "Removed Level `$level` offense: `$name`!"
+        )
+    }
+
+    fun getPoints(level: Int) = when (level) {
+        1 -> 2.5
+        2 -> 10.0
+        3 -> 65.0
+        4 -> 100.0
+        else -> 0.0
+    }
+
+    private fun offensesCollection(guild: Guild) =
+        mongo.getCollection(guild.id, "offenses")
 
     private fun <T : ExecutableIncident> submitIncident(
         guild: Guild,

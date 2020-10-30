@@ -7,7 +7,7 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 
-class ReportCommand : ModerationCommand(
+class ReportCommand : ModerationRootCommand(
     "report", "Report another member."
 ) {
     override val argumentInfo = ArgumentInfo(

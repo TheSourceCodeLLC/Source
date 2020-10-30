@@ -7,7 +7,7 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 
-class KickCommand : ModerationCommand(
+class KickCommand : ModerationRootCommand(
     "kick", "Kick a member for a specific reason."
 ) {
     override val argumentInfo = ArgumentInfo(

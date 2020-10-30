@@ -7,7 +7,7 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 
-class UnmuteCommand : ModerationCommand(
+class UnmuteCommand : ModerationRootCommand(
     "unmute", "Unmute a member for a specific reason."
 ) {
     override val argumentInfo = ArgumentInfo(

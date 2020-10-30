@@ -9,7 +9,7 @@ import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 
-class CaseCommand : ModerationCommand(
+class CaseCommand : ModerationRootCommand(
     "case", "Manage incidents."
 ) {
     override val aliases = arrayOf("incident")

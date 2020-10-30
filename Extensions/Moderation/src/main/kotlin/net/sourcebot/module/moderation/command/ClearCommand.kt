@@ -5,7 +5,7 @@ import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.argument.*
 import net.sourcebot.api.response.Response
 
-class ClearCommand : ModerationCommand(
+class ClearCommand : ModerationRootCommand(
     "clear", "Clear a number of messages from a channel."
 ) {
     override val argumentInfo = ArgumentInfo(

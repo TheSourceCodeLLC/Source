@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.argument.*
 import net.sourcebot.api.response.Response
 
-class BanCommand : ModerationCommand(
+class BanCommand : ModerationRootCommand(
     "ban", "Ban a member for a specific reason."
 ) {
     override val argumentInfo = ArgumentInfo(
