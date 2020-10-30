@@ -264,7 +264,7 @@ class PunishmentHandler(
         val toAdd = getPoints(offense["level"] as Int)
         val effective = points + toAdd
         val reason = "${offense["name"] as String} (Punishments vary based on your history)"
-        val (type, duration) = pointMap.ceilingEntry(effective.toInt()).value
+        val (type, duration) = pointMap.floorEntry(effective.toInt()).value
         return when (type) {
             Type.WARN -> submitIncident(guild, {
                 WarnIncident(nextIncidentId(guild), sender, target, reason, toAdd)
