@@ -7,15 +7,17 @@ import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.StandardWarningResponse
+import org.bson.Document
 import java.time.Duration
 
-class MuteIncident(
+class MuteIncident @JvmOverloads constructor(
     override val id: Long,
     private val muteRole: Role,
     private val sender: Member,
     val muted: Member,
     duration: Duration,
     override val reason: String,
+    private val points: Double = 10.0
 ) : SimpleIncident(duration) {
     override val source = sender.id
     override val target = muted.id
@@ -30,6 +32,13 @@ class MuteIncident(
         """.trimIndent()
     )
 
+    override fun asDocument() = super.asDocument().also {
+        it["points"] = Document().also {
+            it["value"] = points
+            it["decay"] = (86400L * points).toLong()
+        }
+    }
+
     override fun execute() {
         //Ignore DM failures
         kotlin.runCatching {
@@ -39,7 +48,6 @@ class MuteIncident(
         sender.guild.addRoleToMember(muted, muteRole).complete()
     }
 
-    override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(
-        mute.asMessage(sender)
-    ).queue()
+    override fun sendLog(logChannel: TextChannel) =
+        logChannel.sendMessage(mute.asMessage(sender)).queue()
 }

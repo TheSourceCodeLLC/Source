@@ -18,8 +18,6 @@ class UnmuteCommand : ModerationCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid member to unmute!")
         val reason = args.slurp(" ", "You did not specify an unmute reason!")
-        return punishmentHandler.unmuteIncident(
-            message.guild, message.member!!, target, reason
-        )
+        return punishmentHandler.unmuteIncident(message.member!!, target, reason)
     }
 }

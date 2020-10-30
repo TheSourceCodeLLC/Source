@@ -18,8 +18,6 @@ class WarnCommand : ModerationCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid member to warn!")
         val reason = args.slurp(" ", "You did not specify a warning reason!")
-        return punishmentHandler.warnIncident(
-            message.guild, message.member!!, target, reason
-        )
+        return punishmentHandler.warnIncident(message.member!!, target, reason)
     }
 }

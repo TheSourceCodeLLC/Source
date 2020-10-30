@@ -23,7 +23,7 @@ class MuteCommand : ModerationCommand(
         if (duration.isZero) throw InvalidSyntaxException("The duration may not be zero seconds!")
         val reason = args.slurp(" ", "You did not specify a mute reason!")
         return punishmentHandler.muteIncident(
-            message.guild, message.member!!, target, duration, reason
+            message.member!!, target, duration, reason
         )
     }
 }

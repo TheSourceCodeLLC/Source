@@ -5,12 +5,14 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.StandardWarningResponse
+import org.bson.Document
 
 class KickIncident(
     override val id: Long,
     private val sender: Member,
     val kicked: Member,
     override val reason: String,
+    private val points: Double = 20.0
 ) : OneshotIncident() {
     override val source = sender.id
     override val target = kicked.id
@@ -23,6 +25,13 @@ class KickIncident(
             **Reason:** $reason
         """.trimIndent()
     )
+
+    override fun asDocument() = super.asDocument().also { outer ->
+        outer["points"] = Document().also {
+            it["value"] = points
+            it["decay"] = (86400L * points).toLong()
+        }
+    }
 
     override fun execute() {
         //Ignore DM failures

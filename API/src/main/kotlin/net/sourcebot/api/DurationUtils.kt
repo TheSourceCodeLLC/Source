@@ -5,7 +5,7 @@ import java.time.temporal.ChronoUnit
 
 object DurationUtils {
     @JvmStatic
-    private val pattern = "(\\d+)([Mdhms])".toRegex()
+    private val pattern = "(\\d+)([Mwdhms])".toRegex()
 
     @JvmStatic
     fun parseDuration(input: String): Duration {
@@ -16,6 +16,7 @@ object DurationUtils {
             val asLong = amount.toLong()
             val asChrono = when (unit) {
                 "M" -> ChronoUnit.MONTHS
+                "w" -> ChronoUnit.WEEKS
                 "d" -> ChronoUnit.DAYS
                 "h" -> ChronoUnit.HOURS
                 "m" -> ChronoUnit.MINUTES
@@ -58,8 +59,11 @@ object DurationUtils {
 
     @JvmStatic
     fun formatMillis(millis: Long) = formatDuration(Duration.ofMillis(millis))
+
     @JvmStatic
     fun formatSeconds(seconds: Long) = formatDuration(Duration.ofSeconds(seconds))
 
     private fun ChronoUnit.seconds() = this.duration.seconds
 }
+
+fun durationOf(format: String) = DurationUtils.parseDuration(format)

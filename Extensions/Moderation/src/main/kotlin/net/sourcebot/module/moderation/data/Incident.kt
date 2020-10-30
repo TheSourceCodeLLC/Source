@@ -20,7 +20,7 @@ interface Incident {
     val time: Instant
     val expiry: Instant?
 
-    enum class Type() {
+    enum class Type {
         CLEAR,
         WARN,
         MUTE,

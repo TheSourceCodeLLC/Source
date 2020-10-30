@@ -21,8 +21,6 @@ class TempbanCommand : ModerationCommand(
         val duration = args.next(Adapter.duration(), "You did not specify a valid duration to tempban for!")
         if (duration.isZero) throw InvalidSyntaxException("The duration may not be zero seconds!")
         val reason = args.slurp(" ", "You did not specify a tempban reason!")
-        return punishmentHandler.tempbanIncident(
-            message.guild, message.member!!, target, delDays, duration, reason
-        )
+        return punishmentHandler.tempbanIncident(message.member!!, target, delDays, duration, reason)
     }
 }

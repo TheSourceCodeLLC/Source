@@ -65,8 +65,10 @@ allprojects {
 
 task("install") {
     val depends = File("INSTALL").let { file ->
-        if (!file.exists()) project(":Extensions").subprojects.map { it.tasks.shadowJar }
-        else file.readLines().map { ":Extensions:${it}:shadowJar" }
+        val subprojects = project(":Extensions").subprojects.map { it.name }
+        (if (!file.exists()) subprojects else file.readLines()).map {
+            ":Extensions:${it}:shadowJar"
+        }
     }
     dependsOn(":API:shadowJar", *depends.toTypedArray())
 }

@@ -18,7 +18,7 @@ class BanCommand : ModerationCommand(
         val delDays = args.next(Adapter.int()) ?: 7
         val reason = args.slurp(" ", "You did not specify a ban reason!")
         return punishmentHandler.banIncident(
-            message.guild, message.member!!, target, delDays, reason
+            message.member!!, target, delDays, reason
         )
     }
 }

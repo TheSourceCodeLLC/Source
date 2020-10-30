@@ -17,8 +17,6 @@ class UnbanCommand : ModerationCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next("You did not specify a user ID to unban!")
         val reason = args.slurp(" ", "You did not specify an unban reason!")
-        return punishmentHandler.unbanIncident(
-            message.guild, message.member!!, target, reason
-        )
+        return punishmentHandler.unbanIncident(message.member!!, target, reason)
     }
 }
