@@ -12,7 +12,8 @@ class OffensesCommand : ModerationRootCommand(
     "offenses", "Manage Guild offenses."
 ) {
     override val aliases = arrayOf("offense")
-
+    override val cleanupResponse = false
+    
     private inner class OffensesListCommand : ModerationCommand(
         "list", "List Guild offenses."
     ) {
@@ -30,7 +31,7 @@ class OffensesCommand : ModerationRootCommand(
                 listing.forEach { (level, offenses) ->
                     val points = punishmentHandler.getPoints(level)
                     it.addField(
-                        "Level $level ($points points):",
+                        "Level $level - $points Points",
                         offenses.joinToString(separator = " | ") { (id, name) ->
                             "**$id** `$name`"
                         }, false
