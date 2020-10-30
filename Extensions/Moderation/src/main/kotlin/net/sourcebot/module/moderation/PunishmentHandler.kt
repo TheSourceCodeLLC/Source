@@ -314,7 +314,9 @@ class PunishmentHandler(
 
     fun getOffenses(
         guild: Guild
-    ) = offensesCollection(guild).find().withIndex().associateByTo(
+    ) = offensesCollection(guild).find().sortedBy {
+        it["level"] as Int
+    }.withIndex().associateByTo(
         HashMap(),
         IndexedValue<Document>::index,
         IndexedValue<Document>::value

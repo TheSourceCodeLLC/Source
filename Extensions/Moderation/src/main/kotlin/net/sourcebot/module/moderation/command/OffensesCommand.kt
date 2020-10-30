@@ -12,11 +12,11 @@ class OffensesCommand : ModerationRootCommand(
     "offenses", "Manage Guild offenses."
 ) {
     override val aliases = arrayOf("offense")
-    override val cleanupResponse = false
-    
+
     private inner class OffensesListCommand : ModerationCommand(
         "list", "List Guild offenses."
     ) {
+        override val cleanupResponse = false
         override fun execute(message: Message, args: Arguments): Response {
             val offenses = punishmentHandler.getOffenses(message.guild)
             if (offenses.isEmpty()) return StandardInfoResponse(
