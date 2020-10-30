@@ -19,6 +19,6 @@ class InvalidChannelResponse(jda: JDA, contexts: Set<String>) : StandardErrorRes
         val channelList = validChannels.joinToString(", ") {
             it.asMention
         }
-        description = "You can use this command in the following channel(s):\n $channelList"
+        setDescription("You can use this command in the following channel(s):\n $channelList")
     }
 }
