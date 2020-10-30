@@ -65,7 +65,7 @@ class Source(val properties: JsonConfiguration) {
     val shardManager = DefaultShardManagerBuilder.create(
         properties.required("token"),
         EnumSet.complementOf(ignoredIntents)
-    ).addEventListeners(
+    ).setEnableShutdownHook(false).addEventListeners(
         EventListener(jdaEventSystem::fireEvent),
         object : ListenerAdapter() {
             override fun onMessageReceived(
@@ -85,7 +85,7 @@ class Source(val properties: JsonConfiguration) {
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
                 ModuleHandler.getModules().forEach(moduleHandler::disableModule)
-                shardManager.shards.forEach(JDA::shutdownNow)
+                shardManager.shards.forEach(JDA::shutdown)
                 configurationManager.saveAll()
             }
         })
