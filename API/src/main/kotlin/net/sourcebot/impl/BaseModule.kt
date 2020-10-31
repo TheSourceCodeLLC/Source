@@ -41,6 +41,7 @@ class BaseModule(
 
     override fun onEnable() {
         registerCommands(
+            InfoCommand(),
             HelpCommand(),
             GuildInfoCommand(),
             TimingsCommand(),

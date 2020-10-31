@@ -12,7 +12,7 @@ class GuildInfoCommand : RootCommand() {
     override val name = "guildinfo"
     override val description = "Show information about the current guild."
     override val guildOnly = true
-    override val aliases = arrayOf("info", "online", "boosts")
+    override val aliases = arrayOf("online", "boosts")
     override val permission = name
 
     override fun execute(message: Message, args: Arguments): Response {
