@@ -72,7 +72,8 @@ class PermissionHandler(
             add(permission)
             addAll(permission.mapIndexed { idx, c ->
                 if (c == '.') permission.substring(0..idx) + "*" else null
-            }.filterNotNull().toMutableSet()).apply { add("*") }
+            }.filterNotNull().toMutableSet())
+            add("*")
         }
 
     private fun getAllowedContexts(
