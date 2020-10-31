@@ -2,6 +2,7 @@ package net.sourcebot.module.counting
 
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
+import net.sourcebot.Source
 import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.counting.command.CountingCommand
@@ -13,18 +14,18 @@ class Counting : SourceModule() {
     }
 
     override fun onEnable() {
-        source.shardManager.guilds.forEach { guild ->
+        Source.SHARD_MANAGER.guilds.forEach { guild ->
             val countingChannel = getCountingChannel(guild) ?: return@forEach
             countingChannel.upsertPermissionOverride(
                 guild.publicRole
             ).clear(Permission.MESSAGE_WRITE).complete()
         }
         registerCommands(CountingCommand())
-        subscribeEvents(CountingListener(source.commandHandler, source.configurationManager))
+        subscribeEvents(CountingListener())
     }
 
     override fun onDisable() {
-        source.shardManager.guilds.forEach { guild ->
+        Source.SHARD_MANAGER.guilds.forEach { guild ->
             val countingChannel = getCountingChannel(guild) ?: return@forEach
             countingChannel.upsertPermissionOverride(
                 guild.publicRole
@@ -32,7 +33,7 @@ class Counting : SourceModule() {
         }
     }
 
-    private fun getCountingChannel(guild: Guild) = source.configurationManager[guild].optional<String>(
+    private fun getCountingChannel(guild: Guild) = Source.CONFIG_MANAGER[guild].optional<String>(
         "counting.channel"
     )?.let(guild::getTextChannelById)
 }

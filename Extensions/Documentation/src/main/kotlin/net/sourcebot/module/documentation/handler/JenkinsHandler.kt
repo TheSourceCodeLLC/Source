@@ -2,13 +2,11 @@ package net.sourcebot.module.documentation.handler
 
 import me.theforbiddenai.jenkinsparserkotlin.Jenkins
 import me.theforbiddenai.jenkinsparserkotlin.entities.*
-import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import net.dv8tion.jda.api.utils.MarkdownUtil
+import net.sourcebot.Source
 import net.sourcebot.api.formatted
-import net.sourcebot.api.menus.Menu
-import net.sourcebot.api.menus.MenuHandler
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.module.documentation.utility.*
@@ -26,16 +24,12 @@ import java.util.stream.Collectors
  */
 class JenkinsHandler(
     val url: String,
-    private val title: String,
-    private val menuHandler: MenuHandler
+    private val title: String
 ) {
+    private val menuHandler = Source.MENU_HANDLER
     private val jenkins: Jenkins = Jenkins(url)
     private val baseUrl: String by lazy {
         url.substring(0, url.lastIndexOf("/") + 1).trim()
-    }
-
-    fun linkMenu(message: Message, menu: Menu<*>) {
-        menuHandler.link(message, menu)
     }
 
     /**

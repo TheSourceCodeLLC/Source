@@ -3,27 +3,27 @@ package net.sourcebot.impl.command
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
 import net.dv8tion.jda.api.entities.Message
+import net.sourcebot.Source
 import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
-import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.api.response.StandardSuccessResponse
 
-class ConfigurationCommand(
-    private val configurationManager: ConfigurationManager
-) : RootCommand() {
+class ConfigurationCommand : RootCommand() {
     override val name = "configuration"
     override val description = "Utilize the Guild Configuration."
     override val permission = name
     override val guildOnly = true
     override val aliases = arrayOf("config", "configure", "cfg")
     override val cleanupResponse = true
+
+    private val configurationManager = Source.CONFIG_MANAGER
 
     private inner class ConfigurationSetCommand : Bootstrap(
         "set", "Set a configuration value."

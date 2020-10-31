@@ -2,8 +2,6 @@ package net.sourcebot.module.moderation
 
 import net.dv8tion.jda.api.entities.*
 import net.sourcebot.Source
-import net.sourcebot.api.configuration.ConfigurationManager
-import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.durationOf
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.Response
@@ -18,10 +16,10 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.pow
 
-class PunishmentHandler(
-    private val configurationManager: ConfigurationManager,
-    private val mongo: MongoDB
-) {
+class PunishmentHandler {
+    private val configManager = Source.CONFIG_MANAGER
+    private val mongo = Source.MONGODB
+
     fun clearIncident(
         guild: Guild, sender: Member, channel: TextChannel, amount: Int, reason: String
     ) = submitIncident(
@@ -435,14 +433,14 @@ class PunishmentHandler(
 
     private fun getIncidentChannel(
         guild: Guild
-    ) = configurationManager[guild].optional<String>(
+    ) = configManager[guild].optional<String>(
         "moderation.incident-log"
     )?.let(guild::getTextChannelById)
 
     private fun reportCollection(guild: Guild) = mongo.getCollection(guild.id, "reports")
     private fun getReportChannel(
         guild: Guild
-    ) = configurationManager[guild].optional<String>(
+    ) = configManager[guild].optional<String>(
         "moderation.report-log"
     )?.let(guild::getTextChannelById)
 
@@ -467,7 +465,7 @@ class PunishmentHandler(
         )
     }
 
-    private fun getMuteRole(guild: Guild) = configurationManager[guild].optional<String>(
+    private fun getMuteRole(guild: Guild) = configManager[guild].optional<String>(
         "moderation.mute-role"
     )?.let(guild::getRoleById)
 
@@ -489,10 +487,10 @@ class PunishmentHandler(
 
     fun getHistory(member: Member): List<Case> = getHistory(member.guild, member.id)
 
-    fun performTasks(guilds: () -> Collection<Guild>) {
+    fun performTasks() {
         Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(
             {
-                guilds().forEach { guild ->
+                Source.SHARD_MANAGER.guilds.forEach { guild ->
                     expireOldIncidents(guild)
                     doPointDecay(guild)
                 }

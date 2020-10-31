@@ -15,10 +15,6 @@ class Moderation : SourceModule() {
     }
 
     override fun onEnable() {
-        punishmentHandler = PunishmentHandler(
-            source.configurationManager,
-            source.mongodb
-        )
         registerCommands(
             ClearCommand(),
             WarnCommand(),
@@ -34,20 +30,12 @@ class Moderation : SourceModule() {
             PunishCommand(),
             OffensesCommand()
         )
-        subscribeEvents(
-            MessageListener(
-                source.configurationManager,
-                punishmentHandler,
-                { source.commandHandler.isValidCommand(it) == true },
-                source.mongodb
-            )
-        )
-        punishmentHandler.performTasks { source.shardManager.guilds }
+        subscribeEvents(MessageListener())
+        PUNISHMENT_HANDLER.performTasks()
     }
 
     companion object {
         @JvmStatic
-        lateinit var punishmentHandler: PunishmentHandler
-            private set
+        val PUNISHMENT_HANDLER = PunishmentHandler()
     }
 }

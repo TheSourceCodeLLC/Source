@@ -1,7 +1,6 @@
 package net.sourcebot.api.module
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import net.sourcebot.Source
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.module.exception.AmbiguousModuleException
 import net.sourcebot.api.module.exception.InvalidModuleException
@@ -15,31 +14,22 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.jar.JarFile
 
 @Suppress("DEPRECATION", "UNCHECKED_CAST", "UNUSED")
-class ModuleHandler(
-    private val source: Source
-) : ClassLoader() {
+class ModuleHandler : ClassLoader() {
     private val logger: Logger = LoggerFactory.getLogger(ModuleHandler::class.java)
     private val classCache = ConcurrentHashMap<String, Class<*>>()
+    private val moduleIndex = HashMap<String, SourceModule>()
 
-    companion object {
-        private val moduleIndex = HashMap<String, SourceModule>()
+    fun getModules() = moduleIndex.values
 
-        @JvmStatic
-        fun getModules() = moduleIndex.values
+    fun <T : SourceModule> findModule(
+        name: String
+    ) = moduleIndex.values.find { it.name.startsWith(name, true) } as T?
 
-        @JvmStatic
-        fun <T : SourceModule> findModule(
-            name: String
-        ) = moduleIndex.values.find { it.name.startsWith(name, true) } as T?
+    fun <T : SourceModule> getModule(
+        type: Class<T>
+    ) = moduleIndex.values.find { it.javaClass == type } as T?
 
-        @JvmStatic
-        fun <T : SourceModule> getModule(
-            type: Class<T>
-        ) = moduleIndex.values.find { it.javaClass == type } as T?
-
-        @JvmStatic
-        inline fun <reified T : SourceModule> getModule() = getModule(T::class.java)
-    }
+    inline fun <reified T : SourceModule> getModule() = getModule(T::class.java)
 
     public override fun findClass(
         name: String
@@ -158,7 +148,6 @@ class ModuleHandler(
         val mainClass = findClass(descriptor.main, loader)
         val module = mainClass.newInstance() as SourceModule
         module.apply {
-            this.source = this@ModuleHandler.source
             this.classLoader = loader
             this.descriptor = descriptor
             loadModule(this)

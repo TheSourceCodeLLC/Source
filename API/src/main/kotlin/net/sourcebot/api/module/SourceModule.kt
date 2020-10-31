@@ -14,9 +14,6 @@ import java.nio.file.Files
 abstract class SourceModule {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    lateinit var source: Source
-        internal set
-
     lateinit var classLoader: ModuleClassLoader
         internal set
 
@@ -98,16 +95,17 @@ abstract class SourceModule {
     open fun onDisable() = Unit
 
     fun registerCommands(vararg commands: RootCommand) {
-        source.commandHandler.registerCommands(this, *commands)
+        Source.COMMAND_HANDLER.registerCommands(this, *commands)
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun <M : SourceModule> subscribeEvents(
         vararg subscribers: EventSubscriber<M>
     ) = subscribers.forEach {
         it.subscribe(
             this as M,
-            source.jdaEventSystem,
-            source.sourceEventSystem
+            Source.JDA_EVENTS,
+            Source.SOURCE_EVENTS
         )
     }
 }

@@ -5,6 +5,7 @@ import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
+import net.sourcebot.Source
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.profiles.data.ProfileHandler
@@ -17,7 +18,7 @@ class Profiles : SourceModule() {
             .removalListener<Guild, ProfileHandler> { (_, v) -> v.saveAll() }
             .build(object : CacheLoader<Guild, ProfileHandler>() {
                 override fun load(key: Guild) =
-                    ProfileHandler(source.mongodb.getCollection(key.id, "profiles"))
+                    ProfileHandler(Source.MONGODB.getCollection(key.id, "profiles"))
             })
     }
 

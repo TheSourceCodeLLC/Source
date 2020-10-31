@@ -10,22 +10,28 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.dv8tion.jda.api.events.message.guild.react.GenericGuildMessageReactionEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionRemoveEvent
-import net.sourcebot.api.database.MongoDB
+import net.sourcebot.Source
+import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
-import net.sourcebot.api.module.SourceModule
+import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.response.StandardWarningResponse
+import net.sourcebot.module.starboard.Starboard
 import org.bson.Document
 
 class StarboardListener(
-    private val jdaEvents: EventSystem<GenericEvent>,
-    private val mongo: MongoDB,
     private val dataManager: StarboardDataManager
-) {
+) : EventSubscriber<Starboard> {
+    private val mongo = Source.MONGODB
+
     companion object {
         const val UNICODE_STAR = "\u2B50"
     }
 
-    fun listen(module: SourceModule) {
+    override fun subscribe(
+        module: Starboard,
+        jdaEvents: EventSystem<GenericEvent>,
+        sourceEvents: EventSystem<SourceEvent>
+    ) {
         jdaEvents.listen(module, this::onReactionAdd)
         jdaEvents.listen(module, this::onReactionRemove)
         jdaEvents.listen(module, this::onMessageDelete)

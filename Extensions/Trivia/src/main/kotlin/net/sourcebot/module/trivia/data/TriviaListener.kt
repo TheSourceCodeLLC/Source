@@ -3,7 +3,9 @@ package net.sourcebot.module.trivia.data
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
+import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
+import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.module.trivia.Trivia
 
 val validEmotes = arrayOf(
@@ -13,7 +15,7 @@ val validEmotes = arrayOf(
     "\uD83C\uDDE9"
 )
 
-class TriviaListener(trivia: Trivia, events: EventSystem<GenericEvent>) {
+class TriviaListener(trivia: Trivia) : EventSubscriber<Trivia> {
     private val gameMap = HashMap<String, HashMap<String, Int>>()
     private val messageCache = HashMap<String, Message>()
 
@@ -50,7 +52,11 @@ class TriviaListener(trivia: Trivia, events: EventSystem<GenericEvent>) {
         message.removeReaction(unicode, event.user).queue()
     }
 
-    init {
-        events.listen(trivia, this::onReaction)
+    override fun subscribe(
+        module: Trivia,
+        jdaEvents: EventSystem<GenericEvent>,
+        sourceEvents: EventSystem<SourceEvent>
+    ) {
+        jdaEvents.listen(module, this::onReaction)
     }
 }

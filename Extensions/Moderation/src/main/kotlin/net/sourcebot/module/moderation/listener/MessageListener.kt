@@ -4,21 +4,19 @@ import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
+import net.sourcebot.Source
 import net.sourcebot.api.DurationUtils.parseDuration
-import net.sourcebot.api.configuration.ConfigurationManager
-import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.module.moderation.Moderation
-import net.sourcebot.module.moderation.PunishmentHandler
 
-class MessageListener(
-    private val configManager: ConfigurationManager,
-    private val punishmentHandler: PunishmentHandler,
-    private val isCommand: (String) -> Boolean,
-    private val mongo: MongoDB
-) : EventSubscriber<Moderation> {
+class MessageListener : EventSubscriber<Moderation> {
+    private val punishmentHandler = Moderation.PUNISHMENT_HANDLER
+    private val permissionHandler = Source.PERMISSION_HANDLER
+    private val configManager = Source.CONFIG_MANAGER
+    private val mongo = Source.MONGODB
+
     override fun subscribe(
         module: Moderation,
         jdaEvents: EventSystem<GenericEvent>,
@@ -30,7 +28,7 @@ class MessageListener(
     }
 
     private fun onMessageReceive(event: GuildMessageReceivedEvent) {
-        if (isCommand(event.message.contentRaw)) return
+        if (Source.COMMAND_HANDLER.isValidCommand(event.message.contentRaw) == true) return
         val config = configManager[event.guild]
         val mentionThreshold = config.required("moderation.mention-threshold") { 4 }
         if (event.message.mentionedMembers.size >= mentionThreshold) return handleMentionLimit(event, mentionThreshold)
@@ -38,6 +36,9 @@ class MessageListener(
     }
 
     private fun handleMentionLimit(event: GuildMessageReceivedEvent, threshold: Int) {
+        val permData = permissionHandler.getData(event.guild)
+        val user = permData.getUser(event.member!!)
+        if (user.hasPermission("moderation.ignore") == true) return
         val incident = punishmentHandler.muteIncident(
             event.guild.selfMember,
             event.member!!,

@@ -9,10 +9,8 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.sourcebot.Source
 import net.sourcebot.api.command.PermissionCheck.Type.*
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.module.SourceModule
-import net.sourcebot.api.permission.PermissionHandler
 import net.sourcebot.api.response.EmptyResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
@@ -23,10 +21,10 @@ import java.util.concurrent.TimeUnit
 
 class CommandHandler(
     private val defaultPrefix: String,
-    private val deleteSeconds: Long,
-    private val configManager: ConfigurationManager,
-    private val permissionHandler: PermissionHandler
+    private val deleteSeconds: Long
 ) : AbstractMessageHandler() {
+    private val configManager = Source.CONFIG_MANAGER
+    private val permissionHandler = Source.PERMISSION_HANDLER
     private var commandMap = CommandMap<RootCommand>()
 
     override fun cascade(

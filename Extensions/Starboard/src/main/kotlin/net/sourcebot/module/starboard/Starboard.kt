@@ -12,11 +12,6 @@ class Starboard : SourceModule() {
     }
 
     override fun onEnable() {
-        val dataManager = StarboardDataManager(source.configurationManager)
-        StarboardListener(
-            source.jdaEventSystem,
-            source.mongodb,
-            dataManager
-        ).listen(this)
+        subscribeEvents(StarboardListener(StarboardDataManager()))
     }
 }

@@ -4,26 +4,21 @@ import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.menus.MenuHandler
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.JavadocCommand
 import net.sourcebot.module.documentation.handler.JenkinsHandler
 
-class JDACommand(
-    menuHandler: MenuHandler
-) : JavadocCommand(
+class JDACommand : JavadocCommand(
     "jda",
-    "Allows the user to query the JDA Documentation.",
-    menuHandler
+    "Allows the user to query the JDA Documentation."
 ) {
     override val argumentInfo: ArgumentInfo = ArgumentInfo(
         Argument("query", "The item you are searching for in the JDA documentation.")
     )
     private val jenkinsHandler = JenkinsHandler(
         "https://ci.dv8tion.net/job/JDA/javadoc/allclasses.html",
-        "JDA Javadocs",
-        menuHandler
+        "JDA Javadocs"
     )
 
     override fun execute(message: Message, args: Arguments): Response {

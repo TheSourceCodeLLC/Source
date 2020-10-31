@@ -5,21 +5,24 @@ import com.google.common.cache.CacheLoader
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.sourcebot.Source
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.configuration.ConfigurationManager
-import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.AbstractMessageHandler
+import net.sourcebot.api.event.EventSubscriber
+import net.sourcebot.api.event.EventSystem
+import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.response.SourceColor
+import net.sourcebot.module.tags.Tags
 import org.bson.Document
 import java.util.concurrent.TimeUnit
 
-class TagHandler(
-    private val defaultPrefix: String,
-    private val configManager: ConfigurationManager,
-    private val mongodb: MongoDB
-) : AbstractMessageHandler() {
+class TagHandler(private val defaultPrefix: String) : AbstractMessageHandler(), EventSubscriber<Tags> {
+    private val configManager = Source.CONFIG_MANAGER
+    private val mongodb = Source.MONGODB
+
     private val tags = CacheBuilder.newBuilder().weakKeys()
         .expireAfterWrite(10, TimeUnit.MINUTES)
         .build(object : CacheLoader<Guild, TagCache>() {
@@ -54,4 +57,11 @@ class TagHandler(
     ) = configManager[guild].required("tags.prefix") { defaultPrefix }
 
     operator fun get(guild: Guild): TagCache = tags[guild]
+    override fun subscribe(
+        module: Tags,
+        jdaEvents: EventSystem<GenericEvent>,
+        sourceEvents: EventSystem<SourceEvent>
+    ) {
+        jdaEvents.listen(module, this::onMessageReceived)
+    }
 }

@@ -7,8 +7,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent
-import net.sourcebot.api.configuration.ConfigurationManager
-import net.sourcebot.api.database.MongoDB
+import net.sourcebot.Source
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
@@ -16,10 +15,9 @@ import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.module.applications.Applications
 import java.util.concurrent.TimeUnit
 
-class ApplicationHandler(
-    private val mongodb: MongoDB,
-    private val configurationManager: ConfigurationManager
-) : EventSubscriber<Applications> {
+class ApplicationHandler : EventSubscriber<Applications> {
+    private val mongodb = Source.MONGODB
+    private val configurationManager = Source.CONFIG_MANAGER
 
     private val activeApplicationCache = CacheBuilder.newBuilder().weakKeys()
         .expireAfterWrite(45, TimeUnit.MINUTES)

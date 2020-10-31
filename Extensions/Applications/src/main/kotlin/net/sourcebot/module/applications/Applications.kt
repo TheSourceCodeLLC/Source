@@ -15,10 +15,7 @@ class Applications : SourceModule() {
     override fun onEnable() {
         MongoSerial.register(ApplicationModel.Serial())
 
-        val appHandler = ApplicationHandler(
-            source.mongodb,
-            source.configurationManager
-        )
+        val appHandler = ApplicationHandler()
 
         // Add optional customizable cooldowns for each app
         // Add option to open/close apps

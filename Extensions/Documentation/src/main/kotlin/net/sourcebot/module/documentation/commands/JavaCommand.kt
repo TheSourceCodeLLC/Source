@@ -6,18 +6,14 @@ import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
-import net.sourcebot.api.menus.MenuHandler
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.JavadocCommand
 import net.sourcebot.module.documentation.handler.JenkinsHandler
 
-class JavaCommand(
-    private val menuHandler: MenuHandler
-) : JavadocCommand(
+class JavaCommand : JavadocCommand(
     "java",
-    "Allows the user to query the Java Documentation.",
-    menuHandler
+    "Allows the user to query the Java Documentation."
 ) {
     private val defaultVersion = 14
     override val argumentInfo: ArgumentInfo = ArgumentInfo(
@@ -34,7 +30,7 @@ class JavaCommand(
         val connectionString =
             if (version >= 11) "https://docs.oracle.com/en/java/javase/$version/docs/api/overview-tree.html"
             else "https://docs.oracle.com/javase/$version/docs/api/allclasses-noframe.html"
-        JenkinsHandler(connectionString, "Java $version Javadocs", menuHandler)
+        JenkinsHandler(connectionString, "Java $version Javadocs")
     }
 
     override fun execute(message: Message, args: Arguments): Response {

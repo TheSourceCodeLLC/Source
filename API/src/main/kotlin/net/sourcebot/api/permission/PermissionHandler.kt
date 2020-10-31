@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.MessageChannel
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
-import net.sourcebot.api.database.MongoDB
+import net.sourcebot.Source
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.error.InvalidChannelResponse
@@ -13,10 +13,8 @@ import net.sourcebot.api.response.error.NoPermissionDMAllowedResponse
 import net.sourcebot.api.response.error.NoPermissionResponse
 import org.bson.Document
 
-class PermissionHandler(
-    private val mongodb: MongoDB,
-    private val globalAdmins: Set<String>
-) {
+class PermissionHandler(private val globalAdmins: Set<String>) {
+    private val mongodb = Source.MONGODB
     private val dataCache = HashMap<String, PermissionData>()
 
     private fun computeContext(channel: MessageChannel): Set<String> {

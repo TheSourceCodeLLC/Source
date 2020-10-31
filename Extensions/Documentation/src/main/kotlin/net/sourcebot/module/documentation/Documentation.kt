@@ -6,12 +6,11 @@ import net.sourcebot.module.documentation.commands.*
 class Documentation : SourceModule() {
 
     override fun onEnable() {
-        val menuHandler = source.menuHandler
         registerCommands(
-            JDACommand(menuHandler),
-            JavaCommand(menuHandler),
-            SpigotCommand(menuHandler),
-            BungeeCordCommand(menuHandler),
+            JDACommand(),
+            JavaCommand(),
+            SpigotCommand(),
+            BungeeCordCommand(),
             DJSCommand(),
             MDNCommand(),
             KotlinCommand()

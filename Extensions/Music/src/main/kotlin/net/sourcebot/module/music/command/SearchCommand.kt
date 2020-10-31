@@ -5,8 +5,8 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.utils.MarkdownUtil
+import net.sourcebot.Source
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.menus.MenuHandler
 import net.sourcebot.api.menus.MenuResponse
 import net.sourcebot.api.response.EmptyResponse
 import net.sourcebot.api.response.Response
@@ -15,11 +15,10 @@ import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.music.Music
 import net.sourcebot.module.music.youtube.SearchListItem
 
-class SearchCommand(
-    private val menuHandler: MenuHandler
-) : MusicCommand(
+class SearchCommand : MusicCommand(
     "search", "Search for audio on YouTube."
 ) {
+    private val menuHandler = Source.MENU_HANDLER
     override val cleanupResponse = false
     override fun execute(message: Message, args: Arguments): Response {
         val query = args.slurp(" ", "You did not specify a query!")

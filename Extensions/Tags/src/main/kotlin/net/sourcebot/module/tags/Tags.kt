@@ -15,13 +15,9 @@ class Tags : SourceModule() {
     override fun onEnable() {
         MongoSerial.register(Tag.Serial())
 
-        val tagHandler = TagHandler(
-            config.required("prefix"),
-            source.configurationManager,
-            source.mongodb
-        )
+        val tagHandler = TagHandler(config.required("prefix"))
 
-        source.jdaEventSystem.listen(this, tagHandler::onMessageReceived)
         registerCommands(TagsCommand(tagHandler))
+        subscribeEvents(tagHandler)
     }
 }

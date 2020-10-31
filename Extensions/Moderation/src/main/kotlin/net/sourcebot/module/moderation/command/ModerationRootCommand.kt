@@ -8,7 +8,7 @@ abstract class ModerationRootCommand(
     final override val name: String,
     final override val description: String
 ) : RootCommand() {
-    protected val punishmentHandler = Moderation.punishmentHandler
+    protected val punishmentHandler = Moderation.PUNISHMENT_HANDLER
     final override val permission = "moderation.$name"
     final override val guildOnly = true
 }

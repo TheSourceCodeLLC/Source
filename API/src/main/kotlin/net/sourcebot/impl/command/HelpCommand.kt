@@ -1,7 +1,7 @@
 package net.sourcebot.impl.command
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.CommandHandler
+import net.sourcebot.Source
 import net.sourcebot.api.command.PermissionCheck
 import net.sourcebot.api.command.PermissionCheck.Type.GUILD_ONLY
 import net.sourcebot.api.command.PermissionCheck.Type.VALID
@@ -9,19 +9,14 @@ import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
-import net.sourcebot.api.module.ModuleHandler
 import net.sourcebot.api.module.SourceModule
-import net.sourcebot.api.permission.PermissionHandler
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.api.response.error.GlobalAdminOnlyResponse
 import net.sourcebot.api.response.error.GuildOnlyCommandResponse
 
-class HelpCommand(
-    private val permissionHandler: PermissionHandler,
-    private val commandHandler: CommandHandler
-) : RootCommand() {
+class HelpCommand : RootCommand() {
     override val name = "help"
     override val description = "Shows command / module information."
     override val argumentInfo = ArgumentInfo(
@@ -34,11 +29,14 @@ class HelpCommand(
             "The sub-command(s) to get help for, in the case that `topic` is a command."
         )
     )
+    private val permissionHandler = Source.PERMISSION_HANDLER
+    private val commandHandler = Source.COMMAND_HANDLER
+    private val moduleHandler = Source.MODULE_HANDLER
 
     override fun execute(message: Message, args: Arguments): Response {
         val topic = args.next()
         if (topic == null) {
-            val modules = ModuleHandler.getModules()
+            val modules = moduleHandler.getModules()
             val enabled = modules.filter { it.enabled }
             if (enabled.isEmpty()) return StandardInfoResponse(
                 "Module Index",
@@ -91,7 +89,7 @@ class HelpCommand(
                 }
             }
         }
-        val asModule: SourceModule? = ModuleHandler.findModule(topic)
+        val asModule: SourceModule? = moduleHandler.findModule(topic)
         if (asModule != null) {
             val response = StandardInfoResponse("${asModule.name} Module Assistance")
             val config = when {

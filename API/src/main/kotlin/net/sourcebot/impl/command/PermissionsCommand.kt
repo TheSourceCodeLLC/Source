@@ -1,20 +1,18 @@
 package net.sourcebot.impl.command
 
 import net.dv8tion.jda.api.entities.Message
+import net.sourcebot.Source
 import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.permission.PermissionHandler
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.api.response.StandardSuccessResponse
 
-class PermissionsCommand(
-    private val permissionHandler: PermissionHandler
-) : RootCommand() {
+class PermissionsCommand : RootCommand() {
     override val name = "permissions"
     override val description = "Modify Source permissions."
     override val guildOnly = true
@@ -27,6 +25,7 @@ class PermissionsCommand(
     )
     override val aliases = arrayOf("permission", "perms", "perm")
     override val permission = name
+    private val permissionHandler = Source.PERMISSION_HANDLER
 
     override fun execute(message: Message, args: Arguments): Response {
         val permissionData = permissionHandler.getData(message.guild)

@@ -13,7 +13,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 class Game(amount: Int, category: Int?) {
-    private val triviaListener = Trivia.triviaListener
+    private val triviaListener = Trivia.TRIVIA_LISTENER
     private val questions = LinkedList(
         OpenTDB.requestQuestions(amount, category)
     )

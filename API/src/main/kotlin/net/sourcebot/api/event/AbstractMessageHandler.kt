@@ -3,6 +3,7 @@ package net.sourcebot.api.event
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.sourcebot.api.command.argument.Arguments
 
 /**
@@ -12,8 +13,8 @@ import net.sourcebot.api.command.argument.Arguments
  * @author Hunter Wignall
  * @version September 23, 2020
  */
-abstract class AbstractMessageHandler {
-    fun onMessageReceived(event: MessageReceivedEvent) {
+abstract class AbstractMessageHandler : ListenerAdapter() {
+    override fun onMessageReceived(event: MessageReceivedEvent) {
         val message = event.message
         var content = message.contentRaw
         val prefixes = getViablePrefixes(event)

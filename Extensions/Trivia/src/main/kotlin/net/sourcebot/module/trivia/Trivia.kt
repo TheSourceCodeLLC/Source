@@ -7,12 +7,13 @@ import net.sourcebot.module.trivia.data.TriviaListener
 class Trivia : SourceModule() {
 
     override fun onEnable() {
-        triviaListener = TriviaListener(this, source.jdaEventSystem)
+        TRIVIA_LISTENER = TriviaListener(this)
         registerCommands(TriviaCommand())
+        subscribeEvents(TRIVIA_LISTENER)
     }
 
     companion object {
         @JvmStatic
-        lateinit var triviaListener: TriviaListener
+        internal lateinit var TRIVIA_LISTENER: TriviaListener
     }
 }

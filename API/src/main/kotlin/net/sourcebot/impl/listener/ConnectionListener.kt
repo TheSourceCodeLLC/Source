@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.guild.GenericGuildEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent
-import net.sourcebot.api.configuration.ConfigurationManager
+import net.sourcebot.Source
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
@@ -14,9 +14,8 @@ import net.sourcebot.api.response.SimpleErrorResponse
 import net.sourcebot.api.response.SimpleInfoResponse
 import net.sourcebot.impl.BaseModule
 
-class ConnectionListener(
-    private val configurationManager: ConfigurationManager
-) : EventSubscriber<BaseModule> {
+class ConnectionListener : EventSubscriber<BaseModule> {
+    private val configurationManager = Source.CONFIG_MANAGER
     override fun subscribe(
         module: BaseModule,
         jdaEvents: EventSystem<GenericEvent>,

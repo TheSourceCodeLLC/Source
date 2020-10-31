@@ -12,7 +12,7 @@ import net.sourcebot.impl.command.*
 import net.sourcebot.impl.listener.ConnectionListener
 
 class BaseModule(
-    source: Source
+    private val extClassLoader: ClassLoader
 ) : SourceModule() {
     override val configurationInfo = ConfigurationInfo("source") {
         section("connections") {
@@ -23,12 +23,11 @@ class BaseModule(
     }
 
     init {
-        this.source = source
-        classLoader = object : ModuleClassLoader(source.moduleHandler) {
+        classLoader = object : ModuleClassLoader(Source.MODULE_HANDLER) {
             override fun findClass(name: String, searchParent: Boolean): Class<*> {
                 return try {
-                    if (searchParent) source.moduleHandler.findClass(name)
-                    else source.javaClass.classLoader.loadClass(name)
+                    if (searchParent) Source.MODULE_HANDLER.findClass(name)
+                    else extClassLoader.loadClass(name)
                 } catch (ex: Exception) {
                     null
                 } ?: throw ClassNotFoundException(name)
@@ -42,15 +41,13 @@ class BaseModule(
 
     override fun onEnable() {
         registerCommands(
-            HelpCommand(source.permissionHandler, source.commandHandler),
+            HelpCommand(),
             GuildInfoCommand(),
             TimingsCommand(),
-            PermissionsCommand(source.permissionHandler),
-            ConfigurationCommand(source.configurationManager),
-            *lifecycleCommands(source.properties.required("lifecycle"))
+            PermissionsCommand(),
+            ConfigurationCommand(),
+            *lifecycleCommands(Source.properties.required("lifecycle"))
         )
-        subscribeEvents(
-            ConnectionListener(source.configurationManager)
-        )
+        subscribeEvents(ConnectionListener())
     }
 }

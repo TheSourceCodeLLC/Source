@@ -6,18 +6,16 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
-import net.sourcebot.api.command.CommandHandler
-import net.sourcebot.api.configuration.ConfigurationManager
+import net.sourcebot.Source
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.module.counting.Counting
 
-class CountingListener(
-    private val commandHandler: CommandHandler,
-    private val configurationManager: ConfigurationManager
-) : EventSubscriber<Counting> {
+class CountingListener : EventSubscriber<Counting> {
+    private val commandHandler = Source.COMMAND_HANDLER
+    private val configurationManager = Source.CONFIG_MANAGER
     override fun subscribe(
         module: Counting,
         jdaEvents: EventSystem<GenericEvent>,
