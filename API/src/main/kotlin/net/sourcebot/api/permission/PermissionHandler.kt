@@ -68,7 +68,8 @@ class PermissionHandler(
         else getPermissionAlert(true, channel.jda, permissible, node)
 
     private fun getEffectiveNodes(permission: String): Set<String> =
-        mutableSetOf(permission).apply {
+        LinkedHashSet<String>().apply {
+            add(permission)
             addAll(permission.mapIndexed { idx, c ->
                 if (c == '.') permission.substring(0..idx) + "*" else null
             }.filterNotNull().toMutableSet()).apply { add("*") }

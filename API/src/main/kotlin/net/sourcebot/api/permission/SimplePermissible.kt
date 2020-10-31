@@ -40,11 +40,9 @@ abstract class SimplePermissible(
 
     override fun getPermissions(): Collection<SourcePermission> = permissions
 
-    override fun getContexts(node: String): Set<String> {
-        val contexts = mutableSetOf<String>()
-        permissions.forEach {
-            if (it.node == node && it.context != null && it.flag) contexts.add(it.context)
-        }
-        return contexts
-    }
+    override fun getContexts(
+        node: String
+    ) = permissions.filter {
+        it.node == node && it.context != null && it.flag
+    }.mapNotNull(SourcePermission::context).toSet()
 }
