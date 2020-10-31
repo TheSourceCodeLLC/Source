@@ -44,13 +44,8 @@ class PermissionHandler(
         return false
     }
 
-    private fun hasGlobalAccess(
-        id: String
-    ): Boolean = id in globalAdmins
-
-    fun hasGlobalAccess(
-        user: User
-    ): Boolean = hasGlobalAccess(user.id)
+    private fun hasGlobalAccess(id: String) = id in globalAdmins
+    fun hasGlobalAccess(user: User) = hasGlobalAccess(user.id)
 
     fun hasPermission(
         permissible: Permissible,

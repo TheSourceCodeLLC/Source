@@ -18,6 +18,7 @@ class PermissionsCommand(
     override val name = "permissions"
     override val description = "Modify Source permissions."
     override val guildOnly = true
+    override val cleanupResponse = false
     override val argumentInfo = ArgumentInfo(
         Argument("role|user", "The type of entity to modify."),
         Argument("target", "The target to modify."),
