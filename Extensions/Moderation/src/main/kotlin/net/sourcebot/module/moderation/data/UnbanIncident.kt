@@ -10,18 +10,18 @@ import net.sourcebot.api.response.StandardSuccessResponse
 class UnbanIncident(
     override val id: Long,
     private val sender: Member,
-    val unbanned: User,
+    val user: User,
     override val reason: String,
 ) : OneshotIncident() {
     override val source = sender.id
-    override val target = unbanned.id
+    override val target = user.id
     override val type = Incident.Type.UNBAN
 
     private val unban = StandardSuccessResponse(
         "Unban - Case #$id",
         """
             **Unbanned By:** ${sender.formatted()} ($source)
-            **Unbanned User:** ${unbanned.formatted()} ($target)
+            **Unbanned User:** ${user.formatted()} ($target)
             **Reason:** $reason
         """.trimIndent()
     )
@@ -29,10 +29,10 @@ class UnbanIncident(
     override fun execute() {
         //Ignore DM failures
         kotlin.runCatching {
-            val dm = unbanned.openPrivateChannel().complete()
-            dm.sendMessage(unban.asMessage(unbanned)).complete()
+            val dm = user.openPrivateChannel().complete()
+            dm.sendMessage(unban.asMessage(user)).complete()
         }
-        sender.guild.unban(unbanned).complete()
+        sender.guild.unban(user).complete()
     }
 
     override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(

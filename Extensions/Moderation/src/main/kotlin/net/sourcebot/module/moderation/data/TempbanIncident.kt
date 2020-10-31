@@ -12,20 +12,20 @@ import java.time.Duration
 class TempbanIncident(
     override val id: Long,
     private val sender: Member,
-    val tempbanned: Member,
+    val member: Member,
     private val delDays: Int,
-    duration: Duration,
+    val duration: Duration,
     override val reason: String,
-    private val points: Double = 66.7
+    private val points: Double
 ) : SimpleIncident(duration) {
     override val source = sender.id
-    override val target = tempbanned.id
+    override val target = member.id
     override val type = Incident.Type.TEMPBAN
     private val tempban = StandardErrorResponse(
         "Tempban - Case #$id",
         """
             **Tempbanned By:** ${sender.formatted()} ($source)
-            **Tempbanned User:** ${tempbanned.formatted()} ($target)
+            **Tempbanned User:** ${member.formatted()} ($target)
             **Duration:** ${DurationUtils.formatDuration(duration)}
             **Reason:** $reason
         """.trimIndent()
@@ -41,10 +41,10 @@ class TempbanIncident(
     override fun execute() {
         //Ignore DM failures
         kotlin.runCatching {
-            val dm = tempbanned.user.openPrivateChannel().complete()
-            dm.sendMessage(tempban.asMessage(tempbanned)).complete()
+            val dm = member.user.openPrivateChannel().complete()
+            dm.sendMessage(tempban.asMessage(member)).complete()
         }
-        tempbanned.ban(delDays, reason).complete()
+        member.ban(delDays, reason).complete()
     }
 
     override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(

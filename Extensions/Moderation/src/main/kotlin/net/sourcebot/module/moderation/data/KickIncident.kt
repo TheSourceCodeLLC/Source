@@ -10,18 +10,18 @@ import org.bson.Document
 class KickIncident(
     override val id: Long,
     private val sender: Member,
-    val kicked: Member,
+    val member: Member,
     override val reason: String,
-    private val points: Double = 7.4
+    private val points: Double
 ) : OneshotIncident() {
     override val source = sender.id
-    override val target = kicked.id
+    override val target = member.id
     override val type = Incident.Type.KICK
     private val kick = StandardWarningResponse(
         "Kick - Case #$id",
         """
             **Kicked By:** ${sender.formatted()} ($source)
-            **Kicked User:** ${kicked.formatted()} ($target)
+            **Kicked User:** ${member.formatted()} ($target)
             **Reason:** $reason
         """.trimIndent()
     )
@@ -36,10 +36,10 @@ class KickIncident(
     override fun execute() {
         //Ignore DM failures
         kotlin.runCatching {
-            val dm = kicked.user.openPrivateChannel().complete()
-            dm.sendMessage(kick.asMessage(kicked)).complete()
+            val dm = member.user.openPrivateChannel().complete()
+            dm.sendMessage(kick.asMessage(member)).complete()
         }
-        kicked.kick(reason).queue()
+        member.kick(reason).queue()
     }
 
     override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(

@@ -10,23 +10,23 @@ import net.sourcebot.api.response.StandardWarningResponse
 import org.bson.Document
 import java.time.Duration
 
-class MuteIncident @JvmOverloads constructor(
+class MuteIncident(
     override val id: Long,
     private val muteRole: Role,
     private val sender: Member,
-    val muted: Member,
-    duration: Duration,
+    val member: Member,
+    val duration: Duration,
     override val reason: String,
-    private val points: Double = 10.0
+    private val points: Double
 ) : SimpleIncident(duration) {
     override val source = sender.id
-    override val target = muted.id
+    override val target = member.id
     override val type = Incident.Type.MUTE
     private val mute = StandardWarningResponse(
         "Mute - Case #$id",
         """
             **Muted By:** ${sender.formatted()} ($source)
-            **Muted User:** ${muted.formatted()} ($target)
+            **Muted User:** ${member.formatted()} ($target)
             **Duration:** ${DurationUtils.formatDuration(duration)}
             **Reason:** $reason
         """.trimIndent()
@@ -42,10 +42,10 @@ class MuteIncident @JvmOverloads constructor(
     override fun execute() {
         //Ignore DM failures
         kotlin.runCatching {
-            val dm = muted.user.openPrivateChannel().complete()
-            dm.sendMessage(mute.asMessage(muted)).complete()
+            val dm = member.user.openPrivateChannel().complete()
+            dm.sendMessage(mute.asMessage(member)).complete()
         }
-        sender.guild.addRoleToMember(muted, muteRole).complete()
+        sender.guild.addRoleToMember(member, muteRole).complete()
     }
 
     override fun sendLog(logChannel: TextChannel) =

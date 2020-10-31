@@ -67,3 +67,4 @@ object DurationUtils {
 }
 
 fun durationOf(format: String) = DurationUtils.parseDuration(format)
+fun Duration.formatted() = DurationUtils.formatDuration(this)

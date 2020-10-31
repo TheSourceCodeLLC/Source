@@ -6,21 +6,21 @@ import net.sourcebot.api.formatted
 import net.sourcebot.api.response.StandardWarningResponse
 import org.bson.Document
 
-class WarnIncident @JvmOverloads constructor(
+class WarnIncident(
     override val id: Long,
     private val sender: Member,
-    val warned: Member,
+    val member: Member,
     override val reason: String,
-    private val points: Double = 3.7
+    private val points: Double
 ) : OneshotIncident() {
     override val source: String = sender.id
-    override val target: String = warned.id
+    override val target: String = member.id
     override val type = Incident.Type.WARN
     private val warning = StandardWarningResponse(
         "Warning - Case #$id",
         """
             **Warned By:** ${sender.formatted()} ($source)
-            **Warned User:** ${warned.formatted()} ($target)
+            **Warned User:** ${member.formatted()} ($target)
             **Reason:** $reason
         """.trimIndent()
     )
@@ -35,8 +35,8 @@ class WarnIncident @JvmOverloads constructor(
     override fun execute() {
         //Ignore DM failures
         kotlin.runCatching {
-            val dm = warned.user.openPrivateChannel().complete()
-            dm.sendMessage(warning.asMessage(warned.user)).complete()
+            val dm = member.user.openPrivateChannel().complete()
+            dm.sendMessage(warning.asMessage(member.user)).complete()
         }
     }
 
