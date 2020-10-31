@@ -12,7 +12,7 @@ class KickIncident(
     private val sender: Member,
     val kicked: Member,
     override val reason: String,
-    private val points: Double = 20.0
+    private val points: Double = 7.4
 ) : OneshotIncident() {
     override val source = sender.id
     override val target = kicked.id

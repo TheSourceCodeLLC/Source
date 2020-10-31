@@ -16,7 +16,7 @@ class TempbanIncident(
     private val delDays: Int,
     duration: Duration,
     override val reason: String,
-    private val points: Double = 65.0
+    private val points: Double = 66.7
 ) : SimpleIncident(duration) {
     override val source = sender.id
     override val target = tempbanned.id

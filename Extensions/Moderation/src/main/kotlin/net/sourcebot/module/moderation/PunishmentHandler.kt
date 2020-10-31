@@ -18,6 +18,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.math.pow
 
 class PunishmentHandler(
     private val configurationManager: ConfigurationManager,
@@ -224,27 +225,34 @@ class PunishmentHandler(
         description: String
     ) : StandardErrorResponse("Unban Failure!", description)
 
-    private val pointMap = TreeMap<Int, Pair<Type, Duration?>>().apply {
-        put(8, Type.WARN to null)
-        put(11, Type.MUTE to durationOf("15m"))
-        put(16, Type.MUTE to durationOf("30m"))
-        put(21, Type.MUTE to durationOf("1h"))
-        put(26, Type.MUTE to durationOf("2h"))
-        put(31, Type.MUTE to durationOf("3h"))
-        put(36, Type.MUTE to durationOf("4h"))
-        put(41, Type.MUTE to durationOf("5h"))
-        put(46, Type.MUTE to durationOf("6h"))
-        put(51, Type.MUTE to durationOf("1d"))
-        put(56, Type.MUTE to durationOf("2d"))
-        put(61, Type.MUTE to durationOf("3d"))
-        put(66, Type.TEMPBAN to durationOf("1d"))
-        put(71, Type.TEMPBAN to durationOf("2d"))
-        put(76, Type.TEMPBAN to durationOf("3d"))
-        put(81, Type.TEMPBAN to durationOf("4d"))
-        put(86, Type.TEMPBAN to durationOf("5d"))
-        put(91, Type.TEMPBAN to durationOf("1w"))
-        put(96, Type.TEMPBAN to durationOf("2w"))
-        put(100, Type.BAN to null)
+    private val pointMap = TreeMap<Double, Pair<Type, Duration?>>().apply {
+        put(3.7, Type.WARN to null)
+        put(7.4, Type.KICK to null)
+        put(11.1, Type.MUTE to durationOf("30m"))
+        put(14.8, Type.MUTE to durationOf("45m"))
+        put(18.5, Type.MUTE to durationOf("1h"))
+        put(22.2, Type.MUTE to durationOf("3h"))
+        put(25.9, Type.MUTE to durationOf("5h"))
+        put(29.6, Type.MUTE to durationOf("7h"))
+        put(33.3, Type.MUTE to durationOf("1d"))
+        put(37.0, Type.MUTE to durationOf("2d"))
+        put(40.7, Type.MUTE to durationOf("3d"))
+        put(44.4, Type.MUTE to durationOf("4d"))
+        put(48.1, Type.MUTE to durationOf("5d"))
+        put(51.9, Type.MUTE to durationOf("6d"))
+        put(55.6, Type.MUTE to durationOf("1w"))
+        put(59.3, Type.MUTE to durationOf("2w"))
+        put(63.0, Type.MUTE to durationOf("3w"))
+        put(66.7, Type.TEMPBAN to durationOf("2d"))
+        put(70.4, Type.TEMPBAN to durationOf("4d"))
+        put(74.1, Type.TEMPBAN to durationOf("6d"))
+        put(77.8, Type.TEMPBAN to durationOf("1w"))
+        put(81.5, Type.TEMPBAN to durationOf("3w"))
+        put(85.2, Type.TEMPBAN to durationOf("1M"))
+        put(88.9, Type.TEMPBAN to durationOf("2M"))
+        put(92.6, Type.TEMPBAN to durationOf("3M"))
+        put(96.3, Type.TEMPBAN to durationOf("4M"))
+        put(100.00, Type.BAN to null)
     }
 
     fun punishMember(sender: Member, target: Member, id: Int): Response {
@@ -265,7 +273,7 @@ class PunishmentHandler(
         val effective = points + toAdd
         val reason = "${offense["name"] as String} (Punishments vary based on your history)"
         val (type, duration) =
-            (pointMap.ceilingEntry(effective.toInt()) ?: pointMap.floorEntry(effective.toInt())).value
+            (pointMap.ceilingEntry(effective) ?: pointMap.floorEntry(effective)).value
         return when (type) {
             Type.WARN -> submitIncident(guild, {
                 WarnIncident(nextIncidentId(guild), sender, target, reason, toAdd)
@@ -349,13 +357,7 @@ class PunishmentHandler(
         )
     }
 
-    fun getPoints(level: Int) = when (level) {
-        1 -> 2.5
-        2 -> 10.0
-        3 -> 65.0
-        4 -> 100.0
-        else -> 0.0
-    }
+    fun getPoints(level: Int) = 3.7 * 3.0.pow(level - 1.0)
 
     private fun offensesCollection(guild: Guild) =
         mongo.getCollection(guild.id, "offenses")

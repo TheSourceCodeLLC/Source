@@ -11,7 +11,7 @@ class WarnIncident @JvmOverloads constructor(
     private val sender: Member,
     val warned: Member,
     override val reason: String,
-    private val points: Double = 5.0
+    private val points: Double = 3.7
 ) : OneshotIncident() {
     override val source: String = sender.id
     override val target: String = warned.id
