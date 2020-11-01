@@ -1,6 +1,7 @@
 package net.sourcebot.module.moderation.data
 
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
@@ -42,7 +43,7 @@ class KickIncident(
         member.kick(reason).queue()
     }
 
-    override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(
+    override fun sendLog(logChannel: TextChannel): Message = logChannel.sendMessage(
         kick.asMessage(sender)
-    ).queue()
+    ).complete()
 }

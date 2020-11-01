@@ -29,7 +29,7 @@ class ClearIncident(
         messages.forEach { channel.deleteMessages(it).queue() }
     }
 
-    override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(
+    override fun sendLog(logChannel: TextChannel): Message = logChannel.sendMessage(
         StandardInfoResponse(
             "Clear - Case #$id",
             """
@@ -39,7 +39,7 @@ class ClearIncident(
                 **Reason:**: $reason
             """.trimIndent()
         ).asMessage(sender.user)
-    ).queue()
+    ).complete()
 
     override fun asDocument() = super.asDocument().also {
         it["amount"] = amount

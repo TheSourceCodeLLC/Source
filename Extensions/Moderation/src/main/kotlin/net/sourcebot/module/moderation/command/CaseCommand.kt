@@ -36,12 +36,14 @@ class CaseCommand : ModerationRootCommand(
         override val description = "Delete a specific incident."
         override val permission by lazy { "${parent!!.permission!!}.$name" }
         override val argumentInfo = ArgumentInfo(
-            Argument("id", "The ID of the case to delete.")
+            Argument("id", "The ID of the case to delete."),
+            Argument("reason", "Why this case is being deleted.")
         )
 
         override fun execute(message: Message, args: Arguments): Response {
             val id = args.next(Adapter.long(), "You did not specify a valid case ID to delete!")
-            return punishmentHandler.deleteCase(message.guild, id)
+            val reason = args.slurp(" ", "You did not specify a reason for the case deletion!")
+            return punishmentHandler.deleteCase(message.member!!, id, reason)
         }
     }
 

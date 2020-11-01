@@ -1,6 +1,7 @@
 package net.sourcebot.module.moderation.data
 
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.asMessage
@@ -35,7 +36,7 @@ class UnmuteIncident(
         sender.guild.removeRoleFromMember(member, muteRole).complete()
     }
 
-    override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(
+    override fun sendLog(logChannel: TextChannel): Message = logChannel.sendMessage(
         unmute.asMessage(sender)
-    ).queue()
+    ).complete()
 }

@@ -1,6 +1,7 @@
 package net.sourcebot.module.moderation.data
 
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.asMessage
@@ -35,7 +36,7 @@ class UnbanIncident(
         sender.guild.unban(user).complete()
     }
 
-    override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(
+    override fun sendLog(logChannel: TextChannel): Message = logChannel.sendMessage(
         unban.asMessage(sender)
-    ).queue()
+    ).complete()
 }

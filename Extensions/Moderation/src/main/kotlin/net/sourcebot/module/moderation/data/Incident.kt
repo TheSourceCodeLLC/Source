@@ -1,6 +1,7 @@
 package net.sourcebot.module.moderation.data
 
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.Source
 import net.sourcebot.api.DurationUtils
@@ -33,7 +34,7 @@ interface Incident {
         UNBLACKLIST,
         UNMUTE,
         UNBAN,
-        DELETED
+        CASE_DELETE
     }
 }
 
@@ -41,7 +42,7 @@ abstract class ExecutableIncident : Incident {
     final override val time: Instant = Instant.now()
     abstract fun asDocument(): Document
     abstract fun execute()
-    abstract fun sendLog(logChannel: TextChannel)
+    abstract fun sendLog(logChannel: TextChannel): Message
 }
 
 abstract class SimpleIncident(
@@ -81,7 +82,7 @@ abstract class OneshotIncident : ExecutableIncident() {
     override val expiry: Instant? = (document["expiry"] as? Long)?.let(Instant::ofEpochMilli)
 
     val heading = when (type) {
-        Type.DELETED -> "Case Deletion"
+        Type.CASE_DELETE -> "Case Deletion"
         Type.ROLE_UPDATE -> "Role Update"
         else -> type.name.toLowerCase().capitalize()
     }
@@ -89,7 +90,7 @@ abstract class OneshotIncident : ExecutableIncident() {
         type.name.contains("ban", true) -> "${type.name}ned"
         type.name.contains("mute", true) -> "${type.name}d"
         type == Type.ROLE_UPDATE -> "Updated"
-        type == Type.DELETED -> "Deleted"
+        type == Type.CASE_DELETE -> "Deleted"
         else -> "${type.name}ed"
     }.toLowerCase().capitalize()
 
@@ -106,7 +107,7 @@ abstract class OneshotIncident : ExecutableIncident() {
         val header = "$heading - #$id"
         return StandardInfoResponse(header).apply {
             appendDescription("**$action By:** $sender\n")
-            if (type != Type.DELETED) {
+            if (type != Type.CASE_DELETE) {
                 appendDescription("**$action $targetType:** ")
                 appendDescription(
                     (if (targetType == "Channel") guild.getTextChannelById(target)?.let {

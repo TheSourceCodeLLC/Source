@@ -1,6 +1,7 @@
 package net.sourcebot.module.moderation.data
 
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
@@ -43,7 +44,6 @@ class BanIncident(
         member.ban(delDays, reason).complete()
     }
 
-    override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(
-        ban.asMessage(sender)
-    ).queue()
+    override fun sendLog(logChannel: TextChannel): Message =
+        logChannel.sendMessage(ban.asMessage(sender)).complete()
 }

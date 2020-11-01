@@ -524,8 +524,10 @@ class PunishmentHandler {
         return try {
             val incident = supplier()
             incident.execute()
-            incident.sendLog(logChannel)
-            incidentCollection(guild).insertOne(incident.asDocument())
+            val message = incident.sendLog(logChannel)
+            incidentCollection(guild).insertOne(incident.asDocument().also {
+                it["message"] = message.id
+            })
             onSuccess(incident)
         } catch (err: Throwable) {
             onFailure().apply { addField("Exception:", err.toString(), false) }
@@ -586,26 +588,17 @@ class PunishmentHandler {
     fun getCase(guild: Guild, id: Long): Case? =
         incidentCollection(guild).find(Document("_id", id)).first()?.let(::Case)
 
-    fun deleteCase(guild: Guild, id: Long): Response {
-        val collection = incidentCollection(guild)
-        val update = collection.updateOne(
-            Document("_id", id), Document().also { update ->
-                update["\$set"] = Document().also { set ->
-                    set["type"] = "DELETED"
-                    set["reason"] = "This case has been deleted."
-                    set["source"] = guild.selfMember.id
-                    set["target"] = guild.selfMember.id
-                    set["time"] = Instant.now().toEpochMilli()
-                    set["resolved"] = true
-                }
-                update["\$unset"] = Document().also { unset ->
-                    unset["points"] = true
-                    unset["expiry"] = true
-                }
-            })
-        return if (update.modifiedCount == 0L) StandardErrorResponse(
-            "Invalid Case ID!", "There is no case with ID #$id!"
-        ) else StandardSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
+    fun deleteCase(
+        member: Member, id: Long, reason: String
+    ) = member.guild.let { guild ->
+        submitIncident(guild,
+            { CaseDeleteIncident(incidentCollection(guild), id, member, guild.selfMember, reason) },
+            {
+                it.message?.let { getIncidentChannel(guild)?.deleteMessageById(it)?.queue({}, {}) }
+                StandardSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
+            },
+            { StandardErrorResponse("Case Delete Failure!", "Case #$id could not be deleted!") }
+        )
     }
 
     private fun getHistory(guild: Guild, id: String): List<Case> =

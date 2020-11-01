@@ -1,6 +1,7 @@
 package net.sourcebot.module.moderation.data
 
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.asMessage
@@ -47,7 +48,7 @@ class TempbanIncident(
         member.ban(delDays, reason).complete()
     }
 
-    override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(
+    override fun sendLog(logChannel: TextChannel): Message = logChannel.sendMessage(
         tempban.asMessage(sender)
-    ).queue()
+    ).complete()
 }
