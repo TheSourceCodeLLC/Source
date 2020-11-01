@@ -35,7 +35,7 @@ class CaseDeleteIncident(
                 it["type"] = Document("\$ne", "CASE_DELETE")
             }
         ) ?: throw NoSuchElementException(
-            "There is no Case with the ID '$id'!"
+            "Case ID '$id' does not exist or has already been deleted!"
         )
         message = found["message"] as String?
     }
