@@ -44,8 +44,7 @@ import java.util.concurrent.ScheduledExecutorService
 @Suppress("Unused")
 object Source {
     private val logger: Logger = LoggerFactory.getLogger(Source::class.java)
-    @JvmStatic
-    internal val properties: JsonConfiguration
+    @JvmStatic internal val properties: JsonConfiguration
 
     init {
         if (this::SHARD_MANAGER.isInitialized) throw IllegalStateException("Source is already enabled!")
@@ -61,15 +60,12 @@ object Source {
         }.let { JsonSerial.fromFile(it) }
     }
 
-
     private val ignoredIntents = EnumSet.of(
         GUILD_MESSAGE_TYPING, DIRECT_MESSAGE_TYPING
     )
 
-    @JvmStatic
-    val SOURCE_EVENTS = EventSystem<SourceEvent>()
-    @JvmStatic
-    val JDA_EVENTS = EventSystem<GenericEvent>()
+    @JvmStatic val SOURCE_EVENTS = EventSystem<SourceEvent>()
+    @JvmStatic val JDA_EVENTS = EventSystem<GenericEvent>()
 
     private fun registerSerial() {
         MongoSerial.register(SourcePermission.Serial())
@@ -85,59 +81,43 @@ object Source {
         logger.info("All modules have been enabled!")
     }
 
-    @JvmStatic
-    val MODULE_HANDLER = ModuleHandler()
-    @JvmStatic
-    val MENU_HANDLER = MenuHandler()
-    @JvmStatic
-    val MONGODB = MongoDB(properties.required("mongodb"))
-    @JvmStatic
-    val PERMISSION_HANDLER = PermissionHandler(properties.required("global-admins"))
-    @JvmStatic
-    val CONFIG_MANAGER = ConfigurationManager(File("storage"))
-    @JvmStatic
-    val COMMAND_HANDLER = CommandHandler(
+    @JvmStatic val MODULE_HANDLER = ModuleHandler()
+    @JvmStatic val MENU_HANDLER = MenuHandler()
+    @JvmStatic val MONGODB = MongoDB(properties.required("mongodb"))
+    @JvmStatic val PERMISSION_HANDLER = PermissionHandler(properties.required("global-admins"))
+    @JvmStatic val CONFIG_MANAGER = ConfigurationManager(File("storage"))
+    @JvmStatic val COMMAND_HANDLER = CommandHandler(
         properties.required("commands.prefix"),
         properties.required("commands.delete-seconds")
     )
 
-    @JvmStatic
-    val TIME_ZONE: ZoneId = ZoneId.of("America/New_York")
-    @JvmStatic
-    val DATE_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
+    @JvmStatic val TIME_ZONE: ZoneId = ZoneId.of("America/New_York")
+    @JvmStatic val DATE_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
         "MM/dd/yyyy hh:mm:ss a z"
     ).withZone(TIME_ZONE)
 
-    @JvmStatic
-    val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
+    @JvmStatic val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
         "hh:mm:ss a z"
     ).withZone(TIME_ZONE)
 
-    @JvmStatic
-    val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
+    @JvmStatic val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern(
         "MM/dd/yyyy"
     ).withZone(TIME_ZONE)
 
     private val numCores = Runtime.getRuntime().availableProcessors()
-
-    @JvmField
-    val EXECUTOR_SERVICE: ExecutorService = Executors.newFixedThreadPool(2 * numCores)
-    @JvmField
-    val SCHEDULED_EXECUTOR_SERVICE: ScheduledExecutorService = Executors.newScheduledThreadPool(
+    @JvmField val EXECUTOR_SERVICE: ExecutorService = Executors.newFixedThreadPool(2 * numCores)
+    @JvmField val SCHEDULED_EXECUTOR_SERVICE: ScheduledExecutorService = Executors.newScheduledThreadPool(
         2 * numCores
     )
 
-    @JvmStatic
-    lateinit var SHARD_MANAGER: ShardManager
+    @JvmStatic lateinit var SHARD_MANAGER: ShardManager
 
-    @JvmStatic
-    fun main(args: Array<String>) {
+    @JvmStatic fun main(args: Array<String>) {
         SysOutOverSLF4J.sendSystemOutAndErrToSLF4J()
         start()
     }
 
-    @JvmStatic
-    fun start() {
+    @JvmStatic fun start() {
         StandardEmbedResponse.footer = properties.required("embed-response.footer")
         LoggerConfiguration.LOG_LEVEL = properties.required<String>("log-level").let {
             Level.toLevel(it, Level.INFO)

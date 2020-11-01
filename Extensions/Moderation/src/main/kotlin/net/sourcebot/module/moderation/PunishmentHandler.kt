@@ -255,7 +255,13 @@ class PunishmentHandler {
         )
         return submitIncident(guild,
             { UnmuteIncident(nextIncidentId(guild), muteRole, sender, member, reason) },
-            { UnmuteSuccessResponse(it.id, it.member, it.reason) },
+            {
+                incidentCollection(guild).updateMany(
+                    Document("type", Document("\$in", arrayOf("MUTE"))),
+                    Document("\$set", Document("resolved", true))
+                )
+                UnmuteSuccessResponse(it.id, it.member, it.reason)
+            },
             { UnmuteFailureResponse("Could not execute unmute incident!") }
         )
     }
@@ -282,7 +288,13 @@ class PunishmentHandler {
         }
         return submitIncident(guild,
             { UnbanIncident(nextIncidentId(guild), sender, ban.user, reason) },
-            { UnbanSuccessResponse(it.id, it.user, it.reason) },
+            {
+                incidentCollection(guild).updateMany(
+                    Document("type", Document("\$in", arrayOf("TEMPBAN", "BAN"))),
+                    Document("\$set", Document("resolved", true))
+                )
+                UnbanSuccessResponse(it.id, it.user, it.reason)
+            },
             { UnbanFailureResponse("Could not execute unban incident!") }
         )
     }
