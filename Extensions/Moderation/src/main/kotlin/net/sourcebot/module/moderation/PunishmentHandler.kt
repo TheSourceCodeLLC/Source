@@ -183,7 +183,9 @@ class PunishmentHandler {
         return submitBlacklist(guild, blacklistRole, sender, member, duration, reason)
     }
 
-    private fun getBlacklist(guild: Guild, id: Int) = blacklistsCollection(guild).find(Document("_id", id)).first()
+    private fun getBlacklist(guild: Guild, id: Int) =
+        blacklistsCollection(guild).find(Document("_id", id)).sortedBy { it["duration"] as Long }.getOrNull(id)
+
     private fun blacklistsCollection(guild: Guild) = mongo.getCollection(guild.id, "blacklists")
 
     private fun submitBlacklist(
@@ -238,10 +240,12 @@ class PunishmentHandler {
 
     fun getBlacklists(
         guild: Guild
-    ) = blacklistsCollection(guild).find().map {
+    ) = blacklistsCollection(guild).find().sortedBy {
+        it["duration"] as Long
+    }.map {
         DurationUtils.formatSeconds(it["duration"] as Long) to it["reason"] as String
     }.withIndex().associateByTo(
-        HashMap(), { it.index }, { it.value }
+        TreeMap(), { it.index }, { it.value }
     )
 
     fun tempbanIncident(
@@ -512,7 +516,9 @@ class PunishmentHandler {
 
     private fun getOffense(
         guild: Guild, id: Int
-    ): Document? = offensesCollection(guild).find(Document("_id", id)).first()
+    ): Document? = offensesCollection(guild).find().sortedBy {
+        it["level"] as Int
+    }.getOrNull(id)
 
     fun getOffenses(
         guild: Guild
