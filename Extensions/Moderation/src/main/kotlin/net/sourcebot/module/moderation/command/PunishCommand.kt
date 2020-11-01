@@ -21,6 +21,6 @@ class PunishCommand : ModerationRootCommand(
             Adapter.int(1, error = "Offense ID must be at least 1!"),
             "You did not specify an offense ID!"
         )
-        return punishmentHandler.punishMember(message.member!!, target, id - 1)
+        return punishmentHandler.punishMember(message.member!!, target, id)
     }
 }

@@ -71,7 +71,7 @@ class OffensesCommand : ModerationRootCommand(
                 Adapter.int(1, error = "The ID must be at least 1!"),
                 "You did not specify an offense ID to remove!"
             )
-            return punishmentHandler.removeOffense(message.guild, id - 1)
+            return punishmentHandler.removeOffense(message.guild, id)
         }
     }
 

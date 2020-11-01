@@ -23,7 +23,7 @@ class BlacklistCommand : ModerationRootCommand(
             Adapter.int(1, error = "Blacklist ID must be at least 1!"),
             "You did not specify a valid blacklist ID to apply!"
         )
-        return punishmentHandler.blacklistIncident(message.member!!, target, id - 1)
+        return punishmentHandler.blacklistIncident(message.member!!, target, id)
     }
 
     private inner class BlacklistsAddCommand : ModerationCommand(
@@ -56,7 +56,7 @@ class BlacklistCommand : ModerationRootCommand(
                 Adapter.int(1, error = "The ID must be at least 1!"),
                 "You did not specify a blacklist ID to remove!"
             )
-            return punishmentHandler.removeBlacklist(message.guild, id - 1)
+            return punishmentHandler.removeBlacklist(message.guild, id)
         }
     }
 

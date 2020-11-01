@@ -184,7 +184,7 @@ class PunishmentHandler {
     }
 
     private fun getBlacklist(guild: Guild, id: Int) =
-        blacklistsCollection(guild).find(Document("_id", id)).sortedBy { it["duration"] as Long }.getOrNull(id)
+        blacklistsCollection(guild).find().sortedBy { it["duration"] as Long }.getOrNull(id - 1)
 
     private fun blacklistsCollection(guild: Guild) = mongo.getCollection(guild.id, "blacklists")
 
@@ -518,7 +518,7 @@ class PunishmentHandler {
         guild: Guild, id: Int
     ): Document? = offensesCollection(guild).find().sortedBy {
         it["level"] as Int
-    }.getOrNull(id)
+    }.getOrNull(id - 1)
 
     fun getOffenses(
         guild: Guild
@@ -544,8 +544,7 @@ class PunishmentHandler {
     }
 
     fun removeOffense(guild: Guild, id: Int): Response {
-        val offenses = getOffenses(guild)
-        val toRemove = offenses[id] ?: return StandardErrorResponse(
+        val toRemove = getOffense(guild, id) ?: return StandardErrorResponse(
             "Invalid Offense!", "There is no offense with the ID `$id`!"
         )
         val level = toRemove["level"] as Int
