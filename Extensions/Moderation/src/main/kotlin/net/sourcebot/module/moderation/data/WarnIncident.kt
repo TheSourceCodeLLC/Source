@@ -1,6 +1,7 @@
 package net.sourcebot.module.moderation.data
 
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.StandardWarningResponse
@@ -40,7 +41,7 @@ class WarnIncident(
         }
     }
 
-    override fun sendLog(logChannel: TextChannel) = logChannel.sendMessage(
+    override fun sendLog(logChannel: TextChannel): Message = logChannel.sendMessage(
         warning.asMessage(sender.user)
-    ).queue()
+    ).complete()
 }
