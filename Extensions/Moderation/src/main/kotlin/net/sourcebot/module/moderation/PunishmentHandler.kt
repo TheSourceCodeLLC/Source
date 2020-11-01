@@ -257,7 +257,7 @@ class PunishmentHandler {
             { UnmuteIncident(nextIncidentId(guild), muteRole, sender, member, reason) },
             {
                 incidentCollection(guild).updateMany(
-                    Document("type", Document("\$in", arrayOf("MUTE"))),
+                    Document("type", "MUTE"),
                     Document("\$set", Document("resolved", true))
                 )
                 UnmuteSuccessResponse(it.id, it.member, it.reason)
