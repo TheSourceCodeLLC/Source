@@ -32,7 +32,7 @@ class CaseDeleteIncident(
         val found = collection.findOneAndDelete(
             Document().also {
                 it["_id"] = id
-                it["type"] = Document("\$neq", "CASE_DELETE")
+                it["type"] = Document("\$ne", "CASE_DELETE")
             }
         ) ?: throw NoSuchElementException(
             "There is no Case with the ID '$id'!"
