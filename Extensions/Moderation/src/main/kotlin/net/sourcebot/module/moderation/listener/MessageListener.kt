@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
+import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import net.sourcebot.Source
 import net.sourcebot.api.DurationUtils.parseDuration
 import net.sourcebot.api.event.EventSubscriber
@@ -25,6 +26,7 @@ class MessageListener : EventSubscriber<Moderation> {
         jdaEvents.listen(module, this::onMessageReceive)
         jdaEvents.listen(module, this::onMessageEdit)
         jdaEvents.listen(module, this::onMessageDelete)
+        jdaEvents.listen(module, this::handleReportReaction)
     }
 
     private fun onMessageReceive(event: GuildMessageReceivedEvent) {
@@ -46,6 +48,18 @@ class MessageListener : EventSubscriber<Moderation> {
             "Mention Spam Threshold Reached ($threshold Members)"
         )
         event.channel.sendMessage(incident.asMessage(event.jda.selfUser)).queue()
+    }
+
+    private fun handleReportReaction(event: GuildMessageReactionAddEvent) {
+        if (event.channel != punishmentHandler.getReportChannel(event.guild)) return
+        if (event.user == event.jda.selfUser) return
+        event.reactionEmote.let {
+            if (it.isEmote) return
+            if (it.name != "✅" && it.name != "❌") return
+        }
+        val message = event.retrieveMessage().complete()
+        val embed = message.embeds.getOrNull(0) ?: return
+        message.channel.sendMessage("That is not implemented yet!").queue()
     }
 
     private fun onMessageEdit(event: GuildMessageUpdateEvent) {

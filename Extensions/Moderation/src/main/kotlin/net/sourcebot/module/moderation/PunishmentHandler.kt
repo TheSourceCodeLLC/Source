@@ -593,7 +593,7 @@ class PunishmentHandler {
     )?.let(guild::getTextChannelById)
 
     private fun reportCollection(guild: Guild) = mongo.getCollection(guild.id, "reports")
-    private fun getReportChannel(
+    fun getReportChannel(
         guild: Guild
     ) = configManager[guild].optional<String>(
         "moderation.report-log"

@@ -48,6 +48,9 @@ class Report(
                 **Reason:** $reason
             """.trimIndent()
         )
-        logChannel.sendMessage(header).embed(embed.asEmbed(targetMember.user)).queue()
+        logChannel.sendMessage(header).embed(embed.asEmbed(targetMember.user)).queue {
+            it.addReaction("✅").queue()
+            it.addReaction("❌").queue()
+        }
     }
 }
