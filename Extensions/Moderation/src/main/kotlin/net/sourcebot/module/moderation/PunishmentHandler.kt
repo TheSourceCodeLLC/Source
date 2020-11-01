@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.*
 import net.sourcebot.Source
 import net.sourcebot.api.durationOf
 import net.sourcebot.api.formatted
+import net.sourcebot.api.response.EmptyResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
@@ -558,7 +559,7 @@ class PunishmentHandler {
         )
         val collection = reportCollection(guild)
         val id = collection.countDocuments() + 1
-        Report(id, sender, target, reason).also {
+        Report(id, sender.id, target.id, reason).also {
             collection.insertOne(it.asDocument())
             it.send(channel)
         }
@@ -567,6 +568,10 @@ class PunishmentHandler {
             "You have submit a report against ${target.formatted()}!"
         )
     }
+
+    fun getReportsAgainst(
+        member: Member
+    ) = reportCollection(member.guild).find(Document("target", member.id)).map(::Report).toList()
 
     private fun getMuteRole(guild: Guild) = configManager[guild].optional<String>(
         "moderation.mute-role"
@@ -654,4 +659,16 @@ class PunishmentHandler {
         }
 
     fun getPoints(member: Member) = getPoints(member.guild, member.id)
+
+    fun addBlacklist(guild: Guild, duration: Duration, reason: String): Response {
+        return EmptyResponse()
+    }
+
+    fun removeBlacklist(guild: Guild, id: Int): Response {
+        return EmptyResponse()
+    }
+
+    fun listBlacklists(guild: Guild): Response {
+        return EmptyResponse()
+    }
 }

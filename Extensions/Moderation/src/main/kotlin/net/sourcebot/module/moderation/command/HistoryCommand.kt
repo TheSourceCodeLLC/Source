@@ -8,6 +8,7 @@ import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.api.zipAll
 
 class HistoryCommand : ModerationRootCommand(
     "history", "Show punishment histories."
@@ -20,28 +21,42 @@ class HistoryCommand : ModerationRootCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild)) ?: message.member!!
         val header = "${target.user.asTag}'s History"
-        val history = punishmentHandler.getHistory(target)
-        if (history.isEmpty()) return StandardInfoResponse(
+        val historyList = punishmentHandler.getHistory(target)
+        val reportList = punishmentHandler.getReportsAgainst(target)
+        if (historyList.isEmpty() && reportList.isEmpty()) return StandardInfoResponse(
             header, "This user does not have any history."
         )
-        val pages = Lists.partition(history, 5)
+        val historyPages = Lists.partition(historyList, 5)
+        val reportPages = Lists.partition(reportList, 5)
+        val pages = historyPages.zipAll(reportPages)
         val pageNum = args.next(
             Adapter.int(1, pages.size, "You specified an invalid page number!")
         ) ?: 1
-        val page = pages[pageNum - 1]
+        val (history, reports) = pages[pageNum - 1]
         return StandardInfoResponse(
             header,
             """
                 **Punishment Points:** ${punishmentHandler.getPoints(target)}
                 
-                **Incidents:**
                 ${
-                page.joinToString("\n") {
-                    "**${it.id}:** ${it.heading}: _${it.reason}_"
-                }
+                if (history?.isNotEmpty() == true) {
+                    """
+                          **Incidents:**
+                          ${history.joinToString("\n") { "**${it.id}:** ${it.heading}: _${it.reason}_" }}
+                      """.trimIndent()
+                } else ""
+            }
+                
+                ${
+                if (reports?.isNotEmpty() == true) {
+                    """
+                        **Reports:**
+                        ${reports.joinToString("\n") { "**${it.id}**: _${it.reason}_" }}
+                    """.trimIndent()
+                } else ""
             }
             
-            Page $pageNum / ${pages.size}
+            Page $pageNum / ${historyPages.size}
             """.trimIndent()
         )
     }

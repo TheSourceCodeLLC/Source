@@ -8,6 +8,7 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import kotlin.math.max
 
 fun String.urlEncoded(charset: Charset = StandardCharsets.UTF_8): String = URLEncoder.encode(this, charset)
 fun String.urlDecoded(charset: Charset = StandardCharsets.UTF_8): String = URLDecoder.decode(this, charset)
@@ -21,3 +22,6 @@ fun Response.asMessage(member: Member) = asMessage(member.user)
 @JvmOverloads
 fun String.truncate(limit: Int, ellipsis: String = "..."): String =
     if (length <= limit) this else substring(0, limit - ellipsis.length) + ellipsis
+
+fun <A, B> List<A>.zipAll(other: List<B>) =
+    (0 until max(size, other.size)).map { getOrNull(it) to other.getOrNull(it) }.toList()
