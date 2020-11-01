@@ -32,7 +32,8 @@ interface Incident {
         BAN,
         UNBLACKLIST,
         UNMUTE,
-        UNBAN
+        UNBAN,
+        DELETED
     }
 }
 
@@ -80,6 +81,7 @@ abstract class OneshotIncident : ExecutableIncident() {
     override val expiry: Instant? = (document["expiry"] as? Long)?.let(Instant::ofEpochMilli)
 
     val heading = when (type) {
+        Type.DELETED -> "Case Deletion"
         Type.ROLE_UPDATE -> "Role Update"
         else -> type.name.toLowerCase().capitalize()
     }
@@ -87,6 +89,7 @@ abstract class OneshotIncident : ExecutableIncident() {
         type.name.contains("ban", true) -> "${type.name}ned"
         type.name.contains("mute", true) -> "${type.name}d"
         type == Type.ROLE_UPDATE -> "Updated"
+        type == Type.DELETED -> "Deleted"
         else -> "${type.name}ed"
     }.toLowerCase().capitalize()
 
@@ -103,16 +106,18 @@ abstract class OneshotIncident : ExecutableIncident() {
         val header = "$heading - #$id"
         return StandardInfoResponse(header).apply {
             appendDescription("**$action By:** $sender\n")
-            appendDescription("**$action $targetType:** ")
-            appendDescription(
-                (if (targetType == "Channel") guild.getTextChannelById(target)?.let {
-                    "${it.name} ($target)"
-                }
-                else guild.getMemberById(target)?.let {
-                    "${it.formatted()} ($target)"
-                }) ?: target
-            )
-            appendDescription("\n")
+            if (type != Type.DELETED) {
+                appendDescription("**$action $targetType:** ")
+                appendDescription(
+                    (if (targetType == "Channel") guild.getTextChannelById(target)?.let {
+                        "${it.name} ($target)"
+                    }
+                    else guild.getMemberById(target)?.let {
+                        "${it.formatted()} ($target)"
+                    }) ?: target
+                )
+                appendDescription("\n**Reason:** $reason\n")
+            }
             when (type) {
                 Type.MUTE, Type.TEMPBAN, Type.BLACKLIST -> {
                     val duration = expiry!!.minusSeconds(this@Case.time.epochSecond).let {
@@ -134,7 +139,6 @@ abstract class OneshotIncident : ExecutableIncident() {
                     appendDescription("**Role $kind**: $role\n")
                 }
             }
-            appendDescription("**Reason:** $reason\n")
             appendDescription("**Date & Time:** $time")
         }
     }

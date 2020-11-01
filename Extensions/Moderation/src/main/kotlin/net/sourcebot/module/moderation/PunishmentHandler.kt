@@ -588,10 +588,24 @@ class PunishmentHandler {
 
     fun deleteCase(guild: Guild, id: Long): Response {
         val collection = incidentCollection(guild)
-        return collection.find(Document("_id", id)).first()?.let {
-            collection.deleteOne(Document("_id", id))
-            StandardSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
-        } ?: StandardErrorResponse("Invalid Case ID!", "There is no case with ID #$id!")
+        val update = collection.updateOne(
+            Document("_id", id), Document().also { update ->
+                update["\$set"] = Document().also { set ->
+                    set["type"] = "DELETED"
+                    set["reason"] = "This case has been deleted."
+                    set["source"] = guild.selfMember.id
+                    set["target"] = guild.selfMember.id
+                    set["time"] = Instant.now().toEpochMilli()
+                    set["resolved"] = true
+                }
+                update["\$unset"] = Document().also { unset ->
+                    unset["points"] = true
+                    unset["expiry"] = true
+                }
+            })
+        return if (update.modifiedCount == 0L) StandardErrorResponse(
+            "Invalid Case ID!", "There is no case with ID #$id!"
+        ) else StandardSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
     }
 
     private fun getHistory(guild: Guild, id: String): List<Case> =
