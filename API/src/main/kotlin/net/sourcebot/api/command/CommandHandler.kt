@@ -135,7 +135,7 @@ class CommandHandler(
                     it.delete().complete()
                 } catch (err: Throwable) {
                 }
-            }, deleteSeconds, TimeUnit.SECONDS)
+            }, command.deleteSeconds ?: deleteSeconds, TimeUnit.SECONDS)
         }
     }
 

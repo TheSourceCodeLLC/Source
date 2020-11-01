@@ -3,7 +3,9 @@ package net.sourcebot.api
 import com.fasterxml.jackson.core.type.TypeReference
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.User
+import net.sourcebot.api.response.EmbedResponse
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.WrappedEmbedResponse
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.Charset
@@ -25,3 +27,6 @@ fun String.truncate(limit: Int, ellipsis: String = "..."): String =
 
 fun <A, B> List<A>.zipAll(other: List<B>) =
     (0 until max(size, other.size)).map { getOrNull(it) to other.getOrNull(it) }.toList()
+
+fun EmbedResponse.wrapped(forWho: User) = WrappedEmbedResponse(this.asEmbed(forWho))
+fun EmbedResponse.wrapped(forWho: Member) = this.wrapped(forWho.user)

@@ -549,17 +549,19 @@ class PunishmentHandler {
     )?.let(guild::getTextChannelById)
 
     fun submitReport(
-        sender: Member,
+        message: Message,
         target: Member,
-        reason: String
+        reason: String,
     ): Response {
-        val guild = sender.guild
+        val guild = message.guild
+        val sender = message.member!!
+        val fromChannel = message.textChannel
         val channel = getReportChannel(guild) ?: return StandardErrorResponse(
             "No Log Channel!", "The report log has not been configured!"
         )
-        val collection = reportCollection(guild)
+        val collection = reportCollection(message.guild)
         val id = collection.countDocuments() + 1
-        Report(id, sender.id, target.id, reason).also {
+        Report(id, sender.id, target.id, reason, fromChannel.id).also {
             collection.insertOne(it.asDocument())
             it.send(channel)
         }

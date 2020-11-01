@@ -23,9 +23,13 @@ class EmptyResponse : Response {
 }
 
 /**
- * Represents a [Response] that renders as a [MessageEmbed]
+ * A type of [Response] that holds a [MessageEmbed] value
  */
-abstract class SimpleEmbedResponse : Response, EmbedBuilder() {
+class WrappedEmbedResponse(private val wrapped: MessageEmbed) : Response {
+    override fun asMessage(user: User) = MessageBuilder(wrapped).build()
+}
+
+abstract class EmbedResponse : Response, EmbedBuilder() {
     final override fun asMessage(
         user: User
     ): Message = MessageBuilder(asEmbed(user)).build()
@@ -34,14 +38,14 @@ abstract class SimpleEmbedResponse : Response, EmbedBuilder() {
 }
 
 /**
- * Represents a [SimpleEmbedResponse] with standard information applied.
+ * Represents a [EmbedResponse] with standard information applied.
  * Resultant embeds may be personalized for a [User] by rendering their profile photo as the author thumbnail.
  * Alerts also have a timestamp and footer.
  */
 abstract class StandardEmbedResponse @JvmOverloads constructor(
     protected var title: String? = null,
     protected var description: String? = null
-) : SimpleEmbedResponse() {
+) : EmbedResponse() {
     companion object {
         @JvmStatic
         var footer: String? = null
@@ -63,11 +67,11 @@ abstract class StandardEmbedResponse @JvmOverloads constructor(
 }
 
 /**
- * Represents an [SimpleEmbedResponse] with a given [Color]
+ * Represents an [EmbedResponse] with a given [Color]
  */
-abstract class SimpleColoredResponse(
+abstract class ColoredResponse(
     color: Color
-) : SimpleEmbedResponse() {
+) : EmbedResponse() {
     constructor(color: SourceColor) : this(color.color)
 
     init {
@@ -97,24 +101,24 @@ abstract class StandardColoredResponse @JvmOverloads constructor(
 }
 
 /**
- * Represents a [SimpleColoredResponse] using the color [SourceColor.INFO]
+ * Represents a [ColoredResponse] using the color [SourceColor.INFO]
  */
-open class SimpleInfoResponse : SimpleColoredResponse(SourceColor.INFO)
+open class InfoResponse : ColoredResponse(SourceColor.INFO)
 
 /**
- * Represents a [SimpleColoredResponse] using the color [SourceColor.SUCCESS]
+ * Represents a [ColoredResponse] using the color [SourceColor.SUCCESS]
  */
-open class SimpleSuccessResponse : SimpleColoredResponse(SourceColor.SUCCESS)
+open class SuccessResponse : ColoredResponse(SourceColor.SUCCESS)
 
 /**
- * Represents a [SimpleColoredResponse] using the color [SourceColor.WARNING]
+ * Represents a [ColoredResponse] using the color [SourceColor.WARNING]
  */
-open class SimpleWarningResponse : SimpleColoredResponse(SourceColor.WARNING)
+open class WarningResponse : ColoredResponse(SourceColor.WARNING)
 
 /**
- * Represents a [SimpleColoredResponse] using the color [SourceColor.ERROR]
+ * Represents a [ColoredResponse] using the color [SourceColor.ERROR]
  */
-open class SimpleErrorResponse : SimpleColoredResponse(SourceColor.ERROR)
+open class ErrorResponse : ColoredResponse(SourceColor.ERROR)
 
 /**
  * Represents a [StandardColoredResponse] using the color [SourceColor.INFO]

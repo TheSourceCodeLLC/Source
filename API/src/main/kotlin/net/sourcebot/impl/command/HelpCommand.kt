@@ -29,6 +29,8 @@ class HelpCommand : RootCommand() {
             "The sub-command(s) to get help for, in the case that `topic` is a command."
         )
     )
+    override val deleteSeconds = 60L
+
     private val permissionHandler = Source.PERMISSION_HANDLER
     private val commandHandler = Source.COMMAND_HANDLER
     private val moduleHandler = Source.MODULE_HANDLER

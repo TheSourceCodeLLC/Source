@@ -8,6 +8,7 @@ import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.api.wrapped
 import net.sourcebot.api.zipAll
 
 class HistoryCommand : ModerationRootCommand(
@@ -34,30 +35,27 @@ class HistoryCommand : ModerationRootCommand(
         ) ?: 1
         val (history, reports) = pages[pageNum - 1]
         return StandardInfoResponse(
-            header,
-            """
-                **Punishment Points:** ${punishmentHandler.getPoints(target)}
-                
-                ${
-                if (history?.isNotEmpty() == true) {
+            header, "**Punishment Points:** ${punishmentHandler.getPoints(target)}"
+        ).apply {
+            if (history?.isNotEmpty() == true) {
+                appendDescription(
                     """
-                          **Incidents:**
-                          ${history.joinToString("\n") { "**${it.id}:** ${it.heading}: _${it.reason}_" }}
-                      """.trimIndent()
-                } else ""
+                        
+                        **Incidents:**
+                        ${history.joinToString("\n") { "**${it.id}:** ${it.heading}: _${it.reason}_" }}
+                    """.trimIndent()
+                )
             }
-                
-                ${
-                if (reports?.isNotEmpty() == true) {
+            if (reports?.isNotEmpty() == true) {
+                appendDescription(
                     """
+                        
                         **Reports:**
                         ${reports.joinToString("\n") { "**${it.id}**: _${it.reason}_" }}
                     """.trimIndent()
-                } else ""
+                )
             }
-            
-            Page $pageNum / ${historyPages.size}
-            """.trimIndent()
-        )
+            appendDescription("\nPage $pageNum / ${historyPages.size}")
+        }.wrapped(target)
     }
 }

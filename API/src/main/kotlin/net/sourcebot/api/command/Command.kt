@@ -26,6 +26,7 @@ abstract class Command {
     }
 
     open val cleanupResponse = true
+    open val deleteSeconds: Long? = null
     open var parent: Command? = null
 
     open val requiresGlobal = false

@@ -11,6 +11,7 @@ class Report(
     val sender: String,
     val target: String,
     val reason: String,
+    val channel: String,
     val time: Long = Instant.now().toEpochMilli()
 ) {
     constructor(document: Document) : this(
@@ -18,6 +19,7 @@ class Report(
         document["sender"] as String,
         document["target"] as String,
         document["reason"] as String,
+        document["channel"] as String,
         document["time"] as Long
     )
 
@@ -29,21 +31,23 @@ class Report(
         it["time"] = time
     }
 
-    fun send(channel: TextChannel) {
-        val guild = channel.guild
+    fun send(logChannel: TextChannel) {
+        val guild = logChannel.guild
         val senderMember = guild.getMemberById(sender)!!
         val targetMember = guild.getMemberById(target)!!
+        val fromChannel = guild.getTextChannelById(channel)!!
         val header = """
-            ${channel.guild.publicRole.asMention}
+            ${guild.publicRole.asMention}
             A report has been made against **${targetMember.formatted()}** by **${senderMember.formatted()}**
         """.trimIndent()
         val embed = StandardErrorResponse(
             "Report #$id", """
-                **Reported By:** ${senderMember.formatted()} (${sender})
-                **Reported User:** ${targetMember.formatted()} (${target})
+                **Reported By:** ${senderMember.formatted()} ($sender)
+                **Reported User:** ${targetMember.formatted()} ($target)
+                **Channel:** ${fromChannel.name} ($channel)
                 **Reason:** $reason
             """.trimIndent()
         )
-        channel.sendMessage(header).embed(embed.asEmbed(targetMember.user)).queue()
+        logChannel.sendMessage(header).embed(embed.asEmbed(targetMember.user)).queue()
     }
 }

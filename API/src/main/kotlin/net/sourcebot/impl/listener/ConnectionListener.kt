@@ -10,8 +10,8 @@ import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.formatted
-import net.sourcebot.api.response.SimpleErrorResponse
-import net.sourcebot.api.response.SimpleInfoResponse
+import net.sourcebot.api.response.ErrorResponse
+import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.impl.BaseModule
 
 class ConnectionListener : EventSubscriber<BaseModule> {
@@ -33,7 +33,7 @@ class ConnectionListener : EventSubscriber<BaseModule> {
         val joinMessages = connectionConfig.optional<List<String>>("joinMessages") ?: return
         val toSend = joinMessages.random()
         val joiner = event.user
-        val message = SimpleInfoResponse().setDescription(
+        val message = InfoResponse().setDescription(
             toSend.format("**${joiner.formatted()}**")
         )
         channel.sendMessage(message.build()).queue()
@@ -47,7 +47,7 @@ class ConnectionListener : EventSubscriber<BaseModule> {
         val leaveMessages = connectionConfig.optional<List<String>>("leaveMessages") ?: return
         val toSend = leaveMessages.random()
         val leaver = event.user
-        val message = SimpleErrorResponse().setDescription(
+        val message = ErrorResponse().setDescription(
             toSend.format("**${leaver.formatted()}**")
         )
         channel.sendMessage(message.build()).queue()

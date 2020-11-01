@@ -18,6 +18,6 @@ class ReportCommand : ModerationRootCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid member to report!")
         val reason = args.slurp(" ", "You did not specify a report reason!")
-        return punishmentHandler.submitReport(message.member!!, target, reason)
+        return punishmentHandler.submitReport(message, target, reason)
     }
 }
