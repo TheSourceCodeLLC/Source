@@ -41,6 +41,7 @@ class HistoryCommand : ModerationRootCommand(
                 appendDescription(
                     """
                         
+                        
                         **Incidents:**
                         ${history.joinToString("\n") { "**${it.id}:** ${it.heading}: _${it.reason}_" }}
                     """.trimIndent()
@@ -50,12 +51,13 @@ class HistoryCommand : ModerationRootCommand(
                 appendDescription(
                     """
                         
+                        
                         **Reports:**
                         ${reports.joinToString("\n") { "**${it.id}**: _${it.reason}_" }}
                     """.trimIndent()
                 )
             }
-            appendDescription("\nPage $pageNum / ${historyPages.size}")
+            appendDescription("\n\nPage $pageNum / ${historyPages.size}")
         }.wrapped(target)
     }
 }
