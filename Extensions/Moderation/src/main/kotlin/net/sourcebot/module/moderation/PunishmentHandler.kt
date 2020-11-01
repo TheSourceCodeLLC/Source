@@ -149,13 +149,56 @@ class PunishmentHandler {
     )
 
     private class MuteSuccessResponse(
-        id: Long, muted: Member, duration: Duration, reason: String
+        id: Long, member: Member, duration: Duration, reason: String
     ) : StandardSuccessResponse(
         "Mute Success (#$id)",
-        "Muted ${muted.formatted()} for '$reason' ! (${duration.formatted()})"
+        "Muted ${member.formatted()} for '$reason' ! (${duration.formatted()})"
     )
 
     private class MuteFailureResponse(
+        description: String
+    ) : StandardErrorResponse("Mute Failure!", description)
+
+    fun blacklistIncident(
+        sender: Member, member: Member, duration: Duration, reason: String
+    ): Response {
+        val guild = sender.guild
+        if (sender == member) return BlacklistFailureResponse("You may not blacklist yourself!")
+        if (member.user.isBot) return BlacklistFailureResponse("You may not blacklist bots!")
+        if (!guild.selfMember.canInteract(member)) return BlacklistFailureResponse(
+            "I do not have permission to blacklist that member!"
+        )
+        if (!sender.canInteract(member)) return BlacklistFailureResponse(
+            "You do not have permission to blacklist that member!"
+        )
+        val blacklistRole = getBlacklistRole(guild) ?: return BlacklistFailureResponse(
+            "The blacklist role has not been configured!"
+        )
+        return submitBlacklist(guild, blacklistRole, sender, member, duration, reason)
+    }
+
+    private fun submitBlacklist(
+        guild: Guild,
+        muteRole: Role,
+        sender: Member,
+        member: Member,
+        duration: Duration,
+        reason: String,
+        points: Double = 10.0
+    ) = submitIncident(guild,
+        { BlacklistIncident(nextIncidentId(guild), muteRole, sender, member, duration, reason, points) },
+        { BlacklistSuccessResponse(it.id, it.member, it.duration, it.reason) },
+        { BlacklistFailureResponse("Could not execute mute incident!") }
+    )
+
+    private class BlacklistSuccessResponse(
+        id: Long, member: Member, duration: Duration, reason: String
+    ) : StandardSuccessResponse(
+        "Mute Success (#$id)",
+        "Muted ${member.formatted()} for '$reason' ! (${duration.formatted()})"
+    )
+
+    private class BlacklistFailureResponse(
         description: String
     ) : StandardErrorResponse("Mute Failure!", description)
 
@@ -363,10 +406,10 @@ class PunishmentHandler {
             Type.WARN -> submitWarn(guild, sender, target, reason, toAdd)
             Type.KICK -> submitKick(guild, sender, target, reason, toAdd)
             Type.MUTE -> {
-                val muteRole = getMuteRole(guild) ?: return MuteFailureResponse(
+                val muteRole = getMuteRole(guild) ?: return BlacklistFailureResponse(
                     "The mute role has not been configured!"
                 )
-                return submitMute(guild, muteRole, sender, target, duration!!, reason, toAdd)
+                return submitBlacklist(guild, muteRole, sender, target, duration!!, reason, toAdd)
             }
             Type.TEMPBAN -> submitTempban(guild, sender, target, 7, duration!!, reason, toAdd)
             Type.BAN -> submitBan(guild, sender, target, 7, reason, toAdd)
@@ -479,6 +522,10 @@ class PunishmentHandler {
 
     private fun getMuteRole(guild: Guild) = configManager[guild].optional<String>(
         "moderation.mute-role"
+    )?.let(guild::getRoleById)
+
+    private fun getBlacklistRole(guild: Guild) = configManager[guild].optional<String>(
+        "moderation.blacklist-role"
     )?.let(guild::getRoleById)
 
     fun getCase(guild: Guild, id: Long): Case? =

@@ -23,10 +23,12 @@ interface Incident {
     enum class Type {
         CLEAR,
         WARN,
-        MUTE,
         KICK,
+        BLACKLIST,
+        MUTE,
         TEMPBAN,
         BAN,
+        UNBLACKLIST,
         UNMUTE,
         UNBAN
     }
