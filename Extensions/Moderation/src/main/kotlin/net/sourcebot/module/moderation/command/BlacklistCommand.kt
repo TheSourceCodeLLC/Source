@@ -72,7 +72,7 @@ class BlacklistCommand : ModerationRootCommand(
                 "Blacklist Listing",
                 blacklists.entries.joinToString("\n") { (index, pair) ->
                     val (duration, reason) = pair
-                    "**${index - 1}.** `$duration - $reason`"
+                    "**${index + 1}.** `$duration - $reason`"
                 }
             )
         }
