@@ -290,7 +290,7 @@ class PunishmentHandler {
             { UnbanIncident(nextIncidentId(guild), sender, ban.user, reason) },
             {
                 incidentCollection(guild).updateMany(
-                    Document("type", Document("\$in", arrayOf("TEMPBAN", "BAN"))),
+                    Document("type", Document("\$in", listOf("TEMPBAN", "BAN"))),
                     Document("\$set", Document("resolved", true))
                 )
                 UnbanSuccessResponse(it.id, it.user, it.reason)
