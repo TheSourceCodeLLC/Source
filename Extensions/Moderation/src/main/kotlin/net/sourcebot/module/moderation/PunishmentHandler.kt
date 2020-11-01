@@ -594,8 +594,22 @@ class PunishmentHandler {
         submitIncident(guild,
             { CaseDeleteIncident(incidentCollection(guild), id, member, guild.selfMember, reason) },
             {
-                it.message?.let { getIncidentChannel(guild)?.deleteMessageById(it)?.queue({}, {}) }
-                StandardSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
+                val deleted = it.deleted!!
+                val response = if (deleted["resolved"] as Boolean? != true) {
+                    val target = deleted["target"] as String
+                    when (deleted["type"] as String) {
+                        "MUTE" -> runCatching {
+                            unmuteIncident(member, guild.getMemberById(target)!!, reason)
+                        }.getOrNull()
+                        "BLACKLIST" -> runCatching {
+                            unblacklistIncident(member, guild.getMemberById(target)!!, reason)
+                        }.getOrNull()
+                        "BAN" -> unbanIncident(member, target, reason)
+                        else -> null
+                    }
+                } else null
+                if (response is StandardSuccessResponse) response
+                else StandardSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
             },
             { StandardErrorResponse("Case Delete Failure!", "Case #$id could not be deleted!") }
         )
