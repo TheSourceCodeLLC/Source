@@ -7,6 +7,7 @@ import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.module.moderation.data.Incident.Type
 import org.bson.Document
 import java.time.Duration
 import java.time.Instant
@@ -74,23 +75,23 @@ abstract class OneshotIncident : ExecutableIncident() {
     override val source: String = document["source"] as String
     override val target: String = document["target"] as String
     override val reason: String = document["reason"] as String
-    override val type: Incident.Type = (document["type"] as String).let(Incident.Type::valueOf)
+    override val type: Type = (document["type"] as String).let(Type::valueOf)
     override val time: Instant = (document["time"] as Long).let(Instant::ofEpochMilli)
     override val expiry: Instant? = (document["expiry"] as? Long)?.let(Instant::ofEpochMilli)
 
     val heading = when (type) {
-        Incident.Type.ROLE_UPDATE -> "Role Update"
+        Type.ROLE_UPDATE -> "Role Update"
         else -> type.name.toLowerCase().capitalize()
     }
     private val action = when {
         type.name.contains("ban", true) -> "${type.name}ned"
         type.name.contains("mute", true) -> "${type.name}d"
-        type == Incident.Type.ROLE_UPDATE -> "Updated"
+        type == Type.ROLE_UPDATE -> "Updated"
         else -> "${type.name}ed"
     }.toLowerCase().capitalize()
 
     private val targetType = when (type) {
-        Incident.Type.CLEAR -> "Channel"
+        Type.CLEAR -> "Channel"
         else -> "User"
     }
 
@@ -113,16 +114,16 @@ abstract class OneshotIncident : ExecutableIncident() {
             )
             appendDescription("\n")
             when (type) {
-                Incident.Type.MUTE, Incident.Type.TEMPBAN -> {
+                Type.MUTE, Type.TEMPBAN, Type.BLACKLIST -> {
                     val duration = expiry!!.minusSeconds(this@Case.time.epochSecond).let {
                         Duration.ofSeconds(it.epochSecond)
                     }.let(DurationUtils::formatDuration)
                     appendDescription("**Duration:** $duration\n")
                 }
-                Incident.Type.CLEAR -> {
+                Type.CLEAR -> {
                     appendDescription("**Amount Cleared:** ${document["amount"] as Int}\n")
                 }
-                Incident.Type.ROLE_UPDATE -> {
+                Type.ROLE_UPDATE -> {
                     val kind = (document["action"] as String).toLowerCase().capitalize().let {
                         it + if (it.endsWith("d")) "ed" else "d"
                     }

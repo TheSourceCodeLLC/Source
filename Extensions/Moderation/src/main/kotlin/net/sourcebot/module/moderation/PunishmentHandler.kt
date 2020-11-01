@@ -297,7 +297,11 @@ class PunishmentHandler {
         val blacklistRole = getBlacklistRole(guild) ?: return StandardErrorResponse(
             "No Blacklist Role!", "The blacklist role has not been configured!"
         )
-        return submitIncident(guild,
+        if (!member.roles.contains(blacklistRole)) return UnblacklistFailureResponse(
+            "That user is not blacklisted!"
+        )
+        return submitIncident(
+            guild,
             { UnblacklistIncident(nextIncidentId(guild), blacklistRole, sender, member, reason) },
             {
                 incidentCollection(guild).updateMany(
@@ -336,7 +340,11 @@ class PunishmentHandler {
         val muteRole = getMuteRole(guild) ?: return StandardErrorResponse(
             "No Mute Role!", "The mute role has not been configured!"
         )
-        return submitIncident(guild,
+        if (!member.roles.contains(muteRole)) return UnmuteFailureResponse(
+            "That member is not muted!"
+        )
+        return submitIncident(
+            guild,
             { UnmuteIncident(nextIncidentId(guild), muteRole, sender, member, reason) },
             {
                 incidentCollection(guild).updateMany(
