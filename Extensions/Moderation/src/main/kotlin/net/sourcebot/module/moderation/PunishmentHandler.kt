@@ -595,16 +595,17 @@ class PunishmentHandler {
             { CaseDeleteIncident(incidentCollection(guild), id, member, guild.selfMember, reason) },
             {
                 val deleted = it.deleted!!
+                (deleted["message"] as String?)?.let { getIncidentChannel(guild)?.deleteMessageById(it)?.queue({}, {}) }
                 val response = if (deleted["resolved"] as Boolean? != true) {
                     val target = deleted["target"] as String
                     when (deleted["type"] as String) {
                         "MUTE" -> runCatching {
-                            unmuteIncident(member, guild.getMemberById(target)!!, reason)
+                            unmuteIncident(member, guild.getMemberById(target)!!, "Case $id deleted: $reason")
                         }.getOrNull()
                         "BLACKLIST" -> runCatching {
-                            unblacklistIncident(member, guild.getMemberById(target)!!, reason)
+                            unblacklistIncident(member, guild.getMemberById(target)!!, "Case $id deleted: $reason")
                         }.getOrNull()
-                        "BAN" -> unbanIncident(member, target, reason)
+                        "BAN" -> unbanIncident(member, target, "Case $id deleted: $reason")
                         else -> null
                     }
                 } else null
