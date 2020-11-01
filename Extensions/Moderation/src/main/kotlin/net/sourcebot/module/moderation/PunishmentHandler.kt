@@ -2,9 +2,9 @@ package net.sourcebot.module.moderation
 
 import net.dv8tion.jda.api.entities.*
 import net.sourcebot.Source
+import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.durationOf
 import net.sourcebot.api.formatted
-import net.sourcebot.api.response.EmptyResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
@@ -160,9 +160,8 @@ class PunishmentHandler {
         description: String
     ) : StandardErrorResponse("Mute Failure!", description)
 
-    //TODO: Implementation of blacklisting
     fun blacklistIncident(
-        sender: Member, member: Member, duration: Duration, reason: String
+        sender: Member, member: Member, id: Int
     ): Response {
         val guild = sender.guild
         if (sender == member) return BlacklistFailureResponse("You may not blacklist yourself!")
@@ -176,8 +175,16 @@ class PunishmentHandler {
         val blacklistRole = getBlacklistRole(guild) ?: return BlacklistFailureResponse(
             "The blacklist role has not been configured!"
         )
+        val blacklist = getBlacklist(guild, id) ?: return StandardErrorResponse(
+            "Invalid Blacklist!", "There is no blacklist with the ID '$id'!"
+        )
+        val duration = Duration.ofSeconds(blacklist["duration"] as Long)
+        val reason = blacklist["reason"] as String
         return submitBlacklist(guild, blacklistRole, sender, member, duration, reason)
     }
+
+    private fun getBlacklist(guild: Guild, id: Int) = blacklistsCollection(guild).find(Document("_id", id)).first()
+    private fun blacklistsCollection(guild: Guild) = mongo.getCollection(guild.id, "blacklists")
 
     private fun submitBlacklist(
         guild: Guild,
@@ -187,7 +194,8 @@ class PunishmentHandler {
         duration: Duration,
         reason: String,
         points: Double = 10.0
-    ) = submitIncident(guild,
+    ) = submitIncident(
+        guild,
         { BlacklistIncident(nextIncidentId(guild), muteRole, sender, member, duration, reason, points) },
         { BlacklistSuccessResponse(it.id, it.member, it.duration, it.reason) },
         { BlacklistFailureResponse("Could not execute blacklist incident!") }
@@ -203,6 +211,38 @@ class PunishmentHandler {
     private class BlacklistFailureResponse(
         description: String
     ) : StandardErrorResponse("Mute Failure!", description)
+
+    fun addBlacklist(
+        guild: Guild,
+        duration: Duration,
+        reason: String
+    ): Response {
+        blacklistsCollection(guild).insertOne(Document().also {
+            it["duration"] = duration.seconds
+            it["reason"] = reason
+        })
+        return StandardSuccessResponse(
+            "Blacklist Added!", "Added blacklist '$reason'!"
+        )
+    }
+
+    fun removeBlacklist(guild: Guild, id: Int): Response {
+        val found = getBlacklist(guild, id) ?: return StandardErrorResponse(
+            "Invalid Blacklist!", "There is no blacklist with the ID '$id'!"
+        )
+        blacklistsCollection(guild).deleteOne(found)
+        return StandardSuccessResponse(
+            "Blacklist Deleted!", "Deleted blacklist '${found["reason"] as String}'!"
+        )
+    }
+
+    fun getBlacklists(
+        guild: Guild
+    ) = blacklistsCollection(guild).find().map {
+        DurationUtils.formatSeconds(it["duration"] as Long) to it["reason"] as String
+    }.withIndex().associateByTo(
+        HashMap(), { it.index }, { it.value }
+    )
 
     fun tempbanIncident(
         sender: Member, tempbanned: Member, delDays: Int, duration: Duration, reason: String
@@ -442,10 +482,10 @@ class PunishmentHandler {
         if (!sender.canInteract(target)) return WarnFailureResponse(
             "You do not have permission to punish that member!"
         )
-        val offense = getOffenses(sender.guild)[id] ?: return StandardErrorResponse(
+        val offense = getOffense(guild, id) ?: return StandardErrorResponse(
             "Invalid Punishment!", "There is no punishment with the ID `$id`!"
         )
-        val points = getPoints(target)
+        val points = getPoints(guild, target.user)
         val toAdd = getPoints(offense["level"] as Int)
         val effective = points + toAdd
         val reason = "${offense["name"] as String} (Punishments vary based on your history)"
@@ -469,6 +509,10 @@ class PunishmentHandler {
     private class PunishFailureResponse(
         description: String
     ) : StandardErrorResponse("Punish Failure!", description)
+
+    private fun getOffense(
+        guild: Guild, id: Int
+    ): Document? = offensesCollection(guild).find(Document("_id", id)).first()
 
     fun getOffenses(
         guild: Guild
@@ -574,8 +618,9 @@ class PunishmentHandler {
     }
 
     fun getReportsAgainst(
-        member: Member
-    ) = reportCollection(member.guild).find(Document("target", member.id)).map(::Report).toList()
+        guild: Guild,
+        user: User
+    ) = reportCollection(guild).find(Document("target", user.id)).map(::Report).toList()
 
     private fun getMuteRole(guild: Guild) = configManager[guild].optional<String>(
         "moderation.mute-role"
@@ -616,12 +661,10 @@ class PunishmentHandler {
         )
     }
 
-    private fun getHistory(guild: Guild, id: String): List<Case> =
+    fun getHistory(guild: Guild, id: String): List<Case> =
         incidentCollection(guild).find(Document("target", id))
             .map(::Case)
             .toList()
-
-    fun getHistory(member: Member): List<Case> = getHistory(member.guild, member.id)
 
     fun performTasks() {
         Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(
@@ -674,25 +717,11 @@ class PunishmentHandler {
         }
     }
 
-    private fun getPoints(guild: Guild, id: String): Double =
+    fun getPoints(guild: Guild, user: User): Double =
         incidentCollection(guild).find(Document().also {
-            it["target"] = id
+            it["target"] = user.id
             it["points"] = Document("\$exists", true)
         }).sumByDouble {
             (it["points"] as Document)["value"] as Double
         }
-
-    fun getPoints(member: Member) = getPoints(member.guild, member.id)
-
-    fun addBlacklist(guild: Guild, duration: Duration, reason: String): Response {
-        return EmptyResponse()
-    }
-
-    fun removeBlacklist(guild: Guild, id: Int): Response {
-        return EmptyResponse()
-    }
-
-    fun listBlacklists(guild: Guild): Response {
-        return EmptyResponse()
-    }
 }

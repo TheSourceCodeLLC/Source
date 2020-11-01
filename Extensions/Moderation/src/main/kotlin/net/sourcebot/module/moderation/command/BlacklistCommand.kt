@@ -6,10 +6,26 @@ import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardInfoResponse
 
-class BlacklistsCommand : ModerationRootCommand(
-    "blacklists", "Manage Guild blacklists."
+class BlacklistCommand : ModerationRootCommand(
+    "blacklist", "Manage Guild blacklists."
 ) {
+    override val aliases = arrayOf("bl", "devmute")
+    override val argumentInfo = ArgumentInfo(
+        Argument("target", "The member to blacklist."),
+        Argument("id", "The ID of the blacklist to apply.")
+    )
+
+    override fun execute(message: Message, args: Arguments): Response {
+        val target = args.next(Adapter.member(message.guild), "You did not specify a valid member to blacklist!")
+        val id = args.next(
+            Adapter.int(1, error = "Blacklist ID must be at least 1!"),
+            "You did not specify a valid blacklist ID to apply!"
+        )
+        return punishmentHandler.blacklistIncident(message.member!!, target, id - 1)
+    }
+
     private inner class BlacklistsAddCommand : ModerationCommand(
         "add", "Add a Guild blacklist."
     ) {
@@ -48,14 +64,25 @@ class BlacklistsCommand : ModerationRootCommand(
         "list", "List the Guild blacklists."
     ) {
         override fun execute(message: Message, args: Arguments): Response {
-            return punishmentHandler.listBlacklists(message.guild)
+            val blacklists = punishmentHandler.getBlacklists(message.guild)
+            if (blacklists.isEmpty()) return StandardInfoResponse(
+                "No Blacklists!", "There are currently no blacklists!"
+            )
+            return StandardInfoResponse(
+                "Blacklist Listing",
+                blacklists.entries.joinToString("\n") { (index, pair) ->
+                    val (duration, reason) = pair
+                    "**${index - 1}.** `$duration - $reason`"
+                }
+            )
         }
     }
 
     init {
         addChildren(
             BlacklistsAddCommand(),
-            BlacklistsRemoveCommand()
+            BlacklistsRemoveCommand(),
+            BlacklistsListCommand()
         )
     }
 }

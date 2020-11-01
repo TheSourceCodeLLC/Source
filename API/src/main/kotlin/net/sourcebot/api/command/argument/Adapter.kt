@@ -1,6 +1,8 @@
 package net.sourcebot.api.command.argument
 
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.command.InvalidSyntaxException
 import java.time.Duration
@@ -85,15 +87,25 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
         @JvmStatic
         fun member(guild: Guild) = ofSingleArg {
             val target = it.replace("<@!?(\\d+)>".toRegex(), "$1")
-            val byId = target.runCatching(guild::getMemberById).getOrNull()
+            val byId = target.runCatching { guild.retrieveMemberById(it).complete() }.getOrNull()
             if (byId != null) return@ofSingleArg byId
             val byTag = target.runCatching(guild::getMemberByTag).getOrNull()
             if (byTag != null) return@ofSingleArg byTag
-            val byName = target.runCatching {
-                guild.getMembersByEffectiveName(this, true)
-            }.getOrNull() ?: return@ofSingleArg null
+            val byName = guild.getMembersByEffectiveName(target, true)
             if (byName.isEmpty()) return@ofSingleArg null
             if (byName.size != 1) throw InvalidSyntaxException("Argument '$target' matches multiple members!")
+            return@ofSingleArg byName[0]
+        }
+
+        @JvmStatic fun user(jda: JDA) = ofSingleArg<User> {
+            val target = it.replace("<@!?(\\d+)>".toRegex(), "$1")
+            val byId = target.runCatching { jda.retrieveUserById(it).complete() }.getOrNull()
+            if (byId != null) return@ofSingleArg byId
+            val byTag = jda.getUserByTag(target)
+            if (byTag != null) return@ofSingleArg byTag
+            val byName = jda.getUsersByName(target, true)
+            if (byName.isEmpty()) return@ofSingleArg null
+            if (byName.size != 1) throw InvalidSyntaxException("Argument '$target' matches multiple users!")
             return@ofSingleArg byName[0]
         }
 
@@ -102,9 +114,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             val target = it.replace("<@&(\\d+)>".toRegex(), "$1")
             val byId = target.runCatching(guild::getRoleById).getOrNull()
             if (byId != null) return@ofSingleArg byId
-            val byName = target.runCatching {
-                guild.getRolesByName(this, true)
-            }.getOrNull() ?: return@ofSingleArg null
+            val byName = guild.getRolesByName(target, true)
             if (byName.isEmpty()) return@ofSingleArg null
             if (byName.size != 1) throw InvalidSyntaxException("Argument '$target' matches multiple roles!")
             return@ofSingleArg byName[0]
@@ -115,9 +125,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             val target = it.replace("<#(\\d+)>".toRegex(), "$1")
             val byId = target.runCatching(guild::getTextChannelById).getOrNull()
             if (byId != null) return@ofSingleArg byId
-            val byName = target.runCatching {
-                guild.getTextChannelsByName(this, true)
-            }.getOrNull() ?: return@ofSingleArg null
+            val byName = guild.getTextChannelsByName(target, true)
             if (byName.isEmpty()) return@ofSingleArg null
             if (byName.size != 1) throw InvalidSyntaxException("Argument '${target}' matches multiple channels!")
             return@ofSingleArg byName[0]
@@ -127,9 +135,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
         fun category(guild: Guild) = ofSingleArg { target ->
             val byId = target.runCatching(guild::getCategoryById).getOrNull()
             if (byId != null) return@ofSingleArg byId
-            val byName = target.runCatching {
-                guild.getCategoriesByName(this, true)
-            }.getOrNull() ?: return@ofSingleArg null
+            val byName = guild.getCategoriesByName(target, true)
             if (byName.isEmpty()) return@ofSingleArg null
             if (byName.size != 1) throw InvalidSyntaxException("Argument '$target' matches multiple categories!")
             return@ofSingleArg byName[0]

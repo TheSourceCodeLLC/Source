@@ -22,13 +22,13 @@ class HistoryCommand : ModerationRootCommand(
     )
 
     override fun execute(message: Message, args: Arguments): Response {
-        val target = args.next(Adapter.member(message.guild)) ?: message.member!!
-        if (target.user.isBot) return StandardErrorResponse(
+        val target = args.next(Adapter.user(message.jda)) ?: message.author
+        if (target.isBot) return StandardErrorResponse(
             "History Failure!", "Bots do not have history!"
         )
-        val header = "${target.user.asTag}'s History"
-        val historyList = punishmentHandler.getHistory(target)
-        val reportList = punishmentHandler.getReportsAgainst(target)
+        val header = "${target.asTag}'s History"
+        val historyList = punishmentHandler.getHistory(message.guild, target.id)
+        val reportList = punishmentHandler.getReportsAgainst(message.guild, target)
         if (historyList.isEmpty() && reportList.isEmpty()) return StandardInfoResponse(
             header, "This user does not have any history."
         )
@@ -40,7 +40,7 @@ class HistoryCommand : ModerationRootCommand(
         ) ?: 1
         val (history, reports) = pages[pageNum - 1]
         return StandardInfoResponse(
-            header, "**Punishment Points:** ${punishmentHandler.getPoints(target)}"
+            header, "**Punishment Points:** ${punishmentHandler.getPoints(message.guild, target)}"
         ).apply {
             if (history?.isNotEmpty() == true) {
                 appendDescription(

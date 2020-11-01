@@ -30,6 +30,7 @@ class Moderation : SourceModule() {
             ReportCommand(),
             PunishCommand(),
             OffensesCommand(),
+            BlacklistCommand(),
             UnblacklistCommand()
         )
         subscribeEvents(MessageListener())
