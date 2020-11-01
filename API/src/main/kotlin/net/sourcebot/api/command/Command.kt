@@ -2,7 +2,6 @@ package net.sourcebot.api.command
 
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
-import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
@@ -17,13 +16,7 @@ abstract class Command {
     abstract val description: String
 
     open val aliases = emptyArray<String>()
-    open val argumentInfo: ArgumentInfo by lazy {
-        val children = children.getCommandNames()
-        if (children.isEmpty()) ArgumentInfo()
-        else ArgumentInfo(
-            Argument(children.joinToString("|"), "The subcommand you wish to perform")
-        )
-    }
+    open val argumentInfo = ArgumentInfo()
 
     open val cleanupResponse = true
     open val deleteSeconds: Long? = null
@@ -41,10 +34,12 @@ abstract class Command {
             parentStr = "${parent.name} $parentStr"
             parent = parent.parent
         }
-        return "$parentStr ${argumentInfo.asList()}"
+        return "$parentStr ${argumentInfo.asList() ?: children.getCommandNames().joinToString("|", "<", ">")}"
     }
 
     operator fun get(identifier: String) = children[identifier]
+
+    fun getChildren() = children.getCommandNames()
 
     open fun execute(
         message: Message,

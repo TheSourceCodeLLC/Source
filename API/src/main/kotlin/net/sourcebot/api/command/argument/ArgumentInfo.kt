@@ -9,11 +9,9 @@ class ArgumentInfo(private vararg val args: Argument) {
      * Required arguments are surrounded by <>
      * Optional arguments are surrounded by ()
      */
-    fun asList(): String =
-        if (args.isEmpty()) ""
-        else args.joinToString(" ") {
-            if (it is OptionalArgument) "(${it.name})" else "<${it.name}>"
-        }
+    fun asList() = if (args.isEmpty()) null else args.joinToString(" ") {
+        if (it is OptionalArgument) "(${it.name})" else "<${it.name}>"
+    }
 
     /**
      * Builds the parameter detail for command help information.

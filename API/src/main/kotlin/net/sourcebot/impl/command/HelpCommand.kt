@@ -87,6 +87,8 @@ class HelpCommand : RootCommand() {
                             addField("Aliases:", command.aliases.joinToString(), false)
                         if (command.permission != null)
                             addField("Permission:", "`${command.permission}`", false)
+                        if (command.getChildren().isNotEmpty())
+                            addField("Subcommands:", command.getChildren().joinToString(), false)
                     }
                 }
             }
