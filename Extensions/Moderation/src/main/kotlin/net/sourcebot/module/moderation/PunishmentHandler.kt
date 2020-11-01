@@ -159,6 +159,7 @@ class PunishmentHandler {
         description: String
     ) : StandardErrorResponse("Mute Failure!", description)
 
+    //TODO: Implementation of blacklisting
     fun blacklistIncident(
         sender: Member, member: Member, duration: Duration, reason: String
     ): Response {
@@ -188,14 +189,14 @@ class PunishmentHandler {
     ) = submitIncident(guild,
         { BlacklistIncident(nextIncidentId(guild), muteRole, sender, member, duration, reason, points) },
         { BlacklistSuccessResponse(it.id, it.member, it.duration, it.reason) },
-        { BlacklistFailureResponse("Could not execute mute incident!") }
+        { BlacklistFailureResponse("Could not execute blacklist incident!") }
     )
 
     private class BlacklistSuccessResponse(
         id: Long, member: Member, duration: Duration, reason: String
     ) : StandardSuccessResponse(
-        "Mute Success (#$id)",
-        "Muted ${member.formatted()} for '$reason' ! (${duration.formatted()})"
+        "Blacklist Success (#$id)",
+        "Blacklisted ${member.formatted()} for '$reason' ! (${duration.formatted()})"
     )
 
     private class BlacklistFailureResponse(
@@ -280,6 +281,45 @@ class PunishmentHandler {
     private class BanFailureResponse(
         description: String
     ) : StandardErrorResponse("Ban Failure!", description)
+
+    fun unblacklistIncident(
+        sender: Member, member: Member, reason: String
+    ): Response {
+        val guild = sender.guild
+        if (sender == member) return UnblacklistFailureResponse("You may not unblacklist yourself!")
+        if (member.user.isBot) return UnblacklistFailureResponse("You may not unblacklist bots!")
+        if (!guild.selfMember.canInteract(member)) return UnblacklistFailureResponse(
+            "I do not have permission to unblacklist that member!"
+        )
+        if (!sender.canInteract(member)) return UnblacklistFailureResponse(
+            "You do not have permission to unblacklist that member!"
+        )
+        val blacklistRole = getBlacklistRole(guild) ?: return StandardErrorResponse(
+            "No Blacklist Role!", "The blacklist role has not been configured!"
+        )
+        return submitIncident(guild,
+            { UnblacklistIncident(nextIncidentId(guild), blacklistRole, sender, member, reason) },
+            {
+                incidentCollection(guild).updateMany(
+                    Document("type", "BLACKLIST"),
+                    Document("\$set", Document("resolved", true))
+                )
+                UnblacklistSuccessResponse(it.id, it.member, it.reason)
+            },
+            { UnblacklistFailureResponse("Could not execute unblacklist incident!") }
+        )
+    }
+
+    private class UnblacklistSuccessResponse(
+        id: Long, member: Member, reason: String
+    ) : StandardSuccessResponse(
+        "Unblacklist Success (#$id)",
+        "Unblacklisted ${member.formatted()} for '$reason'!"
+    )
+
+    private class UnblacklistFailureResponse(
+        description: String
+    ) : StandardErrorResponse("Unblacklist Failure!", description)
 
     fun unmuteIncident(
         sender: Member, member: Member, reason: String
@@ -574,6 +614,10 @@ class PunishmentHandler {
                     unmuteIncident(guild.selfMember, muted, reason)
                 }
                 "TEMPBAN" -> unbanIncident(guild.selfMember, it["target"] as String, reason)
+                "BLACKLIST" -> {
+                    val blacklisted = (it["target"] as String).let(guild::getMemberById)!!
+                    unblacklistIncident(guild.selfMember, blacklisted, reason)
+                }
             }
             collection.updateOne(it, Document("\$set", Document("resolved", true)))
         }

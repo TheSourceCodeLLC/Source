@@ -21,7 +21,7 @@ class BlacklistIncident(
 ) : SimpleIncident(duration) {
     override val source = sender.id
     override val target = member.id
-    override val type = Incident.Type.MUTE
+    override val type = Incident.Type.BLACKLIST
     private val blacklist = StandardWarningResponse(
         "Blacklist - Case #$id",
         """

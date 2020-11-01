@@ -11,6 +11,7 @@ class Moderation : SourceModule() {
         node("incident-log", "Channel ID for the incident log channel.")
         node("message-log", "Channel ID for the message log channel.")
         node("report-log", "Channel ID for the reports channel.")
+        node("blacklist-role", "Role ID for the blacklist role.")
         node("mute-role", "Role ID for the mute role.")
     }
 
@@ -28,7 +29,8 @@ class Moderation : SourceModule() {
             HistoryCommand(),
             ReportCommand(),
             PunishCommand(),
-            OffensesCommand()
+            OffensesCommand(),
+            UnblacklistCommand()
         )
         subscribeEvents(MessageListener())
         PUNISHMENT_HANDLER.performTasks()
