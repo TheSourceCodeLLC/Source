@@ -63,6 +63,7 @@ class BlacklistCommand : ModerationRootCommand(
     private inner class BlacklistsListCommand : ModerationCommand(
         "list", "List the Guild blacklists."
     ) {
+        override val cleanupResponse = false
         override fun execute(message: Message, args: Arguments): Response {
             val blacklists = punishmentHandler.getBlacklists(message.guild)
             if (blacklists.isEmpty()) return StandardInfoResponse(
