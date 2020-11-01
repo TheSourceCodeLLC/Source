@@ -29,7 +29,12 @@ class CaseDeleteIncident(
 
     var message: String? = null
     override fun execute() {
-        val found = collection.findOneAndDelete(Document("_id", id)) ?: throw NoSuchElementException(
+        val found = collection.findOneAndDelete(
+            Document().also {
+                it["_id"] = id
+                it["type"] = Document("\$neq", "CASE_DELETE")
+            }
+        ) ?: throw NoSuchElementException(
             "There is no Case with the ID '$id'!"
         )
         message = found["message"] as String?

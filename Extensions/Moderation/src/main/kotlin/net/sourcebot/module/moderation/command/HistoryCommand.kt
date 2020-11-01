@@ -7,6 +7,7 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.response.Response
+import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.api.wrapped
 import net.sourcebot.api.zipAll
@@ -21,6 +22,9 @@ class HistoryCommand : ModerationRootCommand(
 
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild)) ?: message.member!!
+        if (target.user.isBot) return StandardErrorResponse(
+            "History Failure!", "Bots do not have history!"
+        )
         val header = "${target.user.asTag}'s History"
         val historyList = punishmentHandler.getHistory(target)
         val reportList = punishmentHandler.getReportsAgainst(target)
