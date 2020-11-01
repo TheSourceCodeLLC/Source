@@ -9,6 +9,7 @@ import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.api.truncate
 import net.sourcebot.api.wrapped
 import net.sourcebot.api.zipAll
 
@@ -47,7 +48,11 @@ class HistoryCommand : ModerationRootCommand(
                         
                         
                         **Incidents:**
-                        ${history.joinToString("\n") { "**${it.id}:** ${it.heading}: _${it.reason}_" }}
+                        ${
+                        history.joinToString("\n") {
+                            "**${it.id}:** ${it.heading}: _${it.reason.truncate(50)}_"
+                        }
+                    }
                     """.trimIndent()
                 )
             }
@@ -57,7 +62,7 @@ class HistoryCommand : ModerationRootCommand(
                         
                         
                         **Reports:**
-                        ${reports.joinToString("\n") { "**${it.id}**: _${it.reason}_" }}
+                        ${reports.joinToString("\n") { "**${it.id}**: _${it.reason.truncate(50)}_" }}
                     """.trimIndent()
                 )
             }
