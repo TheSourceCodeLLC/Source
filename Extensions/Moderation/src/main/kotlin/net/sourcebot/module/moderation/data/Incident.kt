@@ -21,6 +21,7 @@ interface Incident {
     val expiry: Instant?
 
     enum class Type {
+        ROLE_UPDATE,
         CLEAR,
         WARN,
         KICK,
@@ -68,7 +69,7 @@ abstract class OneshotIncident : ExecutableIncident() {
     }
 }
 
-class Case(private val document: Document) : Incident {
+@Suppress("NON_EXHAUSTIVE_WHEN") class Case(private val document: Document) : Incident {
     override val id: Long = document["_id"] as Long
     override val source: String = document["source"] as String
     override val target: String = document["target"] as String
@@ -77,9 +78,14 @@ class Case(private val document: Document) : Incident {
     override val time: Instant = (document["time"] as Long).let(Instant::ofEpochMilli)
     override val expiry: Instant? = (document["expiry"] as? Long)?.let(Instant::ofEpochMilli)
 
+    private val heading = when (type) {
+        Incident.Type.ROLE_UPDATE -> "Role Update"
+        else -> type.name.toLowerCase().capitalize()
+    }
     private val action = when {
         type.name.contains("ban", true) -> "${type.name}ned"
         type.name.contains("mute", true) -> "${type.name}d"
+        type == Incident.Type.ROLE_UPDATE -> "Updated"
         else -> "${type.name}ed"
     }.toLowerCase().capitalize()
 
@@ -93,7 +99,7 @@ class Case(private val document: Document) : Incident {
             "${it.formatted()} (${it.id})"
         } ?: source
         val time = Source.DATE_TIME_FORMAT.format(this.time)
-        val header = "${type.name.toLowerCase().capitalize()} - #$id"
+        val header = "$heading - #$id"
         return StandardInfoResponse(header).apply {
             appendDescription("**$action By:** $sender\n")
             appendDescription("**$action $targetType:** ")
@@ -116,7 +122,15 @@ class Case(private val document: Document) : Incident {
                 Incident.Type.CLEAR -> {
                     appendDescription("**Amount Cleared:** ${document["amount"] as Int}\n")
                 }
-                else -> {
+                Incident.Type.ROLE_UPDATE -> {
+                    val kind = (document["action"] as String).toLowerCase().capitalize().let {
+                        it + if (it.endsWith("d")) "ed" else "d"
+                    }
+                    val role = (document["role"] as String).let {
+                        val role = guild.getRoleById(it) ?: return@let it
+                        "${role.name} ($it)"
+                    }
+                    appendDescription("**Role $kind**: $role\n")
                 }
             }
             appendDescription("**Reason:** $reason\n")
