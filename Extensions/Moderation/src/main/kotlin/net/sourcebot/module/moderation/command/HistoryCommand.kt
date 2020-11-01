@@ -37,7 +37,7 @@ class HistoryCommand : ModerationRootCommand(
                 **Incidents:**
                 ${
                 page.joinToString("\n") {
-                    "**${it.id}:** ${it.type.name.toLowerCase().capitalize()}: _${it.reason}_"
+                    "**${it.id}:** ${it.heading}: _${it.reason}_"
                 }
             }
             

@@ -78,7 +78,7 @@ abstract class OneshotIncident : ExecutableIncident() {
     override val time: Instant = (document["time"] as Long).let(Instant::ofEpochMilli)
     override val expiry: Instant? = (document["expiry"] as? Long)?.let(Instant::ofEpochMilli)
 
-    private val heading = when (type) {
+    val heading = when (type) {
         Incident.Type.ROLE_UPDATE -> "Role Update"
         else -> type.name.toLowerCase().capitalize()
     }
