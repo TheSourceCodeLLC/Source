@@ -212,7 +212,7 @@ class PunishmentHandler {
 
     private class BlacklistFailureResponse(
         description: String
-    ) : StandardErrorResponse("Mute Failure!", description)
+    ) : StandardErrorResponse("Blacklist Failure!", description)
 
     fun addBlacklist(
         guild: Guild,
