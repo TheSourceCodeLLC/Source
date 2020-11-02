@@ -70,9 +70,9 @@ class MessageListener : EventSubscriber<Moderation> {
                 else -> return
             }
             val report = punishmentHandler.markReportHandled(event.guild, id, valid, event.userId)
-            message.delete().queue {
-                val render = report.render(event.guild).asEmbed(event.user)
-                message.channel.sendMessage(render).queue()
+            val render = report.render(event.guild).asEmbed(event.user)
+            message.editMessage(render).override(true).queue {
+                it.clearReactions().queue()
             }
         }
     }
