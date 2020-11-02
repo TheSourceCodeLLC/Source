@@ -2,7 +2,6 @@ package net.sourcebot.api.command.argument
 
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
-import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.command.InvalidSyntaxException
 import java.time.Duration
@@ -87,7 +86,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
         @JvmStatic
         fun member(guild: Guild) = ofSingleArg {
             val target = it.replace("<@!?(\\d+)>".toRegex(), "$1")
-            val byId = target.runCatching { guild.retrieveMemberById(this).complete() }.getOrNull()
+            val byId = runCatching { guild.retrieveMemberById(target).complete() }.getOrNull()
             if (byId != null) return@ofSingleArg byId
             val byTag = target.runCatching(guild::getMemberByTag).getOrNull()
             if (byTag != null) return@ofSingleArg byTag
@@ -97,11 +96,11 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             return@ofSingleArg byName[0]
         }
 
-        @JvmStatic fun user(jda: JDA) = ofSingleArg<User> {
+        @JvmStatic fun user(jda: JDA) = ofSingleArg {
             val target = it.replace("<@!?(\\d+)>".toRegex(), "$1")
-            val byId = target.runCatching { jda.retrieveUserById(this).complete() }.getOrNull()
+            val byId = runCatching { jda.retrieveUserById(target).complete() }.getOrNull()
             if (byId != null) return@ofSingleArg byId
-            val byTag = jda.getUserByTag(target)
+            val byTag = target.runCatching(jda::getUserByTag).getOrNull()
             if (byTag != null) return@ofSingleArg byTag
             val byName = jda.getUsersByName(target, true)
             if (byName.isEmpty()) return@ofSingleArg null

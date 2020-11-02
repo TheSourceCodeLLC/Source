@@ -1,6 +1,7 @@
 package net.sourcebot.module.counting.data
 
 import com.fasterxml.jackson.annotation.JsonCreator
+import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.GenericEvent
@@ -33,8 +34,7 @@ class CountingListener : EventSubscriber<Counting> {
 
     private fun onReceive(event: GuildMessageReceivedEvent) {
         if (event.author.isBot) return
-        val config = configurationManager[event.guild]
-        val counting = config.optional<JsonConfiguration>("counting") ?: return
+        val counting = getCountingData(event.guild) ?: return
         val channel = counting.optional<String>("channel")?.let(
             event.guild::getTextChannelById
         ) ?: return
@@ -93,7 +93,7 @@ class CountingListener : EventSubscriber<Counting> {
     }
 
     private fun onEdit(event: GuildMessageUpdateEvent) {
-        val data: JsonConfiguration = configurationManager[event.guild].optional("counting") ?: return
+        val data = getCountingData(event.guild) ?: return
         val channel = data.optional<String>("channel")?.let {
             event.guild.getTextChannelById(it)
         } ?: return
@@ -134,19 +134,25 @@ class CountingListener : EventSubscriber<Counting> {
 
     init {
         Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate({
-            Source.SHARD_MANAGER.guilds.forEach {
-                val countingChannel = Counting.getCountingChannel(it) ?: return@forEach
-                val lastMessage = lastMessages[countingChannel.id] ?: return@forEach
+            Source.SHARD_MANAGER.guilds.forEach { guild ->
+                val counting = getCountingData(guild) ?: return@forEach
+                val channel = counting.optional<String>("channel")?.let(
+                    guild::getTextChannelById
+                ) ?: return@forEach
+                val lastMessage = lastMessages[channel.id] ?: return@forEach
                 val lastNumber = lastMessage.number
-                checkpoints.compute(countingChannel.id) { _, stored ->
+                checkpoints.compute(channel.id) { _, stored ->
                     if (stored == null || lastNumber > stored) {
-                        countingChannel.sendMessage("Checkpoint: $lastNumber").complete()
+                        channel.sendMessage("Checkpoint: $lastNumber").complete()
                         lastNumber
                     } else stored
                 }
             }
         }, 0L, 10L, TimeUnit.MINUTES)
     }
+
+    private fun getCountingData(guild: Guild) =
+        configurationManager[guild].optional<JsonConfiguration>("counting")
 }
 
 class CountingMessage {

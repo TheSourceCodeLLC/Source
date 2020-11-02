@@ -50,6 +50,7 @@ class MessageListener : EventSubscriber<Moderation> {
         event.channel.sendMessage(incident.asMessage(event.jda.selfUser)).queue()
     }
 
+    private val reportTitle = "^Report #(\\d+)$".toRegex()
     private fun handleReportReaction(event: GuildMessageReactionAddEvent) {
         if (event.channel != punishmentHandler.getReportChannel(event.guild)) return
         if (event.user == event.jda.selfUser) return
@@ -57,9 +58,23 @@ class MessageListener : EventSubscriber<Moderation> {
             if (it.isEmote) return
             if (it.name != "✅" && it.name != "❌") return
         }
+        val reaction = event.reactionEmote.name
         val message = event.retrieveMessage().complete()
         val embed = message.embeds.getOrNull(0) ?: return
-        message.channel.sendMessage("That is not implemented yet!").queue()
+        val title = embed.author?.name ?: return
+        if (reportTitle.matches(title)) {
+            val id = reportTitle.matchEntire(title)!!.groupValues[1].toLong()
+            val valid = when (reaction) {
+                "✅" -> true
+                "❌" -> false
+                else -> return
+            }
+            val report = punishmentHandler.markReportHandled(event.guild, id, valid, event.userId)
+            message.delete().queue {
+                val render = report.render(event.guild).asEmbed(event.user)
+                message.channel.sendMessage(render).queue()
+            }
+        }
     }
 
     private fun onMessageEdit(event: GuildMessageUpdateEvent) {

@@ -66,7 +66,7 @@ class HistoryCommand : ModerationRootCommand(
                     """.trimIndent()
                 )
             }
-            appendDescription("\n\nPage $pageNum / ${historyPages.size}")
+            appendDescription("\n\nPage $pageNum / ${pages.size}")
         }.wrapped(target)
     }
 }

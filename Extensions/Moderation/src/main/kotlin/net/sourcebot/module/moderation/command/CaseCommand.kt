@@ -1,7 +1,6 @@
 package net.sourcebot.module.moderation.command
 
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
@@ -10,14 +9,13 @@ import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 
 class CaseCommand : ModerationRootCommand(
-    "case", "Manage incidents."
+    "case", "Manage Guild incidents."
 ) {
     override val aliases = arrayOf("incident")
 
-    inner class CaseGetCommand : Command() {
-        override val name = "get"
-        override val description = "Show information about a specific incident."
-        override val permission by lazy { "${parent!!.permission!!}.$name" }
+    inner class CaseGetCommand : ModerationCommand(
+        "get", "Show information about a specific incident."
+    ) {
         override var cleanupResponse = false
         override val argumentInfo = ArgumentInfo(
             Argument("id", "The ID of the case to view.")
@@ -31,10 +29,9 @@ class CaseCommand : ModerationRootCommand(
         }
     }
 
-    inner class CaseDeleteCommand : Command() {
-        override val name = "delete"
-        override val description = "Delete a specific incident."
-        override val permission by lazy { "${parent!!.permission!!}.$name" }
+    inner class CaseDeleteCommand : ModerationCommand(
+        "delete", "Delete a specific incident."
+    ) {
         override val argumentInfo = ArgumentInfo(
             Argument("id", "The ID of the case to delete."),
             Argument("reason", "Why this case is being deleted.")

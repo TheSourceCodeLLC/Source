@@ -729,4 +729,25 @@ class PunishmentHandler {
         }).sumByDouble {
             (it["points"] as Document)["value"] as Double
         }
+
+    fun getReport(
+        guild: Guild,
+        id: Long
+    ) = reportCollection(guild).find(Document("_id", id)).first()?.let(::Report)
+
+    fun markReportHandled(
+        guild: Guild,
+        id: Long,
+        valid: Boolean,
+        handler: String
+    ): Report {
+        reportCollection(guild).updateOne(
+            Document("_id", id),
+            Document("\$set", Document("handling", Document().also {
+                it["valid"] = valid
+                it["handler"] = handler
+            }))
+        )
+        return getReport(guild, id)!!
+    }
 }
