@@ -31,7 +31,7 @@ class HistoryCommand : ModerationRootCommand(
         val reportList = punishmentHandler.getReportsAgainst(message.guild, target)
         if (historyList.isEmpty() && reportList.isEmpty()) return StandardInfoResponse(
             header, "This user does not have any history."
-        )
+        ).wrapped(target)
         val historyPages = Lists.partition(historyList, 5)
         val reportPages = Lists.partition(reportList, 5)
         val pages = historyPages.zipAll(reportPages)

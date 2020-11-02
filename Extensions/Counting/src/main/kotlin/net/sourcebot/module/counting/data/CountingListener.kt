@@ -11,7 +11,9 @@ import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
+import net.sourcebot.api.ifPresentOrElse
 import net.sourcebot.module.counting.Counting
+import java.util.concurrent.TimeUnit
 
 class CountingListener : EventSubscriber<Counting> {
     private val commandHandler = Source.COMMAND_HANDLER
@@ -25,39 +27,33 @@ class CountingListener : EventSubscriber<Counting> {
         jdaEvents.listen(module, this::onEdit)
     }
 
+    private val checkpoints = HashMap<String, Long>()
     private val lastMessages = HashMap<String, CountingMessage>()
     private val records = HashMap<String, Long>()
 
     private fun onReceive(event: GuildMessageReceivedEvent) {
         if (event.author.isBot) return
-        val guildData = configurationManager[event.guild]
-        val data: JsonConfiguration = guildData.required("counting") {
-            JsonConfiguration(
-                mapOf(
-                    "channel" to null,
-                    "record" to 1
-                )
-            )
-        }
-        val channel = data.optional<String>("channel")?.let {
-            event.guild.getTextChannelById(it)
-        } ?: return
+        val config = configurationManager[event.guild]
+        val counting = config.optional<JsonConfiguration>("counting") ?: return
+        val channel = counting.optional<String>("channel")?.let(
+            event.guild::getTextChannelById
+        ) ?: return
         if (event.channel != channel) return
         val message = event.message
         if (commandHandler.isValidCommand(message.contentRaw) == false) {
             message.delete().queue()
             return restart(
-                "Sorry, ${message.author.asMention}, that was not a valid command!", message, data
+                "Sorry, ${message.author.asMention}, that was not a valid command!", message, counting
             )
         } else if (commandHandler.isValidCommand(message.contentRaw) == true) return
         var lastMessage = lastMessages[channel.id]
         if (lastMessage == null) {
             var unknown = false
-            lastMessage = data.required("lastMessage") {
+            lastMessage = counting.required("lastMessage") {
                 unknown = true
                 message.delete().queue()
                 channel.sendMessage("Could not determine last number!\n1").queue()
-                CountingMessage(1L, event.jda.selfUser.id)
+                CountingMessage(1, event.jda.selfUser.id)
             }.also { lastMessages[channel.id] = it }
             if (unknown) return
         }
@@ -66,32 +62,32 @@ class CountingListener : EventSubscriber<Counting> {
         if (message.author.id == lastMessage.author) {
             message.delete().queue()
             return restart(
-                "Sorry, ${message.author.asMention}, you may not count twice in a row!", message, data
+                "Sorry, ${message.author.asMention}, you may not count twice in a row!", message, counting
             )
         }
         if (input.startsWith("0")) {
             message.delete().queue()
             return restart(
-                "No funny business, ${message.author.asMention}.", message, data
+                "No funny business, ${message.author.asMention}.", message, counting
             )
         }
         val nextNumber = input.toLongOrNull()
         if (nextNumber == null) {
             message.delete().queue()
             return restart(
-                "Sorry, ${message.author.asMention}, messages may only be numbers!", message, data
+                "Sorry, ${message.author.asMention}, messages may only be numbers!", message, counting
             )
         }
         if (nextNumber != lastNumber + 1) return restart(
-            "${message.author.asMention} is bad at counting.", message, data
+            "${message.author.asMention} is bad at counting.", message, counting
         )
         CountingMessage(message).also {
             lastMessages[channel.id] = it
-            data["lastMessage"] = it
+            counting["lastMessage"] = it
         }
         records[channel.id] = nextNumber
         configurationManager[channel.guild].let {
-            it["counting"] = data
+            it["counting"] = counting
             configurationManager.saveData(channel.guild, it)
         }
     }
@@ -115,22 +111,41 @@ class CountingListener : EventSubscriber<Counting> {
         val channel = message.channel as TextChannel
         var toSend = failMessage
         val current = records[channel.id] ?: 1
-        var record = data.required<Long>("record")
+        var record = data.required<Long>("record") { 1 }
         if (current > record) {
             toSend += "\nNew Record! New: $current. Old: $record."
             record = data.set("record", current)
             channel.manager.setTopic("Record: $current").queue()
         }
-        channel.sendMessage(
-            toSend + "\nRestarting... Current record: ${record}\n1"
-        ).complete()
+        toSend += "\nCurrent record: $record\n"
+        val checkpoint: Long = checkpoints.remove(channel.id).ifPresentOrElse(
+            { toSend += "Resuming from checkpoint!\n$it" },
+            { toSend += "Restarting...\n1"; 1 }
+        )
+        channel.sendMessage(toSend).complete()
 
-        CountingMessage(1, message.jda.selfUser.id).also {
+        CountingMessage(checkpoint, message.jda.selfUser.id).also {
             lastMessages[channel.id] = it
             data["lastMessage"] = it
         }
         val config = configurationManager[channel.guild].also { it["counting"] = data }
         configurationManager.saveData(channel.guild, config)
+    }
+
+    init {
+        Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate({
+            Source.SHARD_MANAGER.guilds.forEach {
+                val countingChannel = Counting.getCountingChannel(it) ?: return@forEach
+                val lastMessage = lastMessages[countingChannel.id] ?: return@forEach
+                val lastNumber = lastMessage.number
+                checkpoints.compute(countingChannel.id) { _, stored ->
+                    if (stored == null || lastNumber > stored) {
+                        countingChannel.sendMessage("Checkpoint: $lastNumber").complete()
+                        lastNumber
+                    } else stored
+                }
+            }
+        }, 0L, 10L, TimeUnit.MINUTES)
     }
 }
 
