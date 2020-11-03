@@ -31,6 +31,9 @@ class RolesCommand : ModerationRootCommand(
             if (role.isPublicRole) return StandardErrorResponse(
                 "Role Add Failure!", "You may not add members to the default role!"
             )
+            if (role.isManaged) return StandardErrorResponse(
+                "Role Add Failure!", "You may not add members to managed roles!"
+            )
             val senderHighest = sender.getHighestRole()
             if (senderHighest.position < role.position) return StandardErrorResponse(
                 "Role Add Failure!", "You do not have permission to add members to that role!"
@@ -61,6 +64,9 @@ class RolesCommand : ModerationRootCommand(
             if (role.isPublicRole) return StandardErrorResponse(
                 "Role Remove Failure!", "You may not remove members from the default role!"
             )
+            if (role.isManaged) return StandardErrorResponse(
+                "Role Remove Failure!", "You may not remove members from managed roles!"
+            )
             val senderHighest = sender.getHighestRole()
             if (senderHighest.position < role.position) return StandardErrorResponse(
                 "Role Remove Failure!", "You do not have permission to remove members from that role!"
@@ -80,7 +86,7 @@ class RolesCommand : ModerationRootCommand(
             val guild = message.guild
             val highest = message.member!!.roles.getOrNull(0) ?: guild.publicRole
             val roles = guild.roles.filter {
-                highest.position > it.position && !it.isPublicRole
+                highest.position > it.position && !it.isPublicRole && !it.isManaged
             }
             val listing =
                 if (roles.isEmpty()) "You do not have permission to assign any roles."
