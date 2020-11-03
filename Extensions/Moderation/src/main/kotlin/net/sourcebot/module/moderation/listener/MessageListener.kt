@@ -40,14 +40,15 @@ class MessageListener : EventSubscriber<Moderation> {
     private fun handleMentionLimit(event: GuildMessageReceivedEvent, threshold: Int) {
         val permData = permissionHandler.getData(event.guild)
         val user = permData.getUser(event.member!!)
-        if (user.hasPermission("moderation.ignore") == true) return
-        val incident = punishmentHandler.muteIncident(
-            event.guild.selfMember,
-            event.member!!,
-            parseDuration("10m"),
-            "Mention Spam Threshold Reached ($threshold Members)"
-        )
-        event.channel.sendMessage(incident.asMessage(event.jda.selfUser)).queue()
+        if (!permissionHandler.hasPermission(user, "moderation.ignore-mention-threshold", event.channel)) {
+            val incident = punishmentHandler.muteIncident(
+                event.guild.selfMember,
+                event.member!!,
+                parseDuration("10m"),
+                "Mention Spam Threshold Reached ($threshold Members)"
+            )
+            event.channel.sendMessage(incident.asMessage(event.jda.selfUser)).queue()
+        }
     }
 
     private val reportTitle = "^Report #(\\d+)$".toRegex()

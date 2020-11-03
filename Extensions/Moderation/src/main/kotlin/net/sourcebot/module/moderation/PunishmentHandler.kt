@@ -8,6 +8,7 @@ import net.sourcebot.api.formatted
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
+import net.sourcebot.api.round
 import net.sourcebot.module.moderation.data.*
 import net.sourcebot.module.moderation.data.Incident.Type
 import net.sourcebot.module.moderation.data.RoleUpdateIncident.Action
@@ -474,7 +475,7 @@ class PunishmentHandler {
         put(88.9, Type.TEMPBAN to durationOf("2M"))
         put(92.6, Type.TEMPBAN to durationOf("3M"))
         put(96.3, Type.TEMPBAN to durationOf("4M"))
-        put(100.00, Type.BAN to null)
+        put(100.0, Type.BAN to null)
     }
 
     fun punishMember(sender: Member, target: Member, id: Int): Response {
@@ -557,7 +558,7 @@ class PunishmentHandler {
         )
     }
 
-    fun getPoints(level: Int) = 3.7 * 3.0.pow(level - 1.0)
+    fun getPoints(level: Int) = (3.7 * 3.0.pow(level - 1.0)).round(1)
 
     private fun offensesCollection(guild: Guild) =
         mongo.getCollection(guild.id, "offenses")

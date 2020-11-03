@@ -6,6 +6,8 @@ import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.response.EmbedResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.WrappedEmbedResponse
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.Charset
@@ -37,3 +39,6 @@ fun <T> T?.ifPresentOrElse(
 ) = this?.also(ifPresent) ?: orElse()
 
 fun Member.getHighestRole() = roles.getOrNull(0) ?: guild.publicRole
+
+fun Double.round(precision: Int) =
+    BigDecimal(this).setScale(precision, RoundingMode.HALF_UP).toDouble()
