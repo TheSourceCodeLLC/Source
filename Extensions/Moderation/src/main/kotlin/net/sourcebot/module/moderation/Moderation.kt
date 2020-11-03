@@ -31,7 +31,8 @@ class Moderation : SourceModule() {
             PunishCommand(),
             OffensesCommand(),
             BlacklistCommand(),
-            UnblacklistCommand()
+            UnblacklistCommand(),
+            RolesCommand()
         )
         subscribeEvents(MessageListener())
         PUNISHMENT_HANDLER.performTasks()

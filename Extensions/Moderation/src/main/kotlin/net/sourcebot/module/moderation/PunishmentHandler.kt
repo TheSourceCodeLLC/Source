@@ -10,6 +10,7 @@ import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.module.moderation.data.*
 import net.sourcebot.module.moderation.data.Incident.Type
+import net.sourcebot.module.moderation.data.RoleUpdateIncident.Action
 import org.bson.Document
 import java.time.Duration
 import java.time.Instant
@@ -579,7 +580,13 @@ class PunishmentHandler {
             })
             onSuccess(incident)
         } catch (err: Throwable) {
-            onFailure().apply { addField("Exception:", err.toString(), false) }
+            onFailure().apply {
+                addField(
+                    "Exception:",
+                    "${err.javaClass.simpleName}: ${err.message}",
+                    false
+                )
+            }
         }
     }
 
@@ -750,4 +757,40 @@ class PunishmentHandler {
         )
         return getReport(guild, id)!!
     }
+
+    fun submitRoleAdd(
+        guild: Guild,
+        sender: Member,
+        target: Member,
+        role: Role,
+        reason: String
+    ) = submitIncident(
+        guild,
+        { RoleUpdateIncident(nextIncidentId(guild), sender, target, role, reason, Action.ADD) },
+        {
+            StandardSuccessResponse(
+                "Role Update Success (#${it.id})",
+                "Added role ${role.name} to ${target.formatted()} for '$reason'!"
+            )
+        },
+        { StandardErrorResponse("Role Update Failure!", "There was a problem updating that member's roles!") }
+    )
+
+    fun submitRoleRemove(
+        guild: Guild,
+        sender: Member,
+        target: Member,
+        role: Role,
+        reason: String
+    ) = submitIncident(
+        guild,
+        { RoleUpdateIncident(nextIncidentId(guild), sender, target, role, reason, Action.REMOVE) },
+        {
+            StandardSuccessResponse(
+                "Role Update Success (#${it.id})",
+                "Removed role ${role.name} from ${target.formatted()} for '$reason'!"
+            )
+        },
+        { StandardErrorResponse("Role Update Failure!", "There was a problem updating that member's roles!") }
+    )
 }

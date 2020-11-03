@@ -35,3 +35,5 @@ fun <T> T?.ifPresentOrElse(
     ifPresent: (T) -> Unit,
     orElse: () -> T
 ) = this?.also(ifPresent) ?: orElse()
+
+fun Member.getHighestRole() = roles.getOrNull(0) ?: guild.publicRole

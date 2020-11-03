@@ -117,7 +117,7 @@ abstract class OneshotIncident : ExecutableIncident() {
                         "${it.formatted()} ($target)"
                     }) ?: target
                 )
-                appendDescription("\n**Reason:** $reason\n")
+                appendDescription("\n")
             }
             when (type) {
                 Type.MUTE, Type.TEMPBAN, Type.BLACKLIST -> {
@@ -140,6 +140,7 @@ abstract class OneshotIncident : ExecutableIncident() {
                     appendDescription("**Role $kind**: $role\n")
                 }
             }
+            appendDescription("**Reason:** $reason\n")
             appendDescription("**Date & Time:** $time")
         }
     }
