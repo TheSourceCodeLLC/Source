@@ -7,6 +7,10 @@ import net.sourcebot.module.moderation.listener.MessageListener
 
 class Moderation : SourceModule() {
     override val configurationInfo = ConfigurationInfo("moderation") {
+        section("advertising") {
+            node("whitelist", "Array of Guild IDs that users may send invites to.")
+            node("member-limit", "Minimum members in a Guild invite to be ignored.")
+        }
         node("mention-threshold", "Maximum number of member mentions permitted in a message.")
         node("incident-log", "Channel ID for the incident log channel.")
         node("message-log", "Channel ID for the message log channel.")

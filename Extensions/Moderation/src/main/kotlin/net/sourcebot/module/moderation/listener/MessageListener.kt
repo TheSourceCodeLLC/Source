@@ -1,5 +1,7 @@
 package net.sourcebot.module.moderation.listener
 
+import net.dv8tion.jda.api.EmbedBuilder
+import net.dv8tion.jda.api.entities.Invite
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
@@ -10,6 +12,8 @@ import net.sourcebot.api.DurationUtils.parseDuration
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
+import net.sourcebot.api.formatted
+import net.sourcebot.api.response.SourceColor
 import net.sourcebot.module.moderation.Moderation
 
 class MessageListener : EventSubscriber<Moderation> {
@@ -34,7 +38,7 @@ class MessageListener : EventSubscriber<Moderation> {
         val config = configManager[event.guild]
         val mentionThreshold = config.required("moderation.mention-threshold") { 4 }
         if (event.message.mentionedMembers.size >= mentionThreshold) return handleMentionLimit(event, mentionThreshold)
-
+        if (event.message.invites.isNotEmpty()) return handleChatAdvertising(event)
     }
 
     private fun handleMentionLimit(event: GuildMessageReceivedEvent, threshold: Int) {
@@ -51,30 +55,70 @@ class MessageListener : EventSubscriber<Moderation> {
         }
     }
 
+    private fun handleChatAdvertising(event: GuildMessageReceivedEvent) {
+        val message = event.message
+        val invites = message.invites.mapNotNull {
+            runCatching { Invite.resolve(event.jda, it).complete() }.getOrNull()
+        }
+        if (invites.isEmpty()) return
+        val permissible = permissionHandler.getData(event.guild).getUser(event.member!!)
+        if (!permissionHandler.hasPermission(permissible, "moderation.ignore-advertising-check", event.channel)) {
+            val allowed = configManager[event.guild].optional<Array<String>>(
+                "moderation.advertising.whitelist"
+            ) ?: emptyArray()
+            val memberLimit = configManager[event.guild].optional<Long>(
+                "moderation.advertising.member-limit"
+            ) ?: Long.MAX_VALUE
+            val delete = invites.any {
+                val guild = it.guild ?: return@any false
+                if (guild.id == event.guild.id) return@any false
+                if (guild.id in allowed) return@any false
+                if (guild.memberCount >= memberLimit) return@any false
+                true
+            }
+            if (delete && punishmentHandler.logAdvertising(event.guild, message)) message.delete().queue()
+        }
+    }
+
     private val reportTitle = "^Report #(\\d+)$".toRegex()
     private fun handleReportReaction(event: GuildMessageReactionAddEvent) {
         if (event.channel != punishmentHandler.getReportChannel(event.guild)) return
-        if (event.user == event.jda.selfUser) return
-        event.reactionEmote.let {
-            if (it.isEmote) return
-            if (it.name != "✅" && it.name != "❌") return
+        if (event.user.isBot) return
+        if (event.reactionEmote.isEmote) return
+        val valid = when (event.reactionEmote.name) {
+            "✅" -> true
+            "❌" -> false
+            else -> return
         }
-        val reaction = event.reactionEmote.name
+        val handledMessage = if (valid) "Handled" else "Marked as Invalid"
         val message = event.retrieveMessage().complete()
         val embed = message.embeds.getOrNull(0) ?: return
         val title = embed.author?.name ?: return
-        if (reportTitle.matches(title)) {
-            val id = reportTitle.matchEntire(title)!!.groupValues[1].toLong()
-            val valid = when (reaction) {
-                "✅" -> true
-                "❌" -> false
-                else -> return
+        when {
+            reportTitle.matches(title) -> {
+                val id = reportTitle.matchEntire(title)!!.groupValues[1].toLong()
+                punishmentHandler.markReportHandled(event.guild, id, valid, event.userId)
             }
-            val report = punishmentHandler.markReportHandled(event.guild, id, valid, event.userId)
-            val render = report.render(event.guild).asEmbed(event.user)
-            message.editMessage(render).override(true).queue {
-                it.clearReactions().queue()
+            title == "Potential Advertising" -> {
+                if (valid) {
+                    val target = Regex("\\*\\*User:\\*\\* .+ \\((\\d+)\\)").find(
+                        embed.description!!
+                    )!!.groupValues[1].let(event.guild::getMemberById)
+                    if (target != null) punishmentHandler.banIncident(
+                        event.member, target, 7, "Advertising in Chat"
+                    )
+                }
             }
+        }
+        val render = EmbedBuilder(embed).appendDescription(
+            """
+               
+                
+                **$handledMessage By:** ${event.user.formatted()} (${event.userId})
+            """.trimIndent()
+        ).setColor(SourceColor.SUCCESS.color).build()
+        return message.editMessage(render).override(true).queue {
+            it.clearReactions().queue()
         }
     }
 

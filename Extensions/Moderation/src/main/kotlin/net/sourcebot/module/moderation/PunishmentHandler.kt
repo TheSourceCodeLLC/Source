@@ -748,7 +748,7 @@ class PunishmentHandler {
         id: Long,
         valid: Boolean,
         handler: String
-    ): Report {
+    ) {
         reportCollection(guild).updateOne(
             Document("_id", id),
             Document("\$set", Document("handling", Document().also {
@@ -756,7 +756,6 @@ class PunishmentHandler {
                 it["handler"] = handler
             }))
         )
-        return getReport(guild, id)!!
     }
 
     fun submitRoleAdd(
@@ -794,4 +793,25 @@ class PunishmentHandler {
         },
         { StandardErrorResponse("Role Update Failure!", "There was a problem updating that member's roles!") }
     )
+
+    fun logAdvertising(
+        guild: Guild,
+        message: Message
+    ) = getReportChannel(guild)?.let {
+        val sender = message.member!!
+        val channel = message.textChannel
+        val embed = StandardErrorResponse(
+            "Potential Advertising", """
+                **User:** ${sender.formatted()} (${sender.id})
+                **Channel:** ${channel.name} (${channel.id})
+            """.trimIndent()
+        )
+        it.sendMessage(embed.also {
+            it.addField("Message:", message.contentRaw, false)
+        }.asMessage(message.author)).queue {
+            it.addReaction("✅").queue()
+            it.addReaction("❌").queue()
+        }
+        true
+    } ?: false
 }
