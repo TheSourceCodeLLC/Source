@@ -8,6 +8,7 @@ import net.sourcebot.api.formatted
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
+import net.sourcebot.api.response.StandardWarningResponse
 import net.sourcebot.api.round
 import net.sourcebot.module.moderation.data.*
 import net.sourcebot.module.moderation.data.Incident.Type
@@ -836,7 +837,7 @@ class PunishmentHandler {
     ) = getReportChannel(guild)?.let {
         val sender = message.member!!
         val channel = message.textChannel
-        val embed = StandardErrorResponse(
+        val embed = StandardWarningResponse(
             "Potential Advertising", """
                 **User:** ${sender.formatted()} (${sender.id})
                 **Channel:** ${channel.name} (${channel.id})
