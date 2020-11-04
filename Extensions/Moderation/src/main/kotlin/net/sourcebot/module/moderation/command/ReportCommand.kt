@@ -5,7 +5,6 @@ import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.response.EmptyResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 
@@ -38,7 +37,7 @@ class ReportCommand : ModerationRootCommand(
         )
 
         override fun execute(message: Message, args: Arguments): Response {
-            val id = args.next(Adapter.long(), "You did not specify a valid report ID to view!")
+            val id = args.next(Adapter.long(1), "You did not specify a valid report ID to view!")
             return punishmentHandler.getReport(message.guild, id)?.render(message.guild)
                 ?: return StandardErrorResponse(
                     "Unknown Report!", "There is no report with the ID '$id'!"
@@ -50,12 +49,14 @@ class ReportCommand : ModerationRootCommand(
         "delete", "Delete a specific report."
     ) {
         override val argumentInfo = ArgumentInfo(
-            Argument("id", "The ID of the report to delete.")
+            Argument("id", "The ID of the report to delete."),
+            Argument("reason", "Why this report is being deleted.")
         )
 
         override fun execute(message: Message, args: Arguments): Response {
-            //TODO: Report Deletion
-            return EmptyResponse()
+            val id = args.next(Adapter.long(1), "You did not specify a valid report ID to delete!")
+            val reason = args.slurp(" ", "You did not specify a reason for deleting this report!")
+            return punishmentHandler.deleteReport(message.guild, id, message.member!!, reason)
         }
     }
 

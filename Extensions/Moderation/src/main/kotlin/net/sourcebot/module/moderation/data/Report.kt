@@ -16,7 +16,8 @@ class Report(
     val reason: String,
     val channel: String,
     val time: Long = Instant.now().toEpochMilli(),
-    val handling: Document? = null
+    val handling: Document? = null,
+    val deleted: Boolean = false
 ) {
     constructor(document: Document) : this(
         document["_id"] as Long,
@@ -25,7 +26,8 @@ class Report(
         document["reason"] as String,
         document["channel"] as String,
         document["time"] as Long,
-        document["handling"] as Document?
+        document["handling"] as Document?,
+        document["deleted"] as Boolean? ?: false
     )
 
     fun asDocument(): Document = Document().also {
@@ -56,28 +58,40 @@ class Report(
         val by = runCatching { "${guild.getMemberById(sender)!!.formatted()} ($sender)" }.getOrDefault(sender)
         val who = runCatching { "${guild.getMemberById(target)!!.formatted()} ($target)" }.getOrDefault(target)
         val from = runCatching { "${guild.getTextChannelById(channel)!!.name} ($channel)" }.getOrDefault(channel)
-        return if (handling != null) {
-            val valid = handling["valid"] as Boolean
-            val status = if (valid) "Handled" else "Marked as Invalid"
-            val handler = handling["handler"] as String
-            val staff = runCatching { "${guild.getMemberById(handler)!!.formatted()} ($handler)" }.getOrDefault(handler)
-            StandardSuccessResponse(
-                "Report #$id - Handled", """
+        return when {
+            deleted -> {
+                StandardSuccessResponse(
+                    "Report #$id - Deleted", """
+                            **Deleted By**: $by
+                            **Reason:** $reason
+                        """.trimIndent()
+                )
+            }
+            handling != null -> {
+                val valid = handling["valid"] as Boolean
+                val status = if (valid) "Handled" else "Marked as Invalid"
+                val handler = handling["handler"] as String
+                val staff =
+                    runCatching { "${guild.getMemberById(handler)!!.formatted()} ($handler)" }.getOrDefault(handler)
+                StandardSuccessResponse(
+                    "Report #$id - Handled", """
+                        **Reported By:** $by
+                        **Reported User:** $who
+                        **Channel:** $from
+                        **Reason:** $reason
+                        
+                        **$status By:** $staff
+                    """.trimIndent()
+                )
+            }
+            else -> StandardErrorResponse(
+                "Report #$id", """
                     **Reported By:** $by
                     **Reported User:** $who
                     **Channel:** $from
                     **Reason:** $reason
-                    
-                    **$status By:** $staff
                 """.trimIndent()
             )
-        } else StandardErrorResponse(
-            "Report #$id", """
-                **Reported By:** $by
-                **Reported User:** $who
-                **Channel:** $from
-                **Reason:** $reason
-            """.trimIndent()
-        )
+        }
     }
 }

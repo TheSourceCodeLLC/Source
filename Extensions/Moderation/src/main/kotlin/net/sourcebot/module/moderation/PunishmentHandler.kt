@@ -633,7 +633,13 @@ class PunishmentHandler {
     fun getReportsAgainst(
         guild: Guild,
         user: User
-    ) = reportCollection(guild).find(Document("target", user.id)).map(::Report).toList()
+    ) = reportCollection(guild).find(
+        Document().also {
+            it["handling.valid"] = Document("\$ne", false)
+            it["deleted"] = Document("\$ne", true)
+            it["target"] = user.id
+        }
+    ).map(::Report).toList()
 
     private fun getMuteRole(guild: Guild) = configManager[guild].optional<String>(
         "moderation.mute-role"
@@ -742,6 +748,36 @@ class PunishmentHandler {
         guild: Guild,
         id: Long
     ) = reportCollection(guild).find(Document("_id", id)).first()?.let(::Report)
+
+    fun deleteReport(
+        guild: Guild,
+        id: Long,
+        member: Member,
+        reason: String
+    ): Response {
+        val reports = reportCollection(guild)
+        val query = Document("_id", id)
+        val found = reports.find(query).first() ?: return StandardErrorResponse(
+            "Invalid Report!", "There is no report with the ID '$id'!"
+        )
+        if (found["deleted"] as Boolean? == true) return StandardErrorResponse(
+            "Invalid Report!", "That report has already been deleted!"
+        )
+        reportCollection(guild).updateOne(Document("_id", id), Document("\$set", Document().also {
+            it["sender"] = member.id
+            it["target"] = guild.selfMember.id
+            it["reason"] = reason
+            it["time"] = Instant.now().toEpochMilli()
+            it["handling"] = Document().also {
+                it["valid"] = false
+                it["handler"] = member.id
+            }
+            it["deleted"] = true
+        }))
+        return StandardSuccessResponse(
+            "Report Deleted!", "Successfully deleted report #$id for '$reason'!"
+        )
+    }
 
     fun markReportHandled(
         guild: Guild,
