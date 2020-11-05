@@ -34,11 +34,13 @@ class MessageListener : EventSubscriber<Moderation> {
     }
 
     private fun onMessageReceive(event: GuildMessageReceivedEvent) {
-        if (Source.COMMAND_HANDLER.isValidCommand(event.message.contentRaw) == true) return
+        val message = event.message
+        if (Source.COMMAND_HANDLER.isValidCommand(message.contentRaw) == true) return
         val config = configManager[event.guild]
         val mentionThreshold = config.required("moderation.mention-threshold") { 4 }
-        if (event.message.mentionedMembers.size >= mentionThreshold) return handleMentionLimit(event, mentionThreshold)
-        if (event.message.invites.isNotEmpty()) return handleChatAdvertising(event)
+        if (message.mentionedMembers.size >= mentionThreshold) handleMentionLimit(event, mentionThreshold)
+        if (message.invites.isNotEmpty()) handleChatAdvertising(event)
+
     }
 
     private fun handleMentionLimit(event: GuildMessageReceivedEvent, threshold: Int) {
@@ -93,7 +95,8 @@ class MessageListener : EventSubscriber<Moderation> {
         val handledMessage = if (valid) "Handled" else "Marked as Invalid"
         val message = event.retrieveMessage().complete()
         val embed = message.embeds.getOrNull(0) ?: return
-        val title = embed.author?.name ?: return
+        val authorInfo = embed.author ?: return
+        val title = authorInfo.name ?: return
         when {
             reportTitle.matches(title) -> {
                 val id = reportTitle.matchEntire(title)!!.groupValues[1].toLong()
@@ -109,14 +112,17 @@ class MessageListener : EventSubscriber<Moderation> {
                     )
                 }
             }
+            else -> return
         }
-        val render = EmbedBuilder(embed).appendDescription(
-            """
+        val render = EmbedBuilder(embed)
+            .setAuthor("$title - Handled", authorInfo.url, authorInfo.iconUrl)
+            .appendDescription(
+                """
                
                 
                 **$handledMessage By:** ${event.user.formatted()} (${event.userId})
             """.trimIndent()
-        ).setColor(SourceColor.SUCCESS.color).build()
+            ).setColor(SourceColor.SUCCESS.color).build()
         return message.editMessage(render).override(true).queue {
             it.clearReactions().queue()
         }
