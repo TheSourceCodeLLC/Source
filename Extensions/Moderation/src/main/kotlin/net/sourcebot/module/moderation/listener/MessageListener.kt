@@ -58,7 +58,7 @@ class MessageListener : EventSubscriber<Moderation> {
     private fun handleChatAdvertising(event: GuildMessageReceivedEvent) {
         val message = event.message
         val invites = message.invites.mapNotNull {
-            runCatching { Invite.resolve(event.jda, it).complete() }.getOrNull()
+            runCatching { Invite.resolve(event.jda, it, true).complete() }.getOrNull()
         }
         if (invites.isEmpty()) return
         val permissible = permissionHandler.getData(event.guild).getUser(event.member!!)
