@@ -45,6 +45,7 @@ class MessageListener : EventSubscriber<Moderation> {
     }
 
     private fun onMessageReceive(event: GuildMessageReceivedEvent) {
+        if (event.author.isBot) return
         val message = event.message
         if (Source.COMMAND_HANDLER.isValidCommand(message.contentRaw) == true) return
         val config = configManager[event.guild]
