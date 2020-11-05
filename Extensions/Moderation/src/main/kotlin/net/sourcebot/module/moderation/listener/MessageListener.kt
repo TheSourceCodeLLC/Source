@@ -180,6 +180,7 @@ class MessageListener : EventSubscriber<Moderation> {
             foundAuthor = event.guild.getMemberById(it) ?: return@let it
             "${foundAuthor!!.formatted()} ($it)"
         }
+        if (foundAuthor != null && foundAuthor!!.user.isBot) return
         val content = found["content"] as String
         val channel = (found["channel"] as String).let {
             val channel = event.guild.getTextChannelById(it) ?: return@let it
