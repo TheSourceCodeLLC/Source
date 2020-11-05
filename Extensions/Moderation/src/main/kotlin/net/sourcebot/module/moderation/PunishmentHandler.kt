@@ -502,10 +502,10 @@ class PunishmentHandler {
             Type.WARN -> submitWarn(guild, sender, target, reason, toAdd)
             Type.KICK -> submitKick(guild, sender, target, reason, toAdd)
             Type.MUTE -> {
-                val muteRole = getMuteRole(guild) ?: return BlacklistFailureResponse(
+                val muteRole = getMuteRole(guild) ?: return MuteFailureResponse(
                     "The mute role has not been configured!"
                 )
-                return submitBlacklist(guild, muteRole, sender, target, duration!!, reason, toAdd)
+                return submitMute(guild, muteRole, sender, target, duration!!, reason, toAdd)
             }
             Type.TEMPBAN -> submitTempban(guild, sender, target, 7, duration!!, reason, toAdd)
             Type.BAN -> submitBan(guild, sender, target, 7, reason, toAdd)
