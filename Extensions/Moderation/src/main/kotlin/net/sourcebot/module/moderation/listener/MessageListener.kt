@@ -1,20 +1,31 @@
 package net.sourcebot.module.moderation.listener
 
+import com.mongodb.client.model.UpdateOptions
 import net.dv8tion.jda.api.EmbedBuilder
+import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Invite
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
+import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.Source
 import net.sourcebot.api.DurationUtils.parseDuration
+import net.sourcebot.api.asMessage
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.SourceColor
+import net.sourcebot.api.response.StandardErrorResponse
+import net.sourcebot.api.response.StandardWarningResponse
+import net.sourcebot.api.truncate
 import net.sourcebot.module.moderation.Moderation
+import org.bson.Document
+import java.time.Instant
 
 class MessageListener : EventSubscriber<Moderation> {
     private val punishmentHandler = Moderation.PUNISHMENT_HANDLER
@@ -38,12 +49,15 @@ class MessageListener : EventSubscriber<Moderation> {
         if (Source.COMMAND_HANDLER.isValidCommand(message.contentRaw) == true) return
         val config = configManager[event.guild]
         val mentionThreshold = config.required("moderation.mention-threshold") { 4 }
-        if (message.mentionedMembers.size >= mentionThreshold) handleMentionLimit(event, mentionThreshold)
-        if (message.invites.isNotEmpty()) handleChatAdvertising(event)
-
+        val delete = when {
+            message.mentionedMembers.size >= mentionThreshold -> handleMentionLimit(event, mentionThreshold)
+            message.invites.isNotEmpty() -> handleChatAdvertising(event)
+            else -> false
+        }
+        if (delete) return message.delete().queue() else saveMessage(message)
     }
 
-    private fun handleMentionLimit(event: GuildMessageReceivedEvent, threshold: Int) {
+    private fun handleMentionLimit(event: GuildMessageReceivedEvent, threshold: Int): Boolean {
         val permData = permissionHandler.getData(event.guild)
         val user = permData.getUser(event.member!!)
         if (!permissionHandler.hasPermission(user, "moderation.ignore-mention-threshold", event.channel)) {
@@ -55,16 +69,22 @@ class MessageListener : EventSubscriber<Moderation> {
             )
             event.channel.sendMessage(incident.asMessage(event.jda.selfUser)).queue()
         }
+        return false
     }
 
-    private fun handleChatAdvertising(event: GuildMessageReceivedEvent) {
+    private fun handleChatAdvertising(event: GuildMessageReceivedEvent): Boolean {
         val message = event.message
         val invites = message.invites.mapNotNull {
             runCatching { Invite.resolve(event.jda, it, true).complete() }.getOrNull()
         }
-        if (invites.isEmpty()) return
+        if (invites.isEmpty()) return false
         val permissible = permissionHandler.getData(event.guild).getUser(event.member!!)
-        if (!permissionHandler.hasPermission(permissible, "moderation.ignore-advertising-check", event.channel)) {
+        return if (!permissionHandler.hasPermission(
+                permissible,
+                "moderation.ignore-advertising-check",
+                event.channel
+            )
+        ) {
             val allowed = configManager[event.guild].optional<Array<String>>(
                 "moderation.advertising.whitelist"
             ) ?: emptyArray()
@@ -78,8 +98,8 @@ class MessageListener : EventSubscriber<Moderation> {
                 if (guild.memberCount >= memberLimit) return@any false
                 true
             }
-            if (delete && punishmentHandler.logAdvertising(event.guild, message)) message.delete().queue()
-        }
+            delete && punishmentHandler.logAdvertising(event.guild, message)
+        } else false
     }
 
     private val reportTitle = "^Report #(\\d+)$".toRegex()
@@ -129,10 +149,75 @@ class MessageListener : EventSubscriber<Moderation> {
     }
 
     private fun onMessageEdit(event: GuildMessageUpdateEvent) {
-
+        if (event.author.isBot) return
+        val log = messageLogChannel(event.guild) ?: return
+        val collection = messageLogCollection(event.guild)
+        val author = event.author
+        val channel = event.channel
+        val embed = StandardWarningResponse(
+            "Message Edited", """
+                **Author:** ${author.formatted()} (${author.id})
+                **Channel:** ${channel.name} (${channel.id})
+                **Edited At:** ${Source.DATE_TIME_FORMAT.format(Instant.now())}
+                **Jump Link:** [${MarkdownUtil.maskedLink("Click", event.message.jumpUrl)}]
+            """.trimIndent()
+        )
+        collection.find(Document("_id", event.messageId)).first()?.let {
+            embed.addField("Old Content:", (it["content"] as String).truncate(1024), false)
+        }
+        embed.addField("New Content:", event.message.contentRaw.truncate(1024), false)
+        saveMessage(event.message)
+        log.sendMessage(embed.asMessage(event.author)).queue()
     }
 
     private fun onMessageDelete(event: GuildMessageDeleteEvent) {
+        val log = messageLogChannel(event.guild) ?: return
+        val found = messageLogCollection(event.guild).findOneAndDelete(
+            Document("_id", event.messageId)
+        ) ?: return
+        var foundAuthor: Member? = null
+        val author = (found["author"] as String).let {
+            foundAuthor = event.guild.getMemberById(it) ?: return@let it
+            "${foundAuthor!!.formatted()} ($it)"
+        }
+        val content = found["content"] as String
+        val channel = (found["channel"] as String).let {
+            val channel = event.guild.getTextChannelById(it) ?: return@let it
+            "${channel.name} ($it)"
+        }
+        val sent = (found["time"] as Long)
+            .let(Instant::ofEpochMilli)
+            .let(Source.DATE_TIME_FORMAT::format)
+        val embed = StandardErrorResponse(
+            "Message Deleted", """
+                **Author:** $author
+                **Channel:** $channel
+                **Date Sent:** $sent
+            """.trimIndent()
+        )
+        embed.addField("Message:", content.truncate(1024), false)
+        log.sendMessage(embed.asMessage(foundAuthor ?: event.guild.selfMember)).queue()
+    }
 
+    private fun messageLogCollection(guild: Guild) =
+        mongo.getCollection(guild.id, "message-log")
+
+    private fun messageLogChannel(guild: Guild) =
+        configManager[guild].optional<String>("moderation.message-log")?.let(
+            guild::getTextChannelById
+        )
+
+    private fun saveMessage(message: Message) {
+        val collection = messageLogCollection(message.guild)
+        collection.updateOne(
+            Document("_id", message.id),
+            Document("\$set", Document().also {
+                it["author"] = message.author.id
+                it["content"] = message.contentRaw
+                it["channel"] = message.channel.id
+                it["time"] = message.timeCreated.toInstant().toEpochMilli()
+            }),
+            UpdateOptions().upsert(true)
+        )
     }
 }
