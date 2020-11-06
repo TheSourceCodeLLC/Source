@@ -34,7 +34,11 @@ abstract class Command {
             parentStr = "${parent.name} $parentStr"
             parent = parent.parent
         }
-        return "$parentStr ${argumentInfo.asList() ?: children.getCommandNames().joinToString("|", "<", ">")}"
+        val arguments = argumentInfo.asList()
+        return ("$parentStr " + if (arguments.isNullOrEmpty()) {
+            val subcommands = children.getCommandNames()
+            if (subcommands.isEmpty()) "" else subcommands.joinToString("|", "<", ">")
+        } else arguments).trimEnd()
     }
 
     operator fun get(identifier: String) = children[identifier]
