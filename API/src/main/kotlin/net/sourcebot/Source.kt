@@ -3,6 +3,12 @@ package net.sourcebot
 import ch.qos.logback.classic.Level
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.entities.Activity.ActivityType
@@ -28,7 +34,9 @@ import net.sourcebot.api.permission.SourcePermission
 import net.sourcebot.api.permission.SourceRole
 import net.sourcebot.api.permission.SourceUser
 import net.sourcebot.api.response.StandardEmbedResponse
+import net.sourcebot.api.typeRefOf
 import net.sourcebot.impl.BaseModule
+import org.bson.Document
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J
@@ -50,6 +58,23 @@ object Source {
         if (this::SHARD_MANAGER.isInitialized) throw IllegalStateException("Source is already enabled!")
         logger.info("Starting Source...")
         JsonSerial.register(JsonConfiguration.JsonSerialization())
+        JsonSerial.register(object : JsonSerial<Document> {
+            override val serializer = object : StdSerializer<Document>(Document::class.java) {
+                override fun serialize(
+                    value: Document,
+                    gen: JsonGenerator,
+                    provider: SerializerProvider
+                ) {
+                    gen.writeTree(JsonSerial.toJson<Map<String, Any?>>(value))
+                }
+            }
+            override val deserializer = object : StdDeserializer<Document>(Document::class.java) {
+                override fun deserialize(
+                    p: JsonParser,
+                    ctxt: DeserializationContext
+                ) = Document(p.readValueAs(typeRefOf<Map<String, Any?>>()))
+            }
+        })
         MongoSerial.register(JsonConfiguration.MongoSerialization())
         properties = File("config.json").apply {
             if (!exists()) {

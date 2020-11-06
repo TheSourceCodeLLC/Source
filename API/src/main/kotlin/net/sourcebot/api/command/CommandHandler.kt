@@ -110,7 +110,7 @@ class CommandHandler(
                 }
                 if (roles.none { it.hasPermission(Permission.ADMINISTRATOR) }) {
                     val sourceUser = permissionData.getUser(member)
-                    val sourceRoles = roles.map(permissionData::getRole).toSet()
+                    val sourceRoles = roles.map(permissionData::getRole).distinct()
                     sourceUser.roles = sourceRoles
                     val channel = message.channel as TextChannel
                     if (

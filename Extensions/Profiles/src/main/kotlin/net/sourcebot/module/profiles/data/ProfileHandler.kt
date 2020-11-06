@@ -15,8 +15,17 @@ internal class ProfileHandler(private val collection: MongoCollection<Document>)
         .build(object : CacheLoader<String, JsonConfiguration>() {
             override fun load(
                 key: String
-            ) = collection.find(Document("_id", key)).first()?.let(::JsonConfiguration) ?: JsonConfiguration().also {
-                collection.insertOne(Document(mapOf("_id" to key, "data" to it)))
+            ) = collection.find(Document("_id", key)).first()?.let {
+                JsonConfiguration(it["data"] as Document)
+            } ?: JsonConfiguration().also {
+                collection.insertOne(
+                    Document(
+                        mapOf(
+                            "_id" to key,
+                            "data" to MongoSerial.toDocument(it)
+                        )
+                    )
+                )
             }
         })
 

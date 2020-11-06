@@ -9,7 +9,7 @@ class SourceUser internal constructor(
     val id: String,
     val permissions: MutableList<SourcePermission> = ArrayList()
 ) : SimplePermissible(permissions) {
-    internal var roles: Set<SourceRole> = emptySet()
+    internal var roles: List<SourceRole> = emptyList()
     override fun update(data: PermissionData): UpdateResult = data.updateUser(this)
     override fun delete(data: PermissionData): DeleteResult = data.deleteUser(this)
     override fun asMention() = "<@$id>"
