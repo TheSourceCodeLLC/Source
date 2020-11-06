@@ -32,7 +32,8 @@ class PermissionHandler(private val globalAdmins: Set<String>) {
         context: Set<String> = emptySet()
     ): Boolean {
         if (permissible is SourceUser && hasGlobalAccess(permissible.id)) return true
-        getEffectiveNodes(node).forEach { eff ->
+        val effective = getEffectiveNodes(node)
+        effective.forEach { eff ->
             when (permissible.hasPermission(eff)) {
                 true -> return true
                 false -> return false
@@ -65,7 +66,7 @@ class PermissionHandler(private val globalAdmins: Set<String>) {
             add(permission)
             addAll(permission.mapIndexed { idx, c ->
                 if (c == '.') permission.substring(0..idx) + "*" else null
-            }.filterNotNull().toMutableSet())
+            }.filterNotNull().distinct().reversed())
             add("*")
         }
 
