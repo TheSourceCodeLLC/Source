@@ -6,6 +6,7 @@ import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.moderation.Moderation
 
 class UnblacklistCommand : ModerationRootCommand(
     "unblacklist", "Unblacklist a member for a specific reason."
@@ -18,6 +19,8 @@ class UnblacklistCommand : ModerationRootCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid member to unblacklist!")
         val reason = args.slurp(" ", "You did not specify an unblacklist reason!")
-        return punishmentHandler.unblacklistIncident(message.member!!, target, reason)
+        return Moderation.getPunishmentHandler(message.guild) {
+            unblacklistIncident(message.member!!, target, reason)
+        }
     }
 }

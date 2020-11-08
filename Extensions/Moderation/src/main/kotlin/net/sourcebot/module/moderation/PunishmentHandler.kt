@@ -9,33 +9,49 @@ import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.api.response.StandardWarningResponse
-import net.sourcebot.api.round
 import net.sourcebot.module.moderation.data.*
 import net.sourcebot.module.moderation.data.Incident.Type
+import net.sourcebot.module.moderation.data.Incident.Type.*
 import net.sourcebot.module.moderation.data.RoleUpdateIncident.Action
 import org.bson.Document
 import java.time.Duration
 import java.time.Instant
 import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.math.pow
 
-class PunishmentHandler {
+@Suppress("NestedLambdaShadowedImplicitParameter")
+class PunishmentHandler(private val guild: Guild) {
     private val configManager = Source.CONFIG_MANAGER
     private val mongo = Source.MONGODB
 
-    fun clearIncident(
-        guild: Guild, sender: Member, channel: TextChannel, amount: Int, reason: String
-    ) = submitIncident(
-        guild,
-        { ClearIncident(guild, nextIncidentId(guild), sender, channel, amount, reason) },
+    private val blacklists = mongo.getCollection(guild.id, "blacklists")
+    private val incidents = mongo.getCollection(guild.id, "incidents")
+    private val offenses = mongo.getCollection(guild.id, "offenses")
+    private val reports = mongo.getCollection(guild.id, "reports")
+    private val selfMember = guild.selfMember
+
+    private fun muteRole() = configManager[guild].optional<String>(
+        "moderation.mute-role"
+    )?.let(guild::getRoleById)
+
+    private fun blacklistRole() = configManager[guild].optional<String>(
+        "moderation.blacklist-role"
+    )?.let(guild::getRoleById)
+
+    private fun incidentChannel() = configManager[guild].optional<String>(
+        "moderation.incident-log"
+    )?.let(guild::getTextChannelById)
+
+    fun reportChannel() = configManager[guild].optional<String>(
+        "moderation.report-log"
+    )?.let(guild::getTextChannelById)
+
+    fun clearIncident(sender: Member, channel: TextChannel, amount: Int, reason: String) = submitIncident(
+        { ClearIncident(nextIncidentId(), sender, channel, amount, reason) },
         { ClearSuccessResponse(it.id, amount, channel.name) },
         ::ClearFailureResponse
     )
 
-    private class ClearSuccessResponse(
-        id: Long, amount: Int, channel: String
-    ) : StandardSuccessResponse(
+    private class ClearSuccessResponse(id: Long, amount: Int, channel: String) : StandardSuccessResponse(
         "Clear Success (#$id)",
         "You have cleared $amount messages in channel `$channel`!"
     )
@@ -44,110 +60,79 @@ class PunishmentHandler {
         "Clear Failure!", "Could not execute clear incident!"
     )
 
-    fun warnIncident(
-        sender: Member, member: Member, reason: String
-    ): Response {
-        val guild = sender.guild
+    fun warnIncident(sender: Member, member: Member, reason: String): Response {
         if (sender == member) return WarnFailureResponse("You may not warn yourself!")
         if (member.user.isBot) return WarnFailureResponse("You may not warn bots!")
-        if (!guild.selfMember.canInteract(member)) return WarnFailureResponse(
+        if (!selfMember.canInteract(member)) return WarnFailureResponse(
             "I do not have permission to warn that member!"
         )
         if (!sender.canInteract(member)) return WarnFailureResponse(
             "You do not have permission to warn that member!"
         )
-        return submitWarn(guild, sender, member, reason)
+        return submitWarn(sender, member, reason)
     }
 
-    private fun submitWarn(
-        guild: Guild,
-        sender: Member,
-        member: Member,
-        reason: String,
-        points: Double = 3.7
-    ) = submitIncident(
-        guild,
-        { WarnIncident(nextIncidentId(guild), sender, member, reason, points) },
+    private fun submitWarn(sender: Member, member: Member, reason: String) = submitIncident(
+        { WarnIncident(nextIncidentId(), sender, member, reason) },
         { WarnSuccessResponse(it.id, it.member, it.reason) },
         { WarnFailureResponse("Could not execute warn incident!") }
     )
 
-    private class WarnSuccessResponse(
-        id: Long, warned: Member, reason: String
-    ) : StandardSuccessResponse(
+    private class WarnSuccessResponse(id: Long, warned: Member, reason: String) : StandardSuccessResponse(
         "Warn Success (#$id)",
         "Warned ${warned.formatted()} for '$reason' !"
     )
 
-    private class WarnFailureResponse(
-        description: String
-    ) : StandardErrorResponse("Warn Failure!", description)
+    private class WarnFailureResponse(description: String) : StandardErrorResponse(
+        "Warn Failure!", description
+    )
 
-    fun kickIncident(
-        guild: Guild, sender: Member, member: Member, reason: String
-    ): Response {
+    fun kickIncident(sender: Member, member: Member, reason: String): Response {
         if (sender == member) return KickFailureResponse("You may not kick yourself!")
         if (member.user.isBot) return KickFailureResponse("You may not kick bots!")
-        if (!guild.selfMember.canInteract(member)) return KickFailureResponse(
+        if (!selfMember.canInteract(member)) return KickFailureResponse(
             "I do not have permission to kick that member!"
         )
         if (!sender.canInteract(member)) return KickFailureResponse(
             "You do not have permission to kick that member!"
         )
-        return submitKick(guild, sender, member, reason)
+        return submitKick(sender, member, reason)
     }
 
-    private fun submitKick(
-        guild: Guild,
-        sender: Member,
-        member: Member,
-        reason: String,
-        points: Double = 7.4
-    ) = submitIncident(guild,
-        { KickIncident(nextIncidentId(guild), sender, member, reason, points) },
+    private fun submitKick(sender: Member, member: Member, reason: String) = submitIncident(
+        { KickIncident(nextIncidentId(), sender, member, reason) },
         { KickSuccessResponse(it.id, it.member, it.reason) },
         { KickFailureResponse("Could not execute kick incident!") }
     )
 
-    private class KickSuccessResponse(
-        id: Long, kicked: Member, reason: String
-    ) : StandardSuccessResponse(
+    private class KickSuccessResponse(id: Long, kicked: Member, reason: String) : StandardSuccessResponse(
         "Kick Success (#$id)",
         "Kicked ${kicked.formatted()} for '$reason' !"
     )
 
-    private class KickFailureResponse(
-        description: String
-    ) : StandardErrorResponse("Kick Failure!", description)
+    private class KickFailureResponse(description: String) : StandardErrorResponse(
+        "Kick Failure!", description
+    )
 
-    fun muteIncident(
-        sender: Member, member: Member, duration: Duration, reason: String
-    ): Response {
-        val guild = sender.guild
+    fun muteIncident(sender: Member, member: Member, duration: Duration, reason: String): Response {
         if (sender == member) return MuteFailureResponse("You may not mute yourself!")
         if (member.user.isBot) return MuteFailureResponse("You may not mute bots!")
-        if (!guild.selfMember.canInteract(member)) return MuteFailureResponse(
+        if (!selfMember.canInteract(member)) return MuteFailureResponse(
             "I do not have permission to mute that member!"
         )
         if (!sender.canInteract(member)) return MuteFailureResponse(
             "You do not have permission to mute that member!"
         )
-        val muteRole = getMuteRole(guild) ?: return MuteFailureResponse(
+        val muteRole = muteRole() ?: return MuteFailureResponse(
             "The mute role has not been configured!"
         )
-        return submitMute(guild, muteRole, sender, member, duration, reason)
+        return submitMute(muteRole, sender, member, duration, reason)
     }
 
     private fun submitMute(
-        guild: Guild,
-        muteRole: Role,
-        sender: Member,
-        member: Member,
-        duration: Duration,
-        reason: String,
-        points: Double = 10.0
-    ) = submitIncident(guild,
-        { MuteIncident(nextIncidentId(guild), muteRole, sender, member, duration, reason, points) },
+        muteRole: Role, sender: Member, member: Member, duration: Duration, reason: String
+    ) = submitIncident(
+        { MuteIncident(nextIncidentId(), muteRole, sender, member, duration, reason) },
         { MuteSuccessResponse(it.id, it.member, it.duration, it.reason) },
         { MuteFailureResponse("Could not execute mute incident!") }
     )
@@ -159,49 +144,40 @@ class PunishmentHandler {
         "Muted ${member.formatted()} for '$reason' ! (${duration.formatted()})"
     )
 
-    private class MuteFailureResponse(
-        description: String
-    ) : StandardErrorResponse("Mute Failure!", description)
+    private class MuteFailureResponse(description: String) : StandardErrorResponse(
+        "Mute Failure!", description
+    )
 
-    fun blacklistIncident(
-        sender: Member, member: Member, id: Int
-    ): Response {
-        val guild = sender.guild
+    fun blacklistIncident(sender: Member, member: Member, id: Int): Response {
         if (sender == member) return BlacklistFailureResponse("You may not blacklist yourself!")
         if (member.user.isBot) return BlacklistFailureResponse("You may not blacklist bots!")
-        if (!guild.selfMember.canInteract(member)) return BlacklistFailureResponse(
+        if (!selfMember.canInteract(member)) return BlacklistFailureResponse(
             "I do not have permission to blacklist that member!"
         )
         if (!sender.canInteract(member)) return BlacklistFailureResponse(
             "You do not have permission to blacklist that member!"
         )
-        val blacklistRole = getBlacklistRole(guild) ?: return BlacklistFailureResponse(
+        val blacklistRole = blacklistRole() ?: return BlacklistFailureResponse(
             "The blacklist role has not been configured!"
         )
-        val blacklist = getBlacklist(guild, id) ?: return StandardErrorResponse(
+        val blacklist = getBlacklist(id) ?: return StandardErrorResponse(
             "Invalid Blacklist!", "There is no blacklist with the ID '$id'!"
         )
         val duration = Duration.ofSeconds(blacklist["duration"] as Long)
         val reason = blacklist["reason"] as String
-        return submitBlacklist(guild, blacklistRole, sender, member, duration, reason)
+        return submitBlacklist(blacklistRole, sender, member, duration, reason)
     }
 
-    private fun getBlacklist(guild: Guild, id: Int) =
-        blacklistsCollection(guild).find().sortedBy { it["duration"] as Long }.getOrNull(id - 1)
-
-    private fun blacklistsCollection(guild: Guild) = mongo.getCollection(guild.id, "blacklists")
+    private fun getBlacklist(id: Int) = blacklists.find().sortedBy { it["duration"] as Long }.getOrNull(id - 1)
 
     private fun submitBlacklist(
-        guild: Guild,
         muteRole: Role,
         sender: Member,
         member: Member,
         duration: Duration,
         reason: String,
-        points: Double = 10.0
     ) = submitIncident(
-        guild,
-        { BlacklistIncident(nextIncidentId(guild), muteRole, sender, member, duration, reason, points) },
+        { BlacklistIncident(nextIncidentId(), muteRole, sender, member, duration, reason) },
         { BlacklistSuccessResponse(it.id, it.member, it.duration, it.reason) },
         { BlacklistFailureResponse("Could not execute blacklist incident!") }
     )
@@ -218,11 +194,10 @@ class PunishmentHandler {
     ) : StandardErrorResponse("Blacklist Failure!", description)
 
     fun addBlacklist(
-        guild: Guild,
         duration: Duration,
         reason: String
     ): Response {
-        blacklistsCollection(guild).insertOne(Document().also {
+        blacklists.insertOne(Document().also {
             it["duration"] = duration.seconds
             it["reason"] = reason
         })
@@ -231,51 +206,40 @@ class PunishmentHandler {
         )
     }
 
-    fun removeBlacklist(guild: Guild, id: Int): Response {
-        val found = getBlacklist(guild, id) ?: return StandardErrorResponse(
+    fun removeBlacklist(id: Int): Response {
+        val found = getBlacklist(id) ?: return StandardErrorResponse(
             "Invalid Blacklist!", "There is no blacklist with the ID '$id'!"
         )
-        blacklistsCollection(guild).deleteOne(found)
+        blacklists.deleteOne(found)
         return StandardSuccessResponse(
             "Blacklist Deleted!", "Deleted blacklist '${found["reason"] as String}'!"
         )
     }
 
-    fun getBlacklists(
-        guild: Guild
-    ) = blacklistsCollection(guild).find().sortedBy {
+    fun getBlacklists() = blacklists.find().sortedBy {
         it["duration"] as Long
     }.map {
         DurationUtils.formatSeconds(it["duration"] as Long) to it["reason"] as String
-    }.withIndex().associateByTo(
-        TreeMap(), { it.index }, { it.value }
-    )
+    }.withIndex().associateByTo(TreeMap(), { it.index }, { it.value })
 
     fun tempbanIncident(
         sender: Member, tempbanned: Member, delDays: Int, duration: Duration, reason: String
     ): Response {
-        val guild = sender.guild
         if (sender == tempbanned) return TempbanFailureResponse("You may not tempban yourself!")
         if (tempbanned.user.isBot) return TempbanFailureResponse("You may not tempban bots!")
-        if (!guild.selfMember.canInteract(tempbanned)) return TempbanFailureResponse(
+        if (!selfMember.canInteract(tempbanned)) return TempbanFailureResponse(
             "I do not have permission to tempban that member!"
         )
         if (!sender.canInteract(tempbanned)) return TempbanFailureResponse(
             "You do not have permission to tempban that member!"
         )
-        return submitTempban(guild, sender, tempbanned, delDays, duration, reason)
+        return submitTempban(sender, tempbanned, delDays, duration, reason)
     }
 
     private fun submitTempban(
-        guild: Guild,
-        sender: Member,
-        member: Member,
-        delDays: Int,
-        duration: Duration,
-        reason: String,
-        points: Double = 66.7
-    ) = submitIncident(guild,
-        { TempbanIncident(nextIncidentId(guild), sender, member, delDays, duration, reason, points) },
+        sender: Member, member: Member, delDays: Int, duration: Duration, reason: String
+    ) = submitIncident(
+        { TempbanIncident(nextIncidentId(), sender, member, delDays, duration, reason) },
         { TempbanSuccessResponse(it.id, it.member, it.duration, it.reason) },
         { TempbanFailureResponse("Could not execute tempban incident!") }
     )
@@ -294,27 +258,24 @@ class PunishmentHandler {
     fun banIncident(
         sender: Member, member: Member, delDays: Int, reason: String
     ): Response {
-        val guild = sender.guild
         if (sender == member) return BanFailureResponse("You may not ban yourself!")
         if (member.user.isBot) return BanFailureResponse("You may not ban bots!")
-        if (!guild.selfMember.canInteract(member)) return BanFailureResponse(
+        if (!selfMember.canInteract(member)) return BanFailureResponse(
             "I do not have permission to ban that member!"
         )
         if (!sender.canInteract(member)) return BanFailureResponse(
             "You do not have permission to ban that member!"
         )
-        return submitBan(guild, sender, member, delDays, reason)
+        return submitBan(sender, member, delDays, reason)
     }
 
     private fun submitBan(
-        guild: Guild,
         sender: Member,
         member: Member,
         delDays: Int,
-        reason: String,
-        points: Double = 100.0
-    ) = submitIncident(guild,
-        { BanIncident(nextIncidentId(guild), sender, member, delDays, reason, points) },
+        reason: String
+    ) = submitIncident(
+        { BanIncident(nextIncidentId(), sender, member, delDays, reason) },
         { BanSuccessResponse(it.id, it.member, it.reason) },
         { BanFailureResponse("Could not execute ban incident!") }
     )
@@ -330,29 +291,25 @@ class PunishmentHandler {
         description: String
     ) : StandardErrorResponse("Ban Failure!", description)
 
-    fun unblacklistIncident(
-        sender: Member, member: Member, reason: String
-    ): Response {
-        val guild = sender.guild
+    fun unblacklistIncident(sender: Member, member: Member, reason: String): Response {
         if (sender == member) return UnblacklistFailureResponse("You may not unblacklist yourself!")
         if (member.user.isBot) return UnblacklistFailureResponse("You may not unblacklist bots!")
-        if (!guild.selfMember.canInteract(member)) return UnblacklistFailureResponse(
+        if (!selfMember.canInteract(member)) return UnblacklistFailureResponse(
             "I do not have permission to unblacklist that member!"
         )
         if (!sender.canInteract(member)) return UnblacklistFailureResponse(
             "You do not have permission to unblacklist that member!"
         )
-        val blacklistRole = getBlacklistRole(guild) ?: return StandardErrorResponse(
+        val blacklistRole = blacklistRole() ?: return StandardErrorResponse(
             "No Blacklist Role!", "The blacklist role has not been configured!"
         )
         if (!member.roles.contains(blacklistRole)) return UnblacklistFailureResponse(
             "That user is not blacklisted!"
         )
         return submitIncident(
-            guild,
-            { UnblacklistIncident(nextIncidentId(guild), blacklistRole, sender, member, reason) },
+            { UnblacklistIncident(nextIncidentId(), blacklistRole, sender, member, reason) },
             {
-                incidentCollection(guild).updateMany(
+                incidents.updateMany(
                     Document("type", "BLACKLIST"),
                     Document("\$set", Document("resolved", true))
                 )
@@ -362,40 +319,34 @@ class PunishmentHandler {
         )
     }
 
-    private class UnblacklistSuccessResponse(
-        id: Long, member: Member, reason: String
-    ) : StandardSuccessResponse(
+    private class UnblacklistSuccessResponse(id: Long, member: Member, reason: String) : StandardSuccessResponse(
         "Unblacklist Success (#$id)",
         "Unblacklisted ${member.formatted()} for '$reason'!"
     )
 
-    private class UnblacklistFailureResponse(
-        description: String
-    ) : StandardErrorResponse("Unblacklist Failure!", description)
+    private class UnblacklistFailureResponse(description: String) : StandardErrorResponse(
+        "Unblacklist Failure!", description
+    )
 
-    fun unmuteIncident(
-        sender: Member, member: Member, reason: String
-    ): Response {
-        val guild = sender.guild
+    fun unmuteIncident(sender: Member, member: Member, reason: String): Response {
         if (sender == member) return UnmuteFailureResponse("You may not unmute yourself!")
         if (member.user.isBot) return UnmuteFailureResponse("You may not unmute bots!")
-        if (!guild.selfMember.canInteract(member)) return UnmuteFailureResponse(
+        if (!selfMember.canInteract(member)) return UnmuteFailureResponse(
             "I do not have permission to unmute that member!"
         )
         if (!sender.canInteract(member)) return UnmuteFailureResponse(
             "You do not have permission to unban that member!"
         )
-        val muteRole = getMuteRole(guild) ?: return StandardErrorResponse(
+        val muteRole = muteRole() ?: return StandardErrorResponse(
             "No Mute Role!", "The mute role has not been configured!"
         )
         if (!member.roles.contains(muteRole)) return UnmuteFailureResponse(
             "That member is not muted!"
         )
         return submitIncident(
-            guild,
-            { UnmuteIncident(nextIncidentId(guild), muteRole, sender, member, reason) },
+            { UnmuteIncident(nextIncidentId(), muteRole, sender, member, reason) },
             {
-                incidentCollection(guild).updateMany(
+                incidents.updateMany(
                     Document("type", "MUTE"),
                     Document("\$set", Document("resolved", true))
                 )
@@ -416,19 +367,16 @@ class PunishmentHandler {
         description: String
     ) : StandardErrorResponse("Unmute Failure!", description)
 
-    fun unbanIncident(
-        sender: Member, user: String, reason: String
-    ): Response {
-        val guild = sender.guild
+    fun unbanIncident(sender: Member, user: String, reason: String): Response {
         val ban = try {
             guild.retrieveBanById(user).complete()
         } catch (err: Throwable) {
             return StandardErrorResponse("Unknown Ban!", "The specified user is not banned!")
         }
-        return submitIncident(guild,
-            { UnbanIncident(nextIncidentId(guild), sender, ban.user, reason) },
+        return submitIncident(
+            { UnbanIncident(nextIncidentId(), sender, ban.user, reason) },
             {
-                incidentCollection(guild).updateMany(
+                incidents.updateMany(
                     Document("type", Document("\$in", listOf("TEMPBAN", "BAN"))),
                     Document("\$set", Document("resolved", true))
                 )
@@ -438,103 +386,65 @@ class PunishmentHandler {
         )
     }
 
-    private class UnbanSuccessResponse(
-        id: Long, user: User, reason: String
-    ) : StandardSuccessResponse(
+    private class UnbanSuccessResponse(id: Long, user: User, reason: String) : StandardSuccessResponse(
         "Unban Success (#$id)",
         "Unbanned ${user.formatted()} for '$reason'!"
     )
 
-    private class UnbanFailureResponse(
-        description: String
-    ) : StandardErrorResponse("Unban Failure!", description)
-
-    private val pointMap = TreeMap<Double, Pair<Type, Duration?>>().apply {
-        put(3.7, Type.WARN to null)
-        put(7.4, Type.KICK to null)
-        put(11.1, Type.MUTE to durationOf("30m"))
-        put(14.8, Type.MUTE to durationOf("45m"))
-        put(18.5, Type.MUTE to durationOf("1h"))
-        put(22.2, Type.MUTE to durationOf("3h"))
-        put(25.9, Type.MUTE to durationOf("5h"))
-        put(29.6, Type.MUTE to durationOf("7h"))
-        put(33.3, Type.MUTE to durationOf("1d"))
-        put(37.0, Type.MUTE to durationOf("2d"))
-        put(40.7, Type.MUTE to durationOf("3d"))
-        put(44.4, Type.MUTE to durationOf("4d"))
-        put(48.1, Type.MUTE to durationOf("5d"))
-        put(51.9, Type.MUTE to durationOf("6d"))
-        put(55.6, Type.MUTE to durationOf("1w"))
-        put(59.3, Type.MUTE to durationOf("2w"))
-        put(63.0, Type.MUTE to durationOf("3w"))
-        put(66.7, Type.TEMPBAN to durationOf("2d"))
-        put(70.4, Type.TEMPBAN to durationOf("4d"))
-        put(74.1, Type.TEMPBAN to durationOf("6d"))
-        put(77.8, Type.TEMPBAN to durationOf("1w"))
-        put(81.5, Type.TEMPBAN to durationOf("3w"))
-        put(85.2, Type.TEMPBAN to durationOf("1M"))
-        put(88.9, Type.TEMPBAN to durationOf("2M"))
-        put(92.6, Type.TEMPBAN to durationOf("3M"))
-        put(96.3, Type.TEMPBAN to durationOf("4M"))
-        put(100.0, Type.BAN to null)
-    }
+    private class UnbanFailureResponse(description: String) : StandardErrorResponse(
+        "Unban Failure!", description
+    )
 
     fun punishMember(sender: Member, target: Member, id: Int): Response {
-        val guild = sender.guild
         if (sender == target) return PunishFailureResponse("You may not punish yourself!")
         if (target.user.isBot) return PunishFailureResponse("You may not punish bots!")
-        if (!guild.selfMember.canInteract(target)) return PunishFailureResponse(
+        if (!selfMember.canInteract(target)) return PunishFailureResponse(
             "I do not have permission to punish that member!"
         )
         if (!sender.canInteract(target)) return WarnFailureResponse(
             "You do not have permission to punish that member!"
         )
-        val offense = getOffense(guild, id) ?: return StandardErrorResponse(
+        val offense = getOffense(id) ?: return StandardErrorResponse(
             "Invalid Punishment!", "There is no punishment with the ID `$id`!"
         )
-        val points = getPoints(guild, target.user)
-        val toAdd = getPoints(offense["level"] as Int)
-        val effective = points + toAdd
+        val points = getPoints(target.user)
+        val effective = points + Level.values()[offense["level"] as Int - 1].points
         val reason = "${offense["name"] as String} (Punishments vary based on your history)"
         val (type, duration) =
             (pointMap.ceilingEntry(effective) ?: pointMap.floorEntry(effective)).value
         return when (type) {
-            Type.WARN -> submitWarn(guild, sender, target, reason, toAdd)
-            Type.KICK -> submitKick(guild, sender, target, reason, toAdd)
-            Type.MUTE -> {
-                val muteRole = getMuteRole(guild) ?: return MuteFailureResponse(
+            WARN -> submitWarn(sender, target, reason)
+            KICK -> submitKick(sender, target, reason)
+            MUTE -> {
+                val muteRole = muteRole() ?: return MuteFailureResponse(
                     "The mute role has not been configured!"
                 )
-                return submitMute(guild, muteRole, sender, target, duration!!, reason, toAdd)
+                submitMute(muteRole, sender, target, duration!!, reason)
             }
-            Type.TEMPBAN -> submitTempban(guild, sender, target, 7, duration!!, reason, toAdd)
-            Type.BAN -> submitBan(guild, sender, target, 7, reason, toAdd)
+            TEMPBAN -> submitTempban(sender, target, 7, duration!!, reason)
+            BAN -> submitBan(sender, target, 7, reason)
             else -> StandardErrorResponse("Unmet condition in 'when'!")
         }
     }
 
-    private class PunishFailureResponse(
-        description: String
-    ) : StandardErrorResponse("Punish Failure!", description)
+    private class PunishFailureResponse(description: String) : StandardErrorResponse(
+        "Punish Failure!", description
+    )
 
-    private fun getOffense(
-        guild: Guild, id: Int
-    ): Document? = offensesCollection(guild).find().sortedBy {
+    fun getPoints(user: User): Double = incidents.find(Document().also {
+        it["target"] = user.id
+        it["points"] = Document("\$exists", true)
+    }).sumByDouble { (it["points"] as Document)["value"] as Double }
+
+    private fun getOffense(id: Int): Document? = offenses.find().sortedBy {
         it["level"] as Int
     }.getOrNull(id - 1)
 
-    fun getOffenses(
-        guild: Guild
-    ) = offensesCollection(guild).find().sortedBy {
-        it["level"] as Int
-    }.withIndex().associateByTo(
-        HashMap(),
-        IndexedValue<Document>::index,
-        IndexedValue<Document>::value
+    fun getOffenses() = offenses.find().sortedBy { it["level"] as Int }.withIndex().associateByTo(
+        HashMap(), { it.index }, { it.value }
     )
 
-    fun addOffense(guild: Guild, level: Int, name: String): Response {
-        val offenses = offensesCollection(guild)
+    fun addOffense(level: Int, name: String): Response {
         val offense = Document().also {
             it["level"] = level
             it["name"] = name
@@ -546,42 +456,64 @@ class PunishmentHandler {
         )
     }
 
-    fun removeOffense(guild: Guild, id: Int): Response {
-        val toRemove = getOffense(guild, id) ?: return StandardErrorResponse(
+    fun removeOffense(id: Int): Response {
+        val toRemove = getOffense(id) ?: return StandardErrorResponse(
             "Invalid Offense!", "There is no offense with the ID `$id`!"
         )
         val level = toRemove["level"] as Int
         val name = toRemove["name"] as String
-        offensesCollection(guild).deleteOne(toRemove)
+        offenses.deleteOne(toRemove)
         return StandardSuccessResponse(
             "Offense Removed!",
             "Removed Level `$level` offense: `$name`!"
         )
     }
 
-    fun getPoints(level: Int) = (3.7 * 3.0.pow(level - 1.0)).round(1)
+    private fun submitRoleUpdate(
+        sender: Member, target: Member, role: Role, reason: String, action: Action, description: String
+    ) = submitIncident(
+        { RoleUpdateIncident(nextIncidentId(), sender, target, role, reason, action) },
+        { RoleUpdateSuccess(it.id, description) },
+        ::RoleUpdateFailure
+    )
 
-    private fun offensesCollection(guild: Guild) =
-        mongo.getCollection(guild.id, "offenses")
+    fun submitRoleAdd(sender: Member, target: Member, role: Role, reason: String) = submitRoleUpdate(
+        sender, target, role, reason, Action.ADD,
+        "Added role ${role.name} to ${target.formatted()} for '$reason'!"
+    )
+
+    fun submitRoleRemove(sender: Member, target: Member, role: Role, reason: String) = submitRoleUpdate(
+        sender, target, role, reason, Action.REMOVE,
+        "Removed role ${role.name} from ${target.formatted()} for '$reason'!"
+    )
+
+    private class RoleUpdateSuccess(id: Long, description: String) : StandardSuccessResponse(
+        "Role Update Success (#$id)", description
+    )
+
+    private class RoleUpdateFailure : StandardErrorResponse(
+        "Role Update Failure!",
+        "There was a problem updating that member's roles!"
+    )
 
     private fun <T : ExecutableIncident> submitIncident(
-        guild: Guild,
         supplier: () -> T,
         onSuccess: (T) -> StandardSuccessResponse,
         onFailure: () -> StandardErrorResponse
     ): Response {
-        val logChannel = getIncidentChannel(guild) ?: return StandardErrorResponse(
+        val logChannel = incidentChannel() ?: return StandardErrorResponse(
             "No Log Channel!", "The incident log has not been configured!"
         )
         return try {
             val incident = supplier()
             incident.execute()
             val message = incident.sendLog(logChannel)
-            incidentCollection(guild).insertOne(incident.asDocument().also {
+            incidents.insertOne(incident.asDocument().also {
                 it["message"] = message.id
             })
             onSuccess(incident)
         } catch (err: Throwable) {
+            err.printStackTrace()
             onFailure().apply {
                 addField(
                     "Exception:",
@@ -592,37 +524,17 @@ class PunishmentHandler {
         }
     }
 
-    private fun incidentCollection(guild: Guild) = mongo.getCollection(guild.id, "incidents")
-    private fun nextIncidentId(guild: Guild) = incidentCollection(guild).countDocuments() + 1
+    private fun nextIncidentId() = incidents.countDocuments() + 1
 
-    private fun getIncidentChannel(
-        guild: Guild
-    ) = configManager[guild].optional<String>(
-        "moderation.incident-log"
-    )?.let(guild::getTextChannelById)
-
-    private fun reportCollection(guild: Guild) = mongo.getCollection(guild.id, "reports")
-    fun getReportChannel(
-        guild: Guild
-    ) = configManager[guild].optional<String>(
-        "moderation.report-log"
-    )?.let(guild::getTextChannelById)
-
-    fun submitReport(
-        message: Message,
-        target: Member,
-        reason: String,
-    ): Response {
-        val guild = message.guild
+    fun submitReport(message: Message, target: Member, reason: String): Response {
         val sender = message.member!!
         val fromChannel = message.textChannel
-        val channel = getReportChannel(guild) ?: return StandardErrorResponse(
+        val channel = reportChannel() ?: return StandardErrorResponse(
             "No Log Channel!", "The report log has not been configured!"
         )
-        val collection = reportCollection(message.guild)
-        val id = collection.countDocuments() + 1
+        val id = reports.countDocuments() + 1
         Report(id, sender.id, target.id, reason, fromChannel.id).also {
-            collection.insertOne(it.asDocument())
+            reports.insertOne(it.asDocument())
             it.send(channel)
         }
         return StandardSuccessResponse(
@@ -631,10 +543,7 @@ class PunishmentHandler {
         )
     }
 
-    fun getReportsAgainst(
-        guild: Guild,
-        user: User
-    ) = reportCollection(guild).find(
+    fun getReportsAgainst(user: User) = reports.find(
         Document().also {
             it["handling.valid"] = Document("\$ne", false)
             it["deleted"] = Document("\$ne", true)
@@ -642,121 +551,34 @@ class PunishmentHandler {
         }
     ).map(::Report).toList()
 
-    private fun getMuteRole(guild: Guild) = configManager[guild].optional<String>(
-        "moderation.mute-role"
-    )?.let(guild::getRoleById)
-
-    private fun getBlacklistRole(guild: Guild) = configManager[guild].optional<String>(
-        "moderation.blacklist-role"
-    )?.let(guild::getRoleById)
-
-    fun getCase(guild: Guild, id: Long): Case? =
-        incidentCollection(guild).find(Document("_id", id)).first()?.let(::Case)
-
-    fun deleteCase(
-        member: Member, id: Long, reason: String
-    ) = member.guild.let { guild ->
-        submitIncident(guild,
-            { CaseDeleteIncident(incidentCollection(guild), id, member, guild.selfMember, reason) },
-            {
-                val deleted = it.deleted!!
-                (deleted["message"] as String?)?.let { getIncidentChannel(guild)?.deleteMessageById(it)?.queue({}, {}) }
-                val response = if (deleted["resolved"] as Boolean? != true) {
-                    val target = deleted["target"] as String
-                    when (deleted["type"] as String) {
-                        "MUTE" -> runCatching {
-                            unmuteIncident(member, guild.getMemberById(target)!!, "Case $id deleted: $reason")
-                        }.getOrNull()
-                        "BLACKLIST" -> runCatching {
-                            unblacklistIncident(member, guild.getMemberById(target)!!, "Case $id deleted: $reason")
-                        }.getOrNull()
-                        "BAN" -> unbanIncident(member, target, "Case $id deleted: $reason")
-                        else -> null
-                    }
-                } else null
-                if (response is StandardSuccessResponse) response
-                else StandardSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
-            },
-            { StandardErrorResponse("Case Delete Failure!", "Case #$id could not be deleted!") }
-        )
-    }
-
-    fun getHistory(guild: Guild, id: String): List<Case> =
-        incidentCollection(guild).find(Document("target", id))
-            .map(::Case)
-            .toList()
-
-    fun performTasks() {
-        Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate(
-            {
-                Source.SHARD_MANAGER.guilds.forEach { guild ->
-                    expireOldIncidents(guild)
-                    doPointDecay(guild)
+    fun getHistory(id: String): List<Case> = incidents.find(Document("target", id)).map(::Case).toList()
+    fun getCase(id: Long) = incidents.find(Document("_id", id)).first()?.let(::Case)
+    fun deleteCase(member: Member, id: Long, reason: String) = submitIncident(
+        { CaseDeleteIncident(incidents, id, member, selfMember, reason) },
+        {
+            val deleted = it.deleted!!
+            (deleted["message"] as String?)?.let { incidentChannel()?.deleteMessageById(it)?.queue({}, {}) }
+            val response = if (deleted["resolved"] as Boolean? != true) {
+                val target = deleted["target"] as String
+                when (deleted["type"] as String) {
+                    "MUTE" -> runCatching {
+                        unmuteIncident(member, guild.getMemberById(target)!!, "Case $id deleted: $reason")
+                    }.getOrNull()
+                    "BLACKLIST" -> runCatching {
+                        unblacklistIncident(member, guild.getMemberById(target)!!, "Case $id deleted: $reason")
+                    }.getOrNull()
+                    "BAN" -> unbanIncident(member, target, "Case $id deleted: $reason")
+                    else -> null
                 }
-            }, 0, 1, TimeUnit.SECONDS
-        )
-    }
+            } else null
+            if (response is StandardSuccessResponse) response
+            else StandardSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
+        },
+        { StandardErrorResponse("Case Delete Failure!", "Case #$id could not be deleted!") }
+    )
 
-    private fun expireOldIncidents(guild: Guild) {
-        val reason = "The punishment has expired."
-        val collection = incidentCollection(guild)
-        val query = Document().apply {
-            this["expiry"] = Document().apply {
-                this["\$exists"] = true
-                this["\$lte"] = Instant.now().toEpochMilli()
-            }
-            this["resolved"] = Document("\$ne", true)
-        }
-        collection.find(query).forEach {
-            when (it["type"] as String) {
-                "MUTE" -> {
-                    val muted = (it["target"] as String).let(guild::getMemberById)!!
-                    unmuteIncident(guild.selfMember, muted, reason)
-                }
-                "TEMPBAN" -> unbanIncident(guild.selfMember, it["target"] as String, reason)
-                "BLACKLIST" -> {
-                    val blacklisted = (it["target"] as String).let(guild::getMemberById)!!
-                    unblacklistIncident(guild.selfMember, blacklisted, reason)
-                }
-            }
-            collection.updateOne(it, Document("\$set", Document("resolved", true)))
-        }
-    }
-
-    private fun doPointDecay(guild: Guild) = incidentCollection(guild).let { incidents ->
-        incidents.find(Document("points", Document("\$exists", true))).forEach { incident ->
-            val points = incident["points"] as Document
-            var decay = points["decay"] as Long
-            if (--decay <= 0) incidents.updateOne(incident, Document("\$unset", Document("points", "")))
-            else incidents.updateOne(
-                incident,
-                Document("\$set", Document("points", Document("decay", decay).also {
-                    it["value"] = points["value"]
-                }))
-            )
-        }
-    }
-
-    fun getPoints(guild: Guild, user: User): Double =
-        incidentCollection(guild).find(Document().also {
-            it["target"] = user.id
-            it["points"] = Document("\$exists", true)
-        }).sumByDouble {
-            (it["points"] as Document)["value"] as Double
-        }
-
-    fun getReport(
-        guild: Guild,
-        id: Long
-    ) = reportCollection(guild).find(Document("_id", id)).first()?.let(::Report)
-
-    fun deleteReport(
-        guild: Guild,
-        id: Long,
-        member: Member,
-        reason: String
-    ): Response {
-        val reports = reportCollection(guild)
+    fun getReport(id: Long) = reports.find(Document("_id", id)).first()?.let(::Report)
+    fun deleteReport(id: Long, member: Member, reason: String): Response {
         val query = Document("_id", id)
         val found = reports.find(query).first() ?: return StandardErrorResponse(
             "Invalid Report!", "There is no report with the ID '$id'!"
@@ -764,9 +586,9 @@ class PunishmentHandler {
         if (found["deleted"] as Boolean? == true) return StandardErrorResponse(
             "Invalid Report!", "That report has already been deleted!"
         )
-        reportCollection(guild).updateOne(Document("_id", id), Document("\$set", Document().also {
+        reports.updateOne(query, Document("\$set", Document().also {
             it["sender"] = member.id
-            it["target"] = guild.selfMember.id
+            it["target"] = selfMember.id
             it["reason"] = reason
             it["time"] = Instant.now().toEpochMilli()
             it["handling"] = Document().also {
@@ -780,13 +602,8 @@ class PunishmentHandler {
         )
     }
 
-    fun markReportHandled(
-        guild: Guild,
-        id: Long,
-        valid: Boolean,
-        handler: String
-    ) {
-        reportCollection(guild).updateOne(
+    fun markReportHandled(id: Long, valid: Boolean, handler: String) {
+        reports.updateOne(
             Document("_id", id),
             Document("\$set", Document("handling", Document().also {
                 it["valid"] = valid
@@ -795,46 +612,7 @@ class PunishmentHandler {
         )
     }
 
-    fun submitRoleAdd(
-        guild: Guild,
-        sender: Member,
-        target: Member,
-        role: Role,
-        reason: String
-    ) = submitIncident(
-        guild,
-        { RoleUpdateIncident(nextIncidentId(guild), sender, target, role, reason, Action.ADD) },
-        {
-            StandardSuccessResponse(
-                "Role Update Success (#${it.id})",
-                "Added role ${role.name} to ${target.formatted()} for '$reason'!"
-            )
-        },
-        { StandardErrorResponse("Role Update Failure!", "There was a problem updating that member's roles!") }
-    )
-
-    fun submitRoleRemove(
-        guild: Guild,
-        sender: Member,
-        target: Member,
-        role: Role,
-        reason: String
-    ) = submitIncident(
-        guild,
-        { RoleUpdateIncident(nextIncidentId(guild), sender, target, role, reason, Action.REMOVE) },
-        {
-            StandardSuccessResponse(
-                "Role Update Success (#${it.id})",
-                "Removed role ${role.name} from ${target.formatted()} for '$reason'!"
-            )
-        },
-        { StandardErrorResponse("Role Update Failure!", "There was a problem updating that member's roles!") }
-    )
-
-    fun logAdvertising(
-        guild: Guild,
-        message: Message
-    ) = getReportChannel(guild)?.let {
+    fun logAdvertising(message: Message) = reportChannel()?.let {
         val sender = message.member!!
         val channel = message.textChannel
         val embed = StandardWarningResponse(
@@ -851,4 +629,90 @@ class PunishmentHandler {
         }
         true
     } ?: false
+
+    internal fun expireOldIncidents() {
+        val reason = "The punishment has expired."
+        val query = Document().apply {
+            this["expiry"] = Document().apply {
+                this["\$exists"] = true
+                this["\$lte"] = Instant.now().toEpochMilli()
+            }
+            this["resolved"] = Document("\$ne", true)
+        }
+        incidents.find(query).forEach {
+            when (it["type"] as String) {
+                "MUTE" -> {
+                    val muted = (it["target"] as String).let(guild::getMemberById)!!
+                    unmuteIncident(selfMember, muted, reason)
+                }
+                "TEMPBAN" -> unbanIncident(selfMember, it["target"] as String, reason)
+                "BLACKLIST" -> {
+                    val blacklisted = (it["target"] as String).let(guild::getMemberById)!!
+                    unblacklistIncident(selfMember, blacklisted, reason)
+                }
+            }
+            incidents.updateOne(it, Document("\$set", Document("resolved", true)))
+        }
+    }
+
+    internal fun doPointDecay() = incidents.let { incidents ->
+        incidents.find(Document("points", Document("\$exists", true))).forEach { incident ->
+            val points = incident["points"] as Document
+            var decay = points["decay"] as Long
+            if (--decay <= 0) incidents.updateOne(incident, Document("\$unset", Document("points", "")))
+            else incidents.updateOne(
+                incident,
+                Document("\$set", Document("points", Document("decay", decay).also {
+                    it["value"] = points["value"]
+                }))
+            )
+        }
+    }
+
+    companion object {
+        private val pointMap = object : TreeMap<Double, Pair<Type, Duration?>>() {
+            init {
+                register( /* Level 1 - 1 Month Expiry */
+                    Pair(5.0, WARN), Pair(10.0, WARN)
+                )
+                register( /* Level 2 - 3 Month Expiry */
+                    Triple(15.0, MUTE, "30m"),
+                    Triple(20.0, MUTE, "1h"),
+                    Triple(25.0, MUTE, "2h"),
+                    Triple(30.0, MUTE, "3h"),
+                    Triple(35.0, MUTE, "6h"),
+                    Triple(40.0, MUTE, "12h"),
+                    Triple(45.0, MUTE, "1d")
+                )
+                register(
+                    /* Level 3 - 6 Month Expiry */
+                    Triple(50.0, TEMPBAN, "1d"),
+                    Triple(55.0, TEMPBAN, "2d"),
+                    Triple(60.0, TEMPBAN, "3d"),
+                    Triple(65.0, TEMPBAN, "4d"),
+                    Triple(70.0, TEMPBAN, "5d"),
+                    Triple(75.0, TEMPBAN, "6d"),
+                    Triple(80.0, TEMPBAN, "1w"),
+                    Triple(85.0, TEMPBAN, "2w"),
+                    Triple(90.0, TEMPBAN, "3w"),
+                    Triple(95.0, TEMPBAN, "1M"),
+                )
+                register( /* Level 4 - 1 Year Expiry */
+                    Pair(100.0, BAN)
+                )
+            }
+
+            fun register(vararg pairs: Pair<Double, Type>) {
+                register(*pairs.map { Triple(it.first, it.second, null) }.toTypedArray())
+            }
+
+            fun register(vararg triples: Triple<Double, Type, String?>) {
+                triples.forEach {
+                    val (points, type, duration) = it
+                    val value = type to duration?.let(::durationOf)
+                    put(points, value)
+                }
+            }
+        }
+    }
 }

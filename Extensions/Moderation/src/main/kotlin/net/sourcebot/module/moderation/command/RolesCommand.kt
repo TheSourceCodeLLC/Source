@@ -9,6 +9,7 @@ import net.sourcebot.api.getHighestRole
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.module.moderation.Moderation
 
 class RolesCommand : ModerationRootCommand(
     "roles", "Manage member roles."
@@ -42,7 +43,7 @@ class RolesCommand : ModerationRootCommand(
             if (senderHighest.position < targetHighest.position) return StandardErrorResponse(
                 "Role Add Failure!", "You do not have permission to manage that person's roles!"
             )
-            return punishmentHandler.submitRoleAdd(guild, sender, target, role, reason)
+            return Moderation.getPunishmentHandler(guild) { submitRoleAdd(sender, target, role, reason) }
         }
     }
 
@@ -75,7 +76,7 @@ class RolesCommand : ModerationRootCommand(
             if (senderHighest.position < targetHighest.position) return StandardErrorResponse(
                 "Role Remove Failure!", "You do not have permission to manage that person's roles!"
             )
-            return punishmentHandler.submitRoleRemove(guild, sender, target, role, reason)
+            return Moderation.getPunishmentHandler(guild) { submitRoleRemove(sender, target, role, reason) }
         }
     }
 

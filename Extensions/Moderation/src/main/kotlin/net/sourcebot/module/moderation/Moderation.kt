@@ -1,9 +1,15 @@
 package net.sourcebot.module.moderation
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import net.dv8tion.jda.api.entities.Guild
+import net.sourcebot.Source
 import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.moderation.command.*
 import net.sourcebot.module.moderation.listener.MessageListener
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 class Moderation : SourceModule() {
     override val configurationInfo = ConfigurationInfo("moderation") {
@@ -19,6 +25,7 @@ class Moderation : SourceModule() {
         node("mute-role", "Role ID for the mute role.")
     }
 
+    private lateinit var task: ScheduledFuture<*>
     override fun onEnable() {
         registerCommands(
             ClearCommand(),
@@ -39,11 +46,33 @@ class Moderation : SourceModule() {
             RolesCommand()
         )
         subscribeEvents(MessageListener())
-        PUNISHMENT_HANDLER.performTasks()
+        task = Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate({
+            Source.SHARD_MANAGER.guilds.forEach {
+                Source.EXECUTOR_SERVICE.submit {
+                    getPunishmentHandler(it) {
+                        expireOldIncidents()
+                        doPointDecay()
+                    }
+                }
+            }
+        }, 0L, 1L, TimeUnit.SECONDS)
+    }
+
+    override fun onDisable() {
+        task.cancel(true)
     }
 
     companion object {
-        @JvmStatic
-        val PUNISHMENT_HANDLER = PunishmentHandler()
+        private val punishmentHandlers = CacheBuilder.newBuilder()
+            .weakKeys().expireAfterWrite(10, TimeUnit.MINUTES)
+            .build(object : CacheLoader<Guild, PunishmentHandler>() {
+                override fun load(guild: Guild) = PunishmentHandler(guild)
+            })
+
+        fun <T> getPunishmentHandler(
+            guild: Guild, block: PunishmentHandler.() -> T
+        ) = punishmentHandlers[guild].block()
+
+        fun getPunishmentHandler(guild: Guild): PunishmentHandler = punishmentHandlers[guild]
     }
 }

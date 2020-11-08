@@ -16,7 +16,7 @@ class ProfileCommand : RootCommand(
     "profile", "Manage member profiles."
 ) {
     override val argumentInfo = ArgumentInfo(
-        OptionalArgument("target", "The member who's profile you wish to view.")
+        OptionalArgument("target", "The member who's profile you wish to view.", "self")
     )
 
     override fun execute(message: Message, args: Arguments): Response {

@@ -7,6 +7,8 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.module.moderation.Moderation
+import net.sourcebot.module.moderation.PunishmentHandler
 
 class BlacklistCommand : ModerationRootCommand(
     "blacklist", "Manage Guild blacklists."
@@ -23,7 +25,9 @@ class BlacklistCommand : ModerationRootCommand(
             Adapter.int(1, error = "Blacklist ID must be at least 1!"),
             "You did not specify a valid blacklist ID to apply!"
         )
-        return punishmentHandler.blacklistIncident(message.member!!, target, id)
+        return Moderation.getPunishmentHandler(message.guild) {
+            blacklistIncident(message.member!!, target, id)
+        }
     }
 
     private inner class BlacklistsAddCommand : ModerationCommand(
@@ -40,7 +44,7 @@ class BlacklistCommand : ModerationRootCommand(
                 "You did not specify a duration for the blacklist!"
             )
             val reason = args.slurp(" ", "You did not specify a reason for the blacklist!")
-            return punishmentHandler.addBlacklist(message.guild, duration, reason)
+            return Moderation.getPunishmentHandler(message.guild) { addBlacklist(duration, reason) }
         }
     }
 
@@ -56,7 +60,7 @@ class BlacklistCommand : ModerationRootCommand(
                 Adapter.int(1, error = "The ID must be at least 1!"),
                 "You did not specify a blacklist ID to remove!"
             )
-            return punishmentHandler.removeBlacklist(message.guild, id)
+            return Moderation.getPunishmentHandler(message.guild) { removeBlacklist(id) }
         }
     }
 
@@ -65,7 +69,7 @@ class BlacklistCommand : ModerationRootCommand(
     ) {
         override val cleanupResponse = false
         override fun execute(message: Message, args: Arguments): Response {
-            val blacklists = punishmentHandler.getBlacklists(message.guild)
+            val blacklists = Moderation.getPunishmentHandler(message.guild, PunishmentHandler::getBlacklists)
             if (blacklists.isEmpty()) return StandardInfoResponse(
                 "No Blacklists!", "There are currently no blacklists!"
             )

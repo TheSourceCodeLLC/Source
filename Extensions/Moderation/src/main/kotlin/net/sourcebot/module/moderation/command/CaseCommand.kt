@@ -7,6 +7,7 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
+import net.sourcebot.module.moderation.Moderation
 
 class CaseCommand : ModerationRootCommand(
     "case", "Manage Guild incidents."
@@ -23,9 +24,11 @@ class CaseCommand : ModerationRootCommand(
 
         override fun execute(message: Message, args: Arguments): Response {
             val id = args.next(Adapter.long(), "You did not specify a valid case ID to view!")
-            return punishmentHandler.getCase(message.guild, id)?.render(message.guild) ?: return StandardErrorResponse(
-                "Invalid Case ID!", "There is no case with ID #$id!"
-            )
+            return Moderation.getPunishmentHandler(message.guild) {
+                getCase(id)?.render(message.guild) ?: StandardErrorResponse(
+                    "Invalid Case ID!", "There is no case with ID #$id!"
+                )
+            }
         }
     }
 
@@ -40,7 +43,7 @@ class CaseCommand : ModerationRootCommand(
         override fun execute(message: Message, args: Arguments): Response {
             val id = args.next(Adapter.long(), "You did not specify a valid case ID to delete!")
             val reason = args.slurp(" ", "You did not specify a reason for the case deletion!")
-            return punishmentHandler.deleteCase(message.member!!, id, reason)
+            return Moderation.getPunishmentHandler(message.guild) { deleteCase(message.member!!, id, reason) }
         }
     }
 

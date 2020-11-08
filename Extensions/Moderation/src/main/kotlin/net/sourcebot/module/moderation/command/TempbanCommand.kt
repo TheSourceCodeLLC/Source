@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.argument.*
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.moderation.Moderation
 
 class TempbanCommand : ModerationRootCommand(
     "tempban", "Temporarily ban a member for a specific reason."
@@ -21,6 +22,8 @@ class TempbanCommand : ModerationRootCommand(
         val duration = args.next(Adapter.duration(), "You did not specify a valid duration to tempban for!")
         if (duration.isZero) throw InvalidSyntaxException("The duration may not be zero seconds!")
         val reason = args.slurp(" ", "You did not specify a tempban reason!")
-        return punishmentHandler.tempbanIncident(message.member!!, target, delDays, duration, reason)
+        return Moderation.getPunishmentHandler(message.guild) {
+            tempbanIncident(message.member!!, target, delDays, duration, reason)
+        }
     }
 }

@@ -12,6 +12,7 @@ import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.api.truncate
 import net.sourcebot.api.wrapped
 import net.sourcebot.api.zipAll
+import net.sourcebot.module.moderation.Moderation
 
 class HistoryCommand : ModerationRootCommand(
     "history", "Show punishment histories."
@@ -27,8 +28,9 @@ class HistoryCommand : ModerationRootCommand(
             "History Failure!", "Bots do not have history!"
         )
         val header = "${target.asTag}'s History"
-        val historyList = punishmentHandler.getHistory(message.guild, target.id)
-        val reportList = punishmentHandler.getReportsAgainst(message.guild, target)
+        val punishmentHandler = Moderation.getPunishmentHandler(message.guild)
+        val historyList = punishmentHandler.getHistory(target.id)
+        val reportList = punishmentHandler.getReportsAgainst(target)
         if (historyList.isEmpty() && reportList.isEmpty()) return StandardInfoResponse(
             header, "This user does not have any history."
         ).wrapped(target)
@@ -40,7 +42,7 @@ class HistoryCommand : ModerationRootCommand(
         ) ?: 1
         val (history, reports) = pages[pageNum - 1]
         return StandardInfoResponse(
-            header, "**Punishment Points:** ${punishmentHandler.getPoints(message.guild, target)}"
+            header, "**Punishment Points:** ${punishmentHandler.getPoints(target)}"
         ).apply {
             if (history?.isNotEmpty() == true) {
                 appendDescription(

@@ -7,6 +7,7 @@ import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.moderation.Moderation
 
 class MuteCommand : ModerationRootCommand(
     "mute", "Temporarily mute a member for a specific reason."
@@ -22,8 +23,8 @@ class MuteCommand : ModerationRootCommand(
         val duration = args.next(Adapter.duration(), "You did not specify a valid duration to mute for!")
         if (duration.isZero) throw InvalidSyntaxException("The duration may not be zero seconds!")
         val reason = args.slurp(" ", "You did not specify a mute reason!")
-        return punishmentHandler.muteIncident(
-            message.member!!, target, duration, reason
-        )
+        return Moderation.getPunishmentHandler(message.guild) {
+            muteIncident(message.member!!, target, duration, reason)
+        }
     }
 }

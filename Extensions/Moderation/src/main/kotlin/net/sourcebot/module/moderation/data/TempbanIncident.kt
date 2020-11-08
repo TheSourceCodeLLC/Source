@@ -7,7 +7,6 @@ import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.asMessage
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.StandardErrorResponse
-import org.bson.Document
 import java.time.Duration
 
 class TempbanIncident(
@@ -16,9 +15,8 @@ class TempbanIncident(
     val member: Member,
     private val delDays: Int,
     val duration: Duration,
-    override val reason: String,
-    private val points: Double
-) : SimpleIncident(duration) {
+    override val reason: String
+) : ExpiringPunishment(duration, Level.FOUR) {
     override val source = sender.id
     override val target = member.id
     override val type = Incident.Type.TEMPBAN
@@ -31,13 +29,6 @@ class TempbanIncident(
             **Reason:** $reason
         """.trimIndent()
     )
-
-    override fun asDocument() = super.asDocument().also {
-        it["points"] = Document().also {
-            it["value"] = points
-            it["decay"] = (86400L * points).toLong()
-        }
-    }
 
     override fun execute() {
         //Ignore DM failures

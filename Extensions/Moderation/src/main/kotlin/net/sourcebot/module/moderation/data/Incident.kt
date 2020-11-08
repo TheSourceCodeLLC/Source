@@ -5,9 +5,11 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.Source
 import net.sourcebot.api.DurationUtils
+import net.sourcebot.api.durationOf
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.api.round
 import net.sourcebot.module.moderation.data.Incident.Type
 import org.bson.Document
 import java.time.Duration
@@ -40,9 +42,15 @@ interface Incident {
 
 abstract class ExecutableIncident : Incident {
     final override val time: Instant = Instant.now()
-    abstract fun asDocument(): Document
     abstract fun execute()
     abstract fun sendLog(logChannel: TextChannel): Message
+    open fun asDocument() = Document("_id", id).also {
+        it["source"] = source
+        it["target"] = target
+        it["reason"] = reason
+        it["type"] = type.name
+        it["time"] = time.toEpochMilli()
+    }
 }
 
 abstract class SimpleIncident(
@@ -50,25 +58,35 @@ abstract class SimpleIncident(
 ) : ExecutableIncident() {
     final override val expiry: Instant = time.plus(duration)
 
-    override fun asDocument() = Document("_id", id).apply {
-        this["source"] = source
-        this["target"] = target
-        this["reason"] = reason
-        this["type"] = type.name
-        this["time"] = time.toEpochMilli()
-        this["expiry"] = expiry.toEpochMilli()
+    override fun asDocument() = super.asDocument().also {
+        it["expiry"] = expiry.toEpochMilli()
     }
 }
 
 abstract class OneshotIncident : ExecutableIncident() {
     final override val expiry: Instant? = null
+}
 
-    override fun asDocument() = Document("_id", id).apply {
-        this["source"] = source
-        this["target"] = target
-        this["reason"] = reason
-        this["type"] = type.name
-        this["time"] = time.toEpochMilli()
+abstract class OneshotPunishment(
+    private val level: Level
+) : OneshotIncident() {
+    final override fun asDocument() = super.asDocument().also {
+        it["points"] = Document().also {
+            it["value"] = level.points
+            it["decay"] = level.decay.toSeconds()
+        }
+    }
+}
+
+abstract class ExpiringPunishment(
+    expiry: Duration,
+    private val level: Level
+) : SimpleIncident(expiry) {
+    final override fun asDocument() = super.asDocument().also {
+        it["points"] = Document().also {
+            it["value"] = level.points
+            it["decay"] = level.decay.toSeconds()
+        }
     }
 }
 
@@ -144,4 +162,17 @@ abstract class OneshotIncident : ExecutableIncident() {
             appendDescription("**Date & Time:** $time")
         }
     }
+}
+
+enum class Level(
+    val number: Int,
+    points: Double,
+    val decay: Duration
+) {
+    ONE(1, 5.0, durationOf("1M")),
+    TWO(2, 10.0, durationOf("2M")),
+    THREE(3, 50.0, durationOf("3M")),
+    FOUR(4, 100.0, durationOf("1y"));
+
+    val points = points.round(1)
 }

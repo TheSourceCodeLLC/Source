@@ -1,11 +1,13 @@
 package net.sourcebot.module.moderation.data
 
-import net.dv8tion.jda.api.entities.*
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.MessageHistory
+import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.StandardInfoResponse
 
 class ClearIncident(
-    private val guild: Guild,
     override val id: Long,
     private val sender: Member,
     private val channel: TextChannel,
@@ -17,7 +19,6 @@ class ClearIncident(
     override val type = Incident.Type.CLEAR
 
     override fun execute() {
-        val channel = guild.getTextChannelById(target)!!
         val history = MessageHistory(channel)
         val messages = ArrayList<List<Message>>()
         var toRetrieve = amount + 1

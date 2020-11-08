@@ -5,6 +5,7 @@ import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.moderation.Moderation
 
 class UnbanCommand : ModerationRootCommand(
     "unban", "Unban a user for a specific reason."
@@ -17,6 +18,8 @@ class UnbanCommand : ModerationRootCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next("You did not specify a user ID to unban!")
         val reason = args.slurp(" ", "You did not specify an unban reason!")
-        return punishmentHandler.unbanIncident(message.member!!, target, reason)
+        return Moderation.getPunishmentHandler(message.guild) {
+            unbanIncident(message.member!!, target, reason)
+        }
     }
 }

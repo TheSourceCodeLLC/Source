@@ -5,7 +5,7 @@ import java.time.temporal.ChronoUnit
 
 object DurationUtils {
     @JvmStatic
-    private val pattern = "(\\d+)([Mwdhms])".toRegex()
+    private val pattern = "(\\d+)([yMwdhms])".toRegex()
 
     @JvmStatic
     fun parseDuration(input: String): Duration {
@@ -15,6 +15,7 @@ object DurationUtils {
             val (amount, unit) = it.destructured
             val asLong = amount.toLong()
             val asChrono = when (unit) {
+                "y" -> ChronoUnit.YEARS
                 "M" -> ChronoUnit.MONTHS
                 "w" -> ChronoUnit.WEEKS
                 "d" -> ChronoUnit.DAYS

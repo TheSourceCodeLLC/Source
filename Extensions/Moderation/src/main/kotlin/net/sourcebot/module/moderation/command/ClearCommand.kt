@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.argument.*
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.moderation.Moderation
 
 class ClearCommand : ModerationRootCommand(
     "clear", "Clear a number of messages from a channel."
@@ -19,8 +20,8 @@ class ClearCommand : ModerationRootCommand(
         val amount = args.next(Adapter.int(), "You did not specify a number of messages to clear!")
         if (amount < 2) throw InvalidSyntaxException("Amount to clear may not be less than 2!")
         val reason = args.slurp(" ", "You did not specify a reason for clearing the messages!")
-        return punishmentHandler.clearIncident(
-            message.guild, message.member!!, channel, amount, reason
-        )
+        return Moderation.getPunishmentHandler(message.guild) {
+            clearIncident(message.member!!, channel, amount, reason)
+        }
     }
 }

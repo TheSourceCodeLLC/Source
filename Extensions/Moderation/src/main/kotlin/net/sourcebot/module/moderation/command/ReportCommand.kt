@@ -7,6 +7,7 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
+import net.sourcebot.module.moderation.Moderation
 
 class ReportCommand : ModerationRootCommand(
     "report", "Manage Guild reports."
@@ -25,7 +26,7 @@ class ReportCommand : ModerationRootCommand(
             "Report Failure!", "You may not report yourself!"
         )
         val reason = args.slurp(" ", "You did not specify a report reason!")
-        return punishmentHandler.submitReport(message, target, reason)
+        return Moderation.getPunishmentHandler(message.guild) { submitReport(message, target, reason) }
     }
 
     private inner class ReportGetCommand : ModerationCommand(
@@ -38,10 +39,11 @@ class ReportCommand : ModerationRootCommand(
 
         override fun execute(message: Message, args: Arguments): Response {
             val id = args.next(Adapter.long(1), "You did not specify a valid report ID to view!")
-            return punishmentHandler.getReport(message.guild, id)?.render(message.guild)
-                ?: return StandardErrorResponse(
+            return Moderation.getPunishmentHandler(message.guild) {
+                getReport(id)?.render(message.guild) ?: StandardErrorResponse(
                     "Unknown Report!", "There is no report with the ID '$id'!"
                 )
+            }
         }
     }
 
@@ -56,7 +58,7 @@ class ReportCommand : ModerationRootCommand(
         override fun execute(message: Message, args: Arguments): Response {
             val id = args.next(Adapter.long(1), "You did not specify a valid report ID to delete!")
             val reason = args.slurp(" ", "You did not specify a reason for deleting this report!")
-            return punishmentHandler.deleteReport(message.guild, id, message.member!!, reason)
+            return Moderation.getPunishmentHandler(message.guild) { deleteReport(id, message.member!!, reason) }
         }
     }
 

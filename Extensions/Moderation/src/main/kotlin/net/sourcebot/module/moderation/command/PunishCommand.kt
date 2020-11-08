@@ -6,6 +6,7 @@ import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.moderation.Moderation
 
 class PunishCommand : ModerationRootCommand(
     "punish", "Punish a member using a defined offense."
@@ -21,6 +22,6 @@ class PunishCommand : ModerationRootCommand(
             Adapter.int(1, error = "Offense ID must be at least 1!"),
             "You did not specify an offense ID!"
         )
-        return punishmentHandler.punishMember(message.member!!, target, id)
+        return Moderation.getPunishmentHandler(message.guild) { punishMember(message.member!!, target, id) }
     }
 }

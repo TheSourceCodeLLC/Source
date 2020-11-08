@@ -7,6 +7,9 @@ import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.module.moderation.Moderation
+import net.sourcebot.module.moderation.PunishmentHandler
+import net.sourcebot.module.moderation.data.Level
 
 class OffensesCommand : ModerationRootCommand(
     "offenses", "Manage Guild offenses."
@@ -18,20 +21,19 @@ class OffensesCommand : ModerationRootCommand(
     ) {
         override val cleanupResponse = false
         override fun execute(message: Message, args: Arguments): Response {
-            val offenses = punishmentHandler.getOffenses(message.guild)
+            val offenses = Moderation.getPunishmentHandler(message.guild, PunishmentHandler::getOffenses)
             if (offenses.isEmpty()) return StandardInfoResponse(
                 "No Offenses!", "There are currently no offenses!"
             )
             val listing = offenses.entries.groupBy({ (_, document) ->
-                document["level"] as Int
+                Level.values()[document["level"] as Int - 1]
             }, { (index, document) ->
                 index + 1 to (document["name"] as String)
             })
             return StandardInfoResponse("Offense List").also {
                 listing.forEach { (level, offenses) ->
-                    val points = punishmentHandler.getPoints(level)
                     it.addField(
-                        "Level $level - $points Points",
+                        "Level ${level.number} - ${level.points} Points",
                         offenses.joinToString(separator = " | ") { (id, name) ->
                             "**$id** `$name`"
                         }, false
@@ -55,7 +57,7 @@ class OffensesCommand : ModerationRootCommand(
                 "You did not specify a valid offense level!"
             )
             val name = args.slurp(" ", "You did not specify a name for the offense!")
-            return punishmentHandler.addOffense(message.guild, level, name)
+            return Moderation.getPunishmentHandler(message.guild) { addOffense(level, name) }
         }
     }
 
@@ -71,7 +73,7 @@ class OffensesCommand : ModerationRootCommand(
                 Adapter.int(1, error = "The ID must be at least 1!"),
                 "You did not specify an offense ID to remove!"
             )
-            return punishmentHandler.removeOffense(message.guild, id)
+            return Moderation.getPunishmentHandler(message.guild) { removeOffense(id) }
         }
     }
 

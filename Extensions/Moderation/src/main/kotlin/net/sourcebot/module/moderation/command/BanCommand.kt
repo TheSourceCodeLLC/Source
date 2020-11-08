@@ -3,6 +3,7 @@ package net.sourcebot.module.moderation.command
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.argument.*
 import net.sourcebot.api.response.Response
+import net.sourcebot.module.moderation.Moderation
 
 class BanCommand : ModerationRootCommand(
     "ban", "Ban a member for a specific reason."
@@ -17,8 +18,8 @@ class BanCommand : ModerationRootCommand(
         val target = args.next(Adapter.member(message.guild), "You did not specify a valid member to ban!")
         val delDays = args.next(Adapter.int()) ?: 7
         val reason = args.slurp(" ", "You did not specify a ban reason!")
-        return punishmentHandler.banIncident(
-            message.member!!, target, delDays, reason
-        )
+        return Moderation.getPunishmentHandler(message.guild) {
+            banIncident(message.member!!, target, delDays, reason)
+        }
     }
 }
