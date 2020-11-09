@@ -1,8 +1,12 @@
 package net.sourcebot.api.permission
 
-abstract class SimplePermissible(
-    private val permissions: MutableList<SourcePermission> = ArrayList()
-) : Permissible {
+import java.util.*
+
+abstract class SimplePermissible(stored: Set<SourcePermission>) : Permissible {
+    private val permissions: MutableSet<SourcePermission> = stored.toSortedSet(
+        Comparator.comparingInt<SourcePermission> { it.node.count { it == '.' } }.reversed()
+    )
+
     override fun hasPermission(
         node: String
     ) = permissions.find { it.node == node && it.context == null }?.flag
@@ -38,7 +42,7 @@ abstract class SimplePermissible(
         permissions.removeIf { it.context == context }
     }
 
-    override fun getPermissions(): Collection<SourcePermission> = permissions
+    override fun getPermissions(): Set<SourcePermission> = permissions
 
     override fun getContexts(
         node: String

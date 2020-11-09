@@ -93,16 +93,14 @@ class PermissionHandler(private val globalAdmins: Set<String>) {
         } else InvalidChannelResponse(jda, availableIn)
     }
 
-
     private fun getData(guild: String): PermissionData = dataCache.computeIfAbsent(guild) {
         PermissionData(mongodb.getDatabase(it))
     }
 
     fun getData(guild: Guild) = getData(guild.id)
 
-    internal fun getPermissions(
-        document: Document
-    ): MutableList<SourcePermission> = document.getList("permissions", Document::class.java)
-        .map { MongoSerial.fromDocument<SourcePermission>(it) }
-        .toMutableList()
+    internal fun getPermissions(document: Document) =
+        document.getList("permissions", Document::class.java).map {
+            MongoSerial.fromDocument<SourcePermission>(it)
+        }.toSet()
 }

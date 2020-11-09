@@ -9,9 +9,7 @@ import net.sourcebot.api.database.MongoSerial
 import org.bson.Document
 import java.util.*
 
-class PermissionData(
-    mongodb: MongoDatabase
-) {
+class PermissionData(mongodb: MongoDatabase) {
     private val users = mongodb.getCollection("user-permissions")
     private val roles = mongodb.getCollection("role-permissions")
 
