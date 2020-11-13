@@ -17,15 +17,23 @@ internal class ProfileHandler(private val collection: MongoCollection<Document>)
                 key: String
             ): JsonConfiguration {
                 val query = Document("_id", key)
-                return object : JsonConfiguration(
-                    (collection.find(query).first()?.get("data") as Document?) ?: HashMap()
-                ) {
+                val found = collection.find(query).first()?.get("data") as Document?
+                var insert = false
+                val data = if (found != null) found else {
+                    insert = true
+                    HashMap()
+                }
+                val profile: JsonConfiguration = object : JsonConfiguration(data) {
                     override fun onChange() {
                         collection.updateOne(query, Document("\$set", Document().also {
-                            it["data"] = MongoSerial.toDocument(this)
+                            it["data"] = MongoSerial.toDocument<JsonConfiguration>(this)
                         }))
                     }
                 }
+                if (insert) collection.insertOne(
+                    Document("_id", key).append("data", MongoSerial.toDocument(profile))
+                )
+                return profile
             }
         })
 

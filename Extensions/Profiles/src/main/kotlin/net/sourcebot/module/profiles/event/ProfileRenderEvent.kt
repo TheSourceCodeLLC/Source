@@ -1,6 +1,7 @@
 package net.sourcebot.module.profiles.event
 
 import net.dv8tion.jda.api.EmbedBuilder
+import net.dv8tion.jda.api.entities.Member
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.event.SourceEvent
 
@@ -13,8 +14,10 @@ import net.sourcebot.api.event.SourceEvent
  */
 class ProfileRenderEvent(
     val embed: EmbedBuilder,
+    val member: Member,
     val profile: JsonConfiguration
 ) : SourceEvent {
     operator fun component1() = embed
-    operator fun component2() = profile
+    operator fun component2() = member
+    operator fun component3() = profile
 }

@@ -1,10 +1,14 @@
 package net.sourcebot.api.configuration
 
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import net.sourcebot.api.typeRefOf
 import java.io.File
@@ -81,5 +85,19 @@ interface JsonSerial<T> {
         inline fun <reified T> fromUrl(
             url: String
         ): T = fromUrl(url, typeRefOf())
+
+        @JvmStatic inline fun <reified T> createSerializer(
+            noinline serializer: (T, JsonGenerator, SerializerProvider) -> Unit
+        ): JsonSerializer<T> = object : StdSerializer<T>(T::class.java) {
+            override fun serialize(
+                value: T, gen: JsonGenerator, provider: SerializerProvider
+            ) = serializer(value, gen, provider)
+        }
+
+        @JvmStatic inline fun <reified T> createDeserializer(
+            noinline deserializer: (JsonParser, DeserializationContext) -> T
+        ): JsonDeserializer<T> = object : StdDeserializer<T>(T::class.java) {
+            override fun deserialize(p: JsonParser, ctxt: DeserializationContext) = deserializer(p, ctxt)
+        }
     }
 }

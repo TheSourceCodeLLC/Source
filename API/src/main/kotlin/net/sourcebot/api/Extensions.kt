@@ -40,5 +40,8 @@ fun <T> T?.ifPresentOrElse(
 
 fun Member.getHighestRole() = roles.getOrNull(0) ?: guild.publicRole
 
-fun Double.round(precision: Int) =
-    BigDecimal(this).setScale(precision, RoundingMode.HALF_UP).toDouble()
+@JvmOverloads
+fun Double.round(
+    precision: Int,
+    mode: RoundingMode = RoundingMode.HALF_UP
+) = BigDecimal(this).setScale(precision, mode).toDouble()

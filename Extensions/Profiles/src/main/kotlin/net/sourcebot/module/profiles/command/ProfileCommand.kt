@@ -9,6 +9,7 @@ import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.api.wrapped
 import net.sourcebot.module.profiles.Profiles
 import net.sourcebot.module.profiles.event.ProfileRenderEvent
 
@@ -34,13 +35,7 @@ class ProfileCommand : RootCommand(
             """.trimIndent(), false
             )
         }
-        Source.SOURCE_EVENTS.fireEvent(ProfileRenderEvent(embed, profile))
-        return embed
-    }
-
-    private inner class ProfileSetCommand : Command(
-        "set", "Set a field in a member's profile."
-    ) {
-
+        Source.SOURCE_EVENTS.fireEvent(ProfileRenderEvent(embed, target, profile))
+        return embed.wrapped(target)
     }
 }

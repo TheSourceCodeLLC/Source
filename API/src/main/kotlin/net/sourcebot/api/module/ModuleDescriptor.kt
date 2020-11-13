@@ -4,13 +4,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import net.sourcebot.api.configuration.JsonConfiguration
 
 class ModuleDescriptor(json: ObjectNode) : JsonConfiguration(json) {
-    val main: String = required("main")
-
-    val name: String = required("name")
-    val version: String = required("version")
-    val description: String = required("description")
-
-    val author: String = required("author")
+    val main by delegateRequired<String>()
+    val name by delegateRequired<String>()
+    val version by delegateRequired<String>()
+    val description by delegateRequired<String>()
+    val author by delegateRequired<String>()
 
     val hardDepends: List<String> = optional("hard-depend") ?: emptyList()
     val softDepends: List<String> = optional("soft-depend") ?: emptyList()

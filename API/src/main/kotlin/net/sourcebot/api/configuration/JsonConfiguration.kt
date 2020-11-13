@@ -14,10 +14,12 @@ import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.typeRefOf
 import org.bson.Document
 import java.io.File
+import kotlin.reflect.KProperty
 
 open class JsonConfiguration @JsonCreator constructor(
     internal val json: ObjectNode = JsonSerial.newObject()
 ) {
+    constructor(json: JsonConfiguration) : this(json.json)
     constructor(map: Map<String, Any?>) : this() {
         map.forEach(::set)
     }
@@ -39,28 +41,24 @@ open class JsonConfiguration @JsonCreator constructor(
         return obj
     }
 
-    @JvmOverloads
-    fun <T> optional(path: String, typeReference: TypeReference<T>, supplier: () -> T? = { null }): T? {
+    fun <T> optional(path: String, typeReference: TypeReference<T>): T? {
         val levels = path.split(".").iterator()
         var lastElem: JsonNode? = json[levels.next()]
         while (lastElem != null && levels.hasNext()) {
             lastElem = lastElem[levels.next()]
         }
-        return lastElem?.let { JsonSerial.fromJson(it, typeReference) } ?: supplier()?.let { set(path, it) }
+        return lastElem?.let { JsonSerial.fromJson(it, typeReference) }
     }
 
-    @JvmOverloads
-    inline fun <reified T> optional(
-        path: String,
-        noinline supplier: () -> T? = { null }
-    ): T? = optional(path, typeRefOf(), supplier)
+    inline fun <reified T> optional(path: String): T? = optional(path, typeRefOf())
 
     @JvmOverloads
     fun <T> required(
         path: String,
         typeReference: TypeReference<T>,
         supplier: () -> T? = { null }
-    ): T = optional(path, typeReference, supplier) ?: throw IllegalArgumentException("Could not load value at '$path'!")
+    ): T = optional(path, typeReference) ?: supplier()?.let { set(path, it) }
+    ?: throw IllegalArgumentException("Could not load value at '$path'!")
 
     @JvmOverloads
     inline fun <reified T> required(
@@ -101,5 +99,37 @@ open class JsonConfiguration @JsonCreator constructor(
                 override fun onChange() = JsonSerial.toFile(it, this)
             }
         }
+    }
+
+    @JvmOverloads inline fun <reified T> delegateOptional(
+        path: String? = null
+    ) = OptionalDelegate<T?>(path, typeRefOf())
+
+    @JvmOverloads inline fun <reified T> delegateRequired(
+        path: String? = null, noinline supplier: () -> T? = { null }
+    ) = RequiredDelegate(path, typeRefOf(), supplier)
+
+    inner class OptionalDelegate<T>(
+        private val path: String?,
+        private val typeReference: TypeReference<T>
+    ) : SimpleVarDelegate<T>(path) {
+        operator fun getValue(
+            thisRef: Any?, prop: KProperty<*>
+        ) = this@JsonConfiguration.optional(path ?: prop.name, typeReference)
+    }
+
+    inner class RequiredDelegate<T>(
+        private val path: String?,
+        private val typeReference: TypeReference<T>,
+        private val supplier: () -> T? = { null }
+    ) : SimpleVarDelegate<T>(path) {
+        operator fun getValue(thisRef: Any?, prop: KProperty<*>) =
+            this@JsonConfiguration.required(path ?: prop.name, typeReference, supplier)
+    }
+
+    open inner class SimpleVarDelegate<T>(private val path: String?) {
+        operator fun setValue(
+            thisRef: Any?, prop: KProperty<*>, value: T
+        ) = this@JsonConfiguration.set(path ?: prop.name, value)
     }
 }
