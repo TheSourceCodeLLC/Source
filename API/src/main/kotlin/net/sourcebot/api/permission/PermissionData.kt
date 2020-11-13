@@ -17,7 +17,7 @@ class PermissionData(mongodb: MongoDatabase) {
     private val roleCache = HashMap<String, SourceRole>()
 
     fun getUser(member: Member): SourceUser = userCache.computeIfAbsent(member.id) {
-        users.find(Document("id", member.id)).first()?.let {
+        users.find(Document("_id", member.id)).first()?.let {
             MongoSerial.fromDocument<SourceUser>(it)
         } ?: SourceUser(member.id).also { insert(it, users) }
     }
@@ -26,7 +26,7 @@ class PermissionData(mongodb: MongoDatabase) {
     internal fun deleteUser(sourceUser: SourceUser) = delete(sourceUser, users, userCache)
 
     fun getRole(role: Role): SourceRole = roleCache.computeIfAbsent(role.id) {
-        roles.find(Document("id", role.id)).first()?.let {
+        roles.find(Document("_id", role.id)).first()?.let {
             MongoSerial.fromDocument<SourceRole>(it)
         } ?: SourceRole(role.id).also { insert(it, roles) }
     }

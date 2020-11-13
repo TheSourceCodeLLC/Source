@@ -14,9 +14,9 @@ class SourceUser internal constructor(
     override fun asMention() = "<@$id>"
 
     class Serial(private val permissionHandler: PermissionHandler) : MongoSerial<SourceUser> {
-        override fun queryDocument(obj: SourceUser) = Document("id", obj.id)
+        override fun queryDocument(obj: SourceUser) = Document("_id", obj.id)
         override fun deserialize(document: Document) = document.let {
-            val id = it["id"] as String
+            val id = it["_id"] as String
             val permissions = permissionHandler.getPermissions(it)
             SourceUser(id, permissions)
         }

@@ -3,18 +3,16 @@ package net.sourcebot.api.permission
 import java.util.*
 
 abstract class SimplePermissible(stored: Set<SourcePermission>) : Permissible {
-    private val permissions: MutableSet<SourcePermission> = stored.toSortedSet(
-        Comparator.comparingInt<SourcePermission> { it.node.count { it == '.' } }.reversed()
-    )
+    private val permissions: MutableSet<SourcePermission> = HashSet(stored)
 
     override fun hasPermission(
         node: String
-    ) = permissions.find { it.node == node && it.context == null }?.flag
+    ) = getPermissions().find { it.node == node && it.context == null }?.flag
 
     override fun hasPermission(
         node: String,
         context: String
-    ) = permissions.find { it.node == node && it.context == context }?.flag
+    ) = getPermissions().find { it.node == node && it.context == context }?.flag
 
     override fun setPermission(node: String, flag: Boolean) {
         unsetPermission(node)
@@ -27,7 +25,7 @@ abstract class SimplePermissible(stored: Set<SourcePermission>) : Permissible {
     }
 
     override fun unsetPermission(node: String) {
-        permissions.removeIf { it.node == node }
+        permissions.removeIf { it.node == node && it.context == null }
     }
 
     override fun unsetPermission(node: String, context: String) {
@@ -42,11 +40,11 @@ abstract class SimplePermissible(stored: Set<SourcePermission>) : Permissible {
         permissions.removeIf { it.context == context }
     }
 
-    override fun getPermissions(): Set<SourcePermission> = permissions
+    override fun getPermissions() = permissions.sortedByDescending {
+        it.node.count { it == '.' }
+    }.toSet()
 
-    override fun getContexts(
-        node: String
-    ) = permissions.filter {
+    override fun getContexts(node: String) = permissions.filter {
         it.node == node && it.context != null && it.flag
     }.mapNotNull(SourcePermission::context).toSet()
 }

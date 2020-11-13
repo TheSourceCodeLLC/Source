@@ -2,6 +2,7 @@ package net.sourcebot.api.permission
 
 import net.sourcebot.api.database.MongoSerial
 import org.bson.Document
+import java.util.*
 
 class SourcePermission internal constructor(
     val node: String,
@@ -21,5 +22,11 @@ class SourcePermission internal constructor(
             append("flag", obj.flag)
             if (obj.context != null) append("context", obj.context)
         }
+    }
+
+    override fun hashCode() = Objects.hash(node, flag, context)
+    override fun equals(other: Any?): Boolean {
+        if (other !is SourcePermission) return false
+        return node == other.node && flag == other.flag && context == other.context
     }
 }
