@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.Member
 import net.sourcebot.api.formatted
 import java.time.Duration
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 class GuildCooldown {
     private val handler = HashMap<String, MutableMap<String, Instant>>()
@@ -21,7 +22,11 @@ class GuildCooldown {
                 returnVal = onSuccess()
                 now.plusSeconds(5)
             } else {
-                returnVal = onFailure(Duration.between(now, v).formatted())
+                val difference = Duration.between(now, v).truncatedTo(ChronoUnit.SECONDS)
+                returnVal = when {
+                    difference.isZero || difference.isNegative -> onSuccess()
+                    else -> onFailure(difference.formatted())
+                }
                 v
             }
         }

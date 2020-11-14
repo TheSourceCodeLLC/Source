@@ -2,6 +2,7 @@ package net.sourcebot.api
 
 import com.fasterxml.jackson.core.type.TypeReference
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.response.EmbedResponse
 import net.sourcebot.api.response.Response
@@ -45,3 +46,14 @@ fun Double.round(
     precision: Int,
     mode: RoundingMode = RoundingMode.HALF_UP
 ) = BigDecimal(this).setScale(precision, mode).toDouble()
+
+fun <U> Message.MentionType.listMatches(
+    content: String,
+    transformer: (String) -> U?
+): List<U> {
+    val list = ArrayList<U>()
+    pattern.matcher(content).results().forEach {
+        list += transformer(it.group(1)) ?: return@forEach
+    }
+    return list
+}

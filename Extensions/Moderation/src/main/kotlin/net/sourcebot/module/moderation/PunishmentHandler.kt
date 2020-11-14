@@ -51,16 +51,16 @@ class PunishmentHandler(private val guild: Guild) {
         ::ClearFailureResponse
     )
 
-    private class ClearSuccessResponse(id: Long, amount: Int, channel: String) : StandardSuccessResponse(
+    private class ClearSuccessResponse(id: Long, amount: Int, channel: String) : PunishmentSuccessResponse(
         "Clear Success (#$id)",
         "You have cleared $amount messages in channel `$channel`!"
     )
 
-    private class ClearFailureResponse : StandardErrorResponse(
+    private class ClearFailureResponse : PunishmentFailureResponse(
         "Clear Failure!", "Could not execute clear incident!"
     )
 
-    fun warnIncident(sender: Member, member: Member, reason: String): Response {
+    fun warnIncident(sender: Member, member: Member, reason: String): PunishmentResponse {
         if (sender == member) return WarnFailureResponse("You may not warn yourself!")
         if (member.user.isBot) return WarnFailureResponse("You may not warn bots!")
         if (!selfMember.canInteract(member)) return WarnFailureResponse(
@@ -78,16 +78,16 @@ class PunishmentHandler(private val guild: Guild) {
         { WarnFailureResponse("Could not execute warn incident!") }
     )
 
-    private class WarnSuccessResponse(id: Long, warned: Member, reason: String) : StandardSuccessResponse(
+    private class WarnSuccessResponse(id: Long, warned: Member, reason: String) : PunishmentSuccessResponse(
         "Warn Success (#$id)",
         "Warned ${warned.formatted()} for '$reason' !"
     )
 
-    private class WarnFailureResponse(description: String) : StandardErrorResponse(
+    private class WarnFailureResponse(description: String) : PunishmentFailureResponse(
         "Warn Failure!", description
     )
 
-    fun kickIncident(sender: Member, member: Member, reason: String): Response {
+    fun kickIncident(sender: Member, member: Member, reason: String): PunishmentResponse {
         if (sender == member) return KickFailureResponse("You may not kick yourself!")
         if (member.user.isBot) return KickFailureResponse("You may not kick bots!")
         if (!selfMember.canInteract(member)) return KickFailureResponse(
@@ -105,16 +105,16 @@ class PunishmentHandler(private val guild: Guild) {
         { KickFailureResponse("Could not execute kick incident!") }
     )
 
-    private class KickSuccessResponse(id: Long, kicked: Member, reason: String) : StandardSuccessResponse(
+    private class KickSuccessResponse(id: Long, kicked: Member, reason: String) : PunishmentSuccessResponse(
         "Kick Success (#$id)",
         "Kicked ${kicked.formatted()} for '$reason' !"
     )
 
-    private class KickFailureResponse(description: String) : StandardErrorResponse(
+    private class KickFailureResponse(description: String) : PunishmentFailureResponse(
         "Kick Failure!", description
     )
 
-    fun muteIncident(sender: Member, member: Member, duration: Duration, reason: String): Response {
+    fun muteIncident(sender: Member, member: Member, duration: Duration, reason: String): PunishmentResponse {
         if (sender == member) return MuteFailureResponse("You may not mute yourself!")
         if (member.user.isBot) return MuteFailureResponse("You may not mute bots!")
         if (!selfMember.canInteract(member)) return MuteFailureResponse(
@@ -139,16 +139,16 @@ class PunishmentHandler(private val guild: Guild) {
 
     private class MuteSuccessResponse(
         id: Long, member: Member, duration: Duration, reason: String
-    ) : StandardSuccessResponse(
+    ) : PunishmentSuccessResponse(
         "Mute Success (#$id)",
         "Muted ${member.formatted()} for '$reason' ! (${duration.formatted()})"
     )
 
-    private class MuteFailureResponse(description: String) : StandardErrorResponse(
+    private class MuteFailureResponse(description: String) : PunishmentFailureResponse(
         "Mute Failure!", description
     )
 
-    fun blacklistIncident(sender: Member, member: Member, id: Int): Response {
+    fun blacklistIncident(sender: Member, member: Member, id: Int): PunishmentResponse {
         if (sender == member) return BlacklistFailureResponse("You may not blacklist yourself!")
         if (member.user.isBot) return BlacklistFailureResponse("You may not blacklist bots!")
         if (!selfMember.canInteract(member)) return BlacklistFailureResponse(
@@ -160,7 +160,7 @@ class PunishmentHandler(private val guild: Guild) {
         val blacklistRole = blacklistRole() ?: return BlacklistFailureResponse(
             "The blacklist role has not been configured!"
         )
-        val blacklist = getBlacklist(id) ?: return StandardErrorResponse(
+        val blacklist = getBlacklist(id) ?: return PunishmentFailureResponse(
             "Invalid Blacklist!", "There is no blacklist with the ID '$id'!"
         )
         val duration = Duration.ofSeconds(blacklist["duration"] as Long)
@@ -184,14 +184,14 @@ class PunishmentHandler(private val guild: Guild) {
 
     private class BlacklistSuccessResponse(
         id: Long, member: Member, duration: Duration, reason: String
-    ) : StandardSuccessResponse(
+    ) : PunishmentSuccessResponse(
         "Blacklist Success (#$id)",
         "Blacklisted ${member.formatted()} for '$reason' ! (${duration.formatted()})"
     )
 
     private class BlacklistFailureResponse(
         description: String
-    ) : StandardErrorResponse("Blacklist Failure!", description)
+    ) : PunishmentFailureResponse("Blacklist Failure!", description)
 
     fun addBlacklist(
         duration: Duration,
@@ -224,7 +224,7 @@ class PunishmentHandler(private val guild: Guild) {
 
     fun tempbanIncident(
         sender: Member, tempbanned: Member, delDays: Int, duration: Duration, reason: String
-    ): Response {
+    ): PunishmentResponse {
         if (sender == tempbanned) return TempbanFailureResponse("You may not tempban yourself!")
         if (tempbanned.user.isBot) return TempbanFailureResponse("You may not tempban bots!")
         if (!selfMember.canInteract(tempbanned)) return TempbanFailureResponse(
@@ -246,18 +246,18 @@ class PunishmentHandler(private val guild: Guild) {
 
     private class TempbanSuccessResponse(
         id: Long, member: Member, duration: Duration, reason: String
-    ) : StandardSuccessResponse(
+    ) : PunishmentSuccessResponse(
         "Tempban Success (#$id)",
         "Tempbanned ${member.formatted()} for '$reason'! (${duration.formatted()})"
     )
 
     private class TempbanFailureResponse(
         description: String
-    ) : StandardErrorResponse("Tempban Failure!", description)
+    ) : PunishmentFailureResponse("Tempban Failure!", description)
 
     fun banIncident(
         sender: Member, member: Member, delDays: Int, reason: String
-    ): Response {
+    ): PunishmentResponse {
         if (sender == member) return BanFailureResponse("You may not ban yourself!")
         if (member.user.isBot) return BanFailureResponse("You may not ban bots!")
         if (!selfMember.canInteract(member)) return BanFailureResponse(
@@ -282,16 +282,16 @@ class PunishmentHandler(private val guild: Guild) {
 
     private class BanSuccessResponse(
         id: Long, member: Member, reason: String
-    ) : StandardSuccessResponse(
+    ) : PunishmentSuccessResponse(
         "Ban Success (#$id)",
         "Banned ${member.formatted()} for '$reason'!"
     )
 
     private class BanFailureResponse(
         description: String
-    ) : StandardErrorResponse("Ban Failure!", description)
+    ) : PunishmentFailureResponse("Ban Failure!", description)
 
-    fun unblacklistIncident(sender: Member, member: Member, reason: String): Response {
+    fun unblacklistIncident(sender: Member, member: Member, reason: String): PunishmentResponse {
         if (sender == member) return UnblacklistFailureResponse("You may not unblacklist yourself!")
         if (member.user.isBot) return UnblacklistFailureResponse("You may not unblacklist bots!")
         if (!selfMember.canInteract(member)) return UnblacklistFailureResponse(
@@ -300,7 +300,7 @@ class PunishmentHandler(private val guild: Guild) {
         if (!sender.canInteract(member)) return UnblacklistFailureResponse(
             "You do not have permission to unblacklist that member!"
         )
-        val blacklistRole = blacklistRole() ?: return StandardErrorResponse(
+        val blacklistRole = blacklistRole() ?: return PunishmentFailureResponse(
             "No Blacklist Role!", "The blacklist role has not been configured!"
         )
         if (!member.roles.contains(blacklistRole)) return UnblacklistFailureResponse(
@@ -319,16 +319,16 @@ class PunishmentHandler(private val guild: Guild) {
         )
     }
 
-    private class UnblacklistSuccessResponse(id: Long, member: Member, reason: String) : StandardSuccessResponse(
+    private class UnblacklistSuccessResponse(id: Long, member: Member, reason: String) : PunishmentSuccessResponse(
         "Unblacklist Success (#$id)",
         "Unblacklisted ${member.formatted()} for '$reason'!"
     )
 
-    private class UnblacklistFailureResponse(description: String) : StandardErrorResponse(
+    private class UnblacklistFailureResponse(description: String) : PunishmentFailureResponse(
         "Unblacklist Failure!", description
     )
 
-    fun unmuteIncident(sender: Member, member: Member, reason: String): Response {
+    fun unmuteIncident(sender: Member, member: Member, reason: String): PunishmentResponse {
         if (sender == member) return UnmuteFailureResponse("You may not unmute yourself!")
         if (member.user.isBot) return UnmuteFailureResponse("You may not unmute bots!")
         if (!selfMember.canInteract(member)) return UnmuteFailureResponse(
@@ -337,7 +337,7 @@ class PunishmentHandler(private val guild: Guild) {
         if (!sender.canInteract(member)) return UnmuteFailureResponse(
             "You do not have permission to unban that member!"
         )
-        val muteRole = muteRole() ?: return StandardErrorResponse(
+        val muteRole = muteRole() ?: return PunishmentFailureResponse(
             "No Mute Role!", "The mute role has not been configured!"
         )
         if (!member.roles.contains(muteRole)) return UnmuteFailureResponse(
@@ -358,20 +358,20 @@ class PunishmentHandler(private val guild: Guild) {
 
     private class UnmuteSuccessResponse(
         id: Long, member: Member, reason: String
-    ) : StandardSuccessResponse(
+    ) : PunishmentSuccessResponse(
         "Unmute Success (#$id)",
         "Unmuted ${member.formatted()} for '$reason'!"
     )
 
     private class UnmuteFailureResponse(
         description: String
-    ) : StandardErrorResponse("Unmute Failure!", description)
+    ) : PunishmentFailureResponse("Unmute Failure!", description)
 
-    fun unbanIncident(sender: Member, user: String, reason: String): Response {
+    fun unbanIncident(sender: Member, user: String, reason: String): PunishmentResponse {
         val ban = try {
             guild.retrieveBanById(user).complete()
         } catch (err: Throwable) {
-            return StandardErrorResponse("Unknown Ban!", "The specified user is not banned!")
+            return PunishmentFailureResponse("Unknown Ban!", "The specified user is not banned!")
         }
         return submitIncident(
             { UnbanIncident(nextIncidentId(), sender, ban.user, reason) },
@@ -386,25 +386,25 @@ class PunishmentHandler(private val guild: Guild) {
         )
     }
 
-    private class UnbanSuccessResponse(id: Long, user: User, reason: String) : StandardSuccessResponse(
+    private class UnbanSuccessResponse(id: Long, user: User, reason: String) : PunishmentSuccessResponse(
         "Unban Success (#$id)",
         "Unbanned ${user.formatted()} for '$reason'!"
     )
 
-    private class UnbanFailureResponse(description: String) : StandardErrorResponse(
+    private class UnbanFailureResponse(description: String) : PunishmentFailureResponse(
         "Unban Failure!", description
     )
 
-    fun punishMember(sender: Member, target: Member, id: Int): Response {
+    fun punishMember(sender: Member, target: Member, id: Int): PunishmentResponse {
         if (sender == target) return PunishFailureResponse("You may not punish yourself!")
         if (target.user.isBot) return PunishFailureResponse("You may not punish bots!")
         if (!selfMember.canInteract(target)) return PunishFailureResponse(
             "I do not have permission to punish that member!"
         )
-        if (!sender.canInteract(target)) return WarnFailureResponse(
+        if (!sender.canInteract(target)) return PunishFailureResponse(
             "You do not have permission to punish that member!"
         )
-        val offense = getOffense(id) ?: return StandardErrorResponse(
+        val offense = getOffense(id) ?: return PunishmentFailureResponse(
             "Invalid Punishment!", "There is no punishment with the ID `$id`!"
         )
         val points = getPoints(target.user)
@@ -423,11 +423,11 @@ class PunishmentHandler(private val guild: Guild) {
             }
             TEMPBAN -> submitTempban(sender, target, 7, duration!!, reason)
             BAN -> submitBan(sender, target, 7, reason)
-            else -> StandardErrorResponse("Unmet condition in 'when'!")
+            else -> PunishmentFailureResponse("Unmet condition in 'when'!")
         }
     }
 
-    private class PunishFailureResponse(description: String) : StandardErrorResponse(
+    private class PunishFailureResponse(description: String) : PunishmentFailureResponse(
         "Punish Failure!", description
     )
 
@@ -487,21 +487,21 @@ class PunishmentHandler(private val guild: Guild) {
         "Removed role ${role.name} from ${target.formatted()} for '$reason'!"
     )
 
-    private class RoleUpdateSuccess(id: Long, description: String) : StandardSuccessResponse(
+    private class RoleUpdateSuccess(id: Long, description: String) : PunishmentSuccessResponse(
         "Role Update Success (#$id)", description
     )
 
-    private class RoleUpdateFailure : StandardErrorResponse(
+    private class RoleUpdateFailure : PunishmentFailureResponse(
         "Role Update Failure!",
         "There was a problem updating that member's roles!"
     )
 
     private fun <T : ExecutableIncident> submitIncident(
         supplier: () -> T,
-        onSuccess: (T) -> StandardSuccessResponse,
-        onFailure: () -> StandardErrorResponse
-    ): Response {
-        val logChannel = incidentChannel() ?: return StandardErrorResponse(
+        onSuccess: (T) -> PunishmentSuccessResponse,
+        onFailure: () -> PunishmentFailureResponse
+    ): PunishmentResponse {
+        val logChannel = incidentChannel() ?: return PunishmentFailureResponse(
             "No Log Channel!", "The incident log has not been configured!"
         )
         return try {
@@ -571,10 +571,10 @@ class PunishmentHandler(private val guild: Guild) {
                     else -> null
                 }
             } else null
-            if (response is StandardSuccessResponse) response
-            else StandardSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
+            if (response is PunishmentSuccessResponse) response
+            else PunishmentSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
         },
-        { StandardErrorResponse("Case Delete Failure!", "Case #$id could not be deleted!") }
+        { PunishmentFailureResponse("Case Delete Failure!", "Case #$id could not be deleted!") }
     )
 
     fun getReport(id: Long) = reports.find(Document("_id", id)).first()?.let(::Report)
@@ -715,4 +715,20 @@ class PunishmentHandler(private val guild: Guild) {
             }
         }
     }
+}
+
+interface PunishmentResponse : Response {
+    val success: Boolean
+}
+
+open class PunishmentSuccessResponse(
+    title: String? = null, description: String? = null
+) : StandardSuccessResponse(title, description), PunishmentResponse {
+    final override val success = true
+}
+
+open class PunishmentFailureResponse(
+    title: String? = null, description: String? = null
+) : StandardErrorResponse(title, description), PunishmentResponse {
+    final override val success = false
 }

@@ -4,7 +4,6 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.sourcebot.Source
 import net.sourcebot.api.command.PermissionCheck.Type.*
@@ -109,12 +108,11 @@ class CommandHandler(
                     add(guild.publicRole)
                 }
                 if (roles.none { it.hasPermission(Permission.ADMINISTRATOR) }) {
-                    val sourceUser = permissionData.getUser(member)
-                    val sourceRoles = roles.map(permissionData::getRole).distinct()
-                    sourceUser.roles = sourceRoles
-                    val channel = message.channel as TextChannel
+                    val sourceUser = permissionData.getUser(member).also {
+                        it.roles = roles.map(permissionData::getRole).distinct()
+                    }
                     if (
-                        !permissionHandler.hasPermission(sourceUser, permission, channel)
+                        !permissionHandler.hasPermission(sourceUser, permission, message.channel)
                     ) return PermissionCheck(command, NO_PERMISSION)
                 }
             }

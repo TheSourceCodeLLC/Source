@@ -17,6 +17,7 @@ import kotlin.math.ceil
 class GambleCommand : EconomyRootCommand(
     "gamble", "Wager some of your coins for a chance to win more."
 ) {
+    override val aliases = arrayOf("bet", "g", "wager")
     override val argumentInfo = ArgumentInfo(
         Argument("wager", "The amount of coins you want to wager.")
     )

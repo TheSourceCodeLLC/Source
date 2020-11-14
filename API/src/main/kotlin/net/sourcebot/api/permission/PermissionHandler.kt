@@ -1,10 +1,7 @@
 package net.sourcebot.api.permission
 
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.Guild
-import net.dv8tion.jda.api.entities.MessageChannel
-import net.dv8tion.jda.api.entities.TextChannel
-import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.*
 import net.sourcebot.Source
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.response.Response
@@ -29,7 +26,7 @@ class PermissionHandler(private val globalAdmins: Set<String>) {
     private fun hasPermission(
         permissible: Permissible,
         node: String,
-        context: Set<String> = emptySet()
+        context: Set<String>
     ): Boolean {
         if (permissible is SourceUser && hasGlobalAccess(permissible.id)) return true
         val effective = getEffectiveNodes(node)
@@ -49,8 +46,26 @@ class PermissionHandler(private val globalAdmins: Set<String>) {
     fun hasPermission(
         permissible: Permissible,
         node: String,
-        channel: MessageChannel
-    ): Boolean = hasPermission(permissible, node, computeContext(channel))
+        channel: MessageChannel? = null
+    ): Boolean = hasPermission(permissible, node, channel?.let(::computeContext) ?: emptySet())
+
+    fun userHasPermission(
+        member: Member,
+        node: String,
+        channel: MessageChannel? = null
+    ): Boolean {
+        val subject = getData(member.guild).getUser(member)
+        return hasPermission(subject, node, channel)
+    }
+
+    fun roleHasPermission(
+        role: Role,
+        node: String,
+        channel: MessageChannel? = null
+    ): Boolean {
+        val subject = getData(role.guild).getRole(role)
+        return hasPermission(subject, node, channel)
+    }
 
     fun checkPermission(
         permissible: Permissible,

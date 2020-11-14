@@ -1,10 +1,12 @@
 package net.sourcebot.module.moderation.listener
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.cache.LoadingCache
 import com.mongodb.client.model.UpdateOptions
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Invite
-import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent
@@ -13,19 +15,21 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.Source
+import net.sourcebot.api.*
 import net.sourcebot.api.DurationUtils.parseDuration
-import net.sourcebot.api.asMessage
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
-import net.sourcebot.api.formatted
 import net.sourcebot.api.response.SourceColor
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardWarningResponse
-import net.sourcebot.api.truncate
 import net.sourcebot.module.moderation.Moderation
+import net.sourcebot.module.moderation.event.MessageDeleteEvent
+import net.sourcebot.module.moderation.event.MessageEditEvent
 import org.bson.Document
 import java.time.Instant
+import java.util.concurrent.TimeUnit
+import kotlin.math.ceil
 
 class MessageListener : EventSubscriber<Moderation> {
     private val permissionHandler = Source.PERMISSION_HANDLER
@@ -38,9 +42,81 @@ class MessageListener : EventSubscriber<Moderation> {
         sourceEvents: EventSystem<SourceEvent>
     ) {
         jdaEvents.listen(module, this::onMessageReceive)
-        jdaEvents.listen(module, this::onMessageEdit)
-        jdaEvents.listen(module, this::onMessageDelete)
+        jdaEvents.listen(module, this::submitMessageEdit)
+        jdaEvents.listen(module, this::submitMessageDelete)
         jdaEvents.listen(module, this::handleReportReaction)
+
+        sourceEvents.listen(module, this::onMessageDelete)
+        sourceEvents.listen(module, this::onMessageEdit)
+    }
+
+    private fun onMessageDelete(event: MessageDeleteEvent) {
+        val (guild, authorId, content, channelId, sent) = event
+        val author = event.author
+        val channel = event.channel
+        messageLogChannel(guild)?.let { log ->
+            if (author != null && author.user.isBot) return@let
+            val embed = StandardErrorResponse(
+                "Message Deleted", """
+                **Author:** ${author?.let { "${it.formatted()} (${it.id})" } ?: authorId}
+                **Channel:** ${channel?.let { "${it.name} (${it.id})" } ?: channelId}
+                **Date Sent:** ${Source.DATE_TIME_FORMAT.format(sent)}
+            """.trimIndent()
+            )
+            embed.addField("Message:", content.truncate(1024), false)
+            log.sendMessage(embed.asMessage(author ?: event.guild.selfMember)).queue()
+        }
+        @Suppress("NestedLambdaShadowedImplicitParameter")
+        channel?.let {
+            val mentionedUsers = Message.MentionType.USER.listMatches(content, guild::getMemberById)
+            val mentionedRoles = Message.MentionType.ROLE.listMatches(content, guild::getRoleById)
+            if (mentionedUsers.isEmpty() && mentionedRoles.isEmpty()) return
+            it.sendMessage(
+                StandardErrorResponse(
+                    "Ghost Ping!", """
+                        **User:** ${author?.let { "${it.formatted()} (${it.id})" } ?: authorId}
+                    """.trimIndent()
+                ).also {
+                    it.addField("Message:", content.truncate(1024), false)
+                }.asMessage(author ?: event.guild.selfMember)
+            ).queue()
+        }
+    }
+
+    private fun onMessageEdit(event: MessageEditEvent) {
+        val (guild, author, channel, newContent, oldContent) = event
+        messageLogChannel(guild)?.let { log ->
+            val embed = StandardWarningResponse(
+                "Message Edited", """
+                **Author:** ${author.formatted()} (${author.id})
+                **Channel:** ${channel.name} (${channel.id})
+                **Edited At:** ${Source.DATE_TIME_FORMAT.format(Instant.now())}
+                **Jump Link:** [${MarkdownUtil.maskedLink("Click", event.message.jumpUrl)}]
+            """.trimIndent()
+            )
+            if (oldContent != null)
+                embed.addField("Old Content:", oldContent.truncate(1024), false)
+            embed.addField("New Content:", newContent.truncate(1024), false)
+            saveMessage(event.message)
+            log.sendMessage(embed.asMessage(event.author)).queue()
+        }
+        @Suppress("NAME_SHADOWING")
+        oldContent?.let { oldContent: String ->
+            val oldUsers = Message.MentionType.USER.listMatches(oldContent, guild::getMemberById)
+            val oldRoles = Message.MentionType.ROLE.listMatches(oldContent, guild::getRoleById)
+            val newUsers = Message.MentionType.USER.listMatches(newContent, guild::getMemberById)
+            val newRoles = Message.MentionType.ROLE.listMatches(newContent, guild::getRoleById)
+            if (newUsers.containsAll(oldUsers) && newRoles.containsAll(oldRoles)) return@let
+            channel.sendMessage(
+                StandardErrorResponse(
+                    "Ghost Ping!", """
+                        **User:** ${author.let { "${it.formatted()} (${it.id})" }}
+                    """.trimIndent()
+                ).also {
+                    it.addField("Message:", oldContent.truncate(1024), false)
+                }.asMessage(author)
+            ).queue()
+        }
     }
 
     private fun onMessageReceive(event: GuildMessageReceivedEvent) {
@@ -52,9 +128,45 @@ class MessageListener : EventSubscriber<Moderation> {
         val delete = when {
             message.mentionedMembers.size >= mentionThreshold -> handleMentionLimit(event, mentionThreshold)
             message.invites.isNotEmpty() -> handleChatAdvertising(event)
+            handleCapsCheck(event) -> true
             else -> false
         }
-        if (delete) return message.delete().queue() else saveMessage(message)
+        if (delete) message.delete().queue() else saveMessage(message)
+    }
+
+    private val capsViolations = HashMap<String, LoadingCache<String, Int>>()
+    private fun handleCapsCheck(event: GuildMessageReceivedEvent): Boolean {
+        val violations = capsViolations.computeIfAbsent(event.guild.id) {
+            CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES)
+                .build(object : CacheLoader<String, Int>() {
+                    override fun load(key: String) = 0
+                })
+        }
+        val content = event.message.contentRaw
+        if (content.length < 7) return false
+        val threshold = ceil(content.length * .8).toInt()
+        if (content.count(Char::isUpperCase) < threshold) return false
+        val violationCount = violations[event.author.id] + 1
+        return Moderation.getPunishmentHandler(event.guild) {
+            val incident = if (violationCount == 2) muteIncident(
+                event.guild.selfMember,
+                event.member!!,
+                durationOf("10m"),
+                "Caps Violation! (2 offenses within 5 minutes!)"
+            )
+            else warnIncident(
+                event.guild.selfMember,
+                event.member!!,
+                "Caps Violation!"
+            )
+            if (incident.success) {
+                violations.put(event.author.id, violationCount)
+                event.channel.sendMessage(incident.asMessage(event.member!!)).queue {
+                    it.delete().queueAfter(10, TimeUnit.SECONDS)
+                }
+                true
+            } else false
+        }
     }
 
     private fun handleMentionLimit(event: GuildMessageReceivedEvent, threshold: Int): Boolean {
@@ -151,56 +263,33 @@ class MessageListener : EventSubscriber<Moderation> {
         }
     }
 
-    private fun onMessageEdit(event: GuildMessageUpdateEvent) {
+    private fun submitMessageEdit(event: GuildMessageUpdateEvent) {
         if (event.author.isBot) return
-        val log = messageLogChannel(event.guild) ?: return
         val collection = messageLogCollection(event.guild)
-        val author = event.author
+        val author = event.member!!
         val channel = event.channel
-        val embed = StandardWarningResponse(
-            "Message Edited", """
-                **Author:** ${author.formatted()} (${author.id})
-                **Channel:** ${channel.name} (${channel.id})
-                **Edited At:** ${Source.DATE_TIME_FORMAT.format(Instant.now())}
-                **Jump Link:** [${MarkdownUtil.maskedLink("Click", event.message.jumpUrl)}]
-            """.trimIndent()
+        val newContent = event.message.contentRaw
+        val oldContent = collection.find(Document("_id", event.messageId)).first()?.get("content") as? String
+        Source.SOURCE_EVENTS.fireEvent(
+            MessageEditEvent(
+                event.guild, author, channel, newContent, oldContent, event.message
+            )
         )
-        collection.find(Document("_id", event.messageId)).first()?.let {
-            embed.addField("Old Content:", (it["content"] as String).truncate(1024), false)
-        }
-        embed.addField("New Content:", event.message.contentRaw.truncate(1024), false)
-        saveMessage(event.message)
-        log.sendMessage(embed.asMessage(event.author)).queue()
     }
 
-    private fun onMessageDelete(event: GuildMessageDeleteEvent) {
-        val log = messageLogChannel(event.guild) ?: return
+    private fun submitMessageDelete(event: GuildMessageDeleteEvent) {
         val found = messageLogCollection(event.guild).findOneAndDelete(
             Document("_id", event.messageId)
         ) ?: return
-        var foundAuthor: Member? = null
-        val author = (found["author"] as String).let {
-            foundAuthor = event.guild.getMemberById(it) ?: return@let it
-            "${foundAuthor!!.formatted()} ($it)"
-        }
-        if (foundAuthor != null && foundAuthor!!.user.isBot) return
-        val content = found["content"] as String
-        val channel = (found["channel"] as String).let {
-            val channel = event.guild.getTextChannelById(it) ?: return@let it
-            "${channel.name} ($it)"
-        }
-        val sent = (found["time"] as Long)
-            .let(Instant::ofEpochMilli)
-            .let(Source.DATE_TIME_FORMAT::format)
-        val embed = StandardErrorResponse(
-            "Message Deleted", """
-                **Author:** $author
-                **Channel:** $channel
-                **Date Sent:** $sent
-            """.trimIndent()
+        Source.SOURCE_EVENTS.fireEvent(
+            MessageDeleteEvent(
+                event.guild,
+                found["author"] as String,
+                found["content"] as String,
+                found["channel"] as String,
+                (found["time"] as Long).let(Instant::ofEpochMilli)
+            )
         )
-        embed.addField("Message:", content.truncate(1024), false)
-        log.sendMessage(embed.asMessage(foundAuthor ?: event.guild.selfMember)).queue()
     }
 
     private fun messageLogCollection(guild: Guild) =
