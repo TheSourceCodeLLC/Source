@@ -12,16 +12,19 @@ import net.sourcebot.module.counting.data.CountingListener
 class Counting : SourceModule() {
     override val configurationInfo = ConfigurationInfo("counting") {
         node("channel", "Channel ID for the counting channel.")
+        node("mute-role", "Role ID to mute players from the counting channel.")
     }
 
+    private val countingListener = CountingListener()
     override fun onEnable() {
         Source.SHARD_MANAGER.guilds.forEach(::clearCountingOverride)
         registerCommands(CountingCommand())
-        subscribeEvents(CountingListener())
+        subscribeEvents(countingListener)
     }
 
     override fun onDisable() {
         Source.SHARD_MANAGER.guilds.forEach(::denyCountingOverride)
+        countingListener.close()
     }
 
     private fun setCountingOverride(
