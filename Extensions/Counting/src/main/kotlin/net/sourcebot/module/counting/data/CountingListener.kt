@@ -13,11 +13,13 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.sourcebot.Source
+import net.sourcebot.api.asMessage
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.ifPresentOrElse
+import net.sourcebot.api.response.StandardWarningResponse
 import net.sourcebot.module.counting.Counting
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -160,7 +162,14 @@ class CountingListener : EventSubscriber<Counting> {
             val violationLevel = channelViolations[blame] + 1
             channelViolations.put(blame, violationLevel)
             if (violationLevel < 5) return
-            channel.guild.addRoleToMember(blame, muteRole).queue()
+            channel.guild.addRoleToMember(blame, muteRole).queue {
+                val member = channel.guild.getMemberById(blame) ?: return@queue
+                val embed = StandardWarningResponse(
+                    "Incapable Of Counting!",
+                    "Role given to ${member.asMention} due to 5 failures over the past 5 minutes!"
+                )
+                channel.sendMessage(embed.asMessage(member)).queue()
+            }
         }
     }
 
