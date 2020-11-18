@@ -24,6 +24,7 @@ import net.sourcebot.api.response.SourceColor
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardWarningResponse
 import net.sourcebot.module.moderation.Moderation
+import net.sourcebot.module.moderation.PunishmentResponse
 import net.sourcebot.module.moderation.event.MessageDeleteEvent
 import net.sourcebot.module.moderation.event.MessageEditEvent
 import org.bson.Document
@@ -147,26 +148,25 @@ class MessageListener : EventSubscriber<Moderation> {
         val threshold = ceil(content.length * .8).toInt()
         if (content.count(Char::isUpperCase) < threshold) return false
         val violationCount = violations[event.author.id] + 1
-        return Moderation.getPunishmentHandler(event.guild) {
-            val incident = if (violationCount == 2) muteIncident(
-                event.guild.selfMember,
-                event.member!!,
-                durationOf("10m"),
-                "Caps Violation! (2 offenses within 5 minutes!)"
-            )
-            else warnIncident(
-                event.guild.selfMember,
-                event.member!!,
-                "Caps Violation!"
-            )
-            if (incident.success) {
-                violations.put(event.author.id, violationCount)
-                event.channel.sendMessage(incident.asMessage(event.member!!)).queue {
-                    it.delete().queueAfter(10, TimeUnit.SECONDS)
-                }
-                true
-            } else false
+        Moderation.getPunishmentHandler(event.guild) {
+            val incident = when (violationCount) {
+                3 -> muteIncident(
+                    event.guild.selfMember,
+                    event.member!!,
+                    durationOf("10m"),
+                    "Caps Violation! (3 offenses within 5 minutes!)"
+                )
+                else -> StandardWarningResponse(
+                    "Caps Violation!", "Please do not use as many capital letters!"
+                )
+            }
+            violations.put(event.author.id, violationCount)
+            if (incident is PunishmentResponse && !incident.success) return@getPunishmentHandler
+            event.channel.sendMessage(incident.asMessage(event.member!!)).queue {
+                it.delete().queueAfter(10, TimeUnit.SECONDS)
+            }
         }
+        return true
     }
 
     private fun handleMentionLimit(event: GuildMessageReceivedEvent, threshold: Int): Boolean {
