@@ -46,6 +46,12 @@ class PermissionHandler(private val globalAdmins: Set<String>) {
     fun hasPermission(
         permissible: Permissible,
         node: String,
+        context: String? = null
+    ): Boolean = hasPermission(permissible, node, context?.let(::setOf) ?: emptySet())
+
+    fun hasPermission(
+        permissible: Permissible,
+        node: String,
         channel: MessageChannel? = null
     ): Boolean = hasPermission(permissible, node, channel?.let(::computeContext) ?: emptySet())
 

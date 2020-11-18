@@ -107,10 +107,10 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             if (byName.size != 1) throw InvalidSyntaxException("Argument '$target' matches multiple users!")
             return@ofSingleArg byName[0]
         }
-
         @JvmStatic
         fun role(guild: Guild) = ofSingleArg {
-            val target = it.replace("<@&(\\d+)>".toRegex(), "$1")
+            val target = it.replace("<@&(\\d+)>".toRegex(), "$1").toLowerCase()
+            if (target == "everyone") return@ofSingleArg guild.publicRole
             val byId = target.runCatching(guild::getRoleById).getOrNull()
             if (byId != null) return@ofSingleArg byId
             val byName = guild.getRolesByName(target, true)

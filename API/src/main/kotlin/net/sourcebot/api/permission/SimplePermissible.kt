@@ -3,7 +3,11 @@ package net.sourcebot.api.permission
 import java.util.*
 
 abstract class SimplePermissible(stored: Set<SourcePermission>) : Permissible {
-    private val permissions: MutableSet<SourcePermission> = HashSet(stored)
+    private val permissions: MutableSet<SourcePermission> = TreeSet(
+        compareByDescending(SourcePermission::node).thenBy {
+            it.node.count { it == '.' }
+        }
+    ).apply { addAll(stored) }
 
     override fun hasPermission(
         node: String
@@ -40,9 +44,7 @@ abstract class SimplePermissible(stored: Set<SourcePermission>) : Permissible {
         permissions.removeIf { it.context == context }
     }
 
-    override fun getPermissions() = permissions.sortedByDescending {
-        it.node.count { it == '.' }
-    }.toSet()
+    override fun getPermissions(): Set<SourcePermission> = permissions
 
     override fun getContexts(node: String) = permissions.filter {
         it.node == node && it.context != null && it.flag
