@@ -173,37 +173,33 @@ class CountingListener : EventSubscriber<Counting> {
         }
     }
 
-    private val checkpointTask: ScheduledFuture<*>
-    init {
-        checkpointTask = Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate({
+    internal fun handleCheckpoints(): ScheduledFuture<*> =
+        Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate({
             Source.EXECUTOR_SERVICE.submit {
                 Source.SHARD_MANAGER.guilds.forEach { guild ->
                     val counting = getCountingData(guild) ?: return@forEach
                     val channel = counting.optional<String>("channel")?.let(
                         guild::getTextChannelById
                     ) ?: return@forEach
-                    val lastMessage = lastMessages[channel.id] ?: return@forEach
-                    val lastNumber = lastMessage.number
-                    checkpoints.compute(channel.id) { _, stored ->
-                        if (stored == null || lastNumber >= stored + 10) {
-                            channel.sendMessage("Checkpoint: $lastNumber").complete()
-                            lastNumber
-                        } else stored
+                    lastMessages[channel.id]?.let { lastMessage ->
+                        val lastNumber = lastMessage.number
+                        checkpoints.compute(channel.id) { _, stored ->
+                            if (stored == null || lastNumber >= stored + 10) {
+                                counting.required("checkpoint") { lastNumber }.also {
+                                    channel.sendMessage("Checkpoint: $it").complete()
+                                }
+                            } else stored
+                        }
                     }
                 }
             }
         }, 0L, 10L, TimeUnit.MINUTES)
-    }
 
     private fun getCountingData(guild: Guild) =
         configurationManager[guild].optional<JsonConfiguration>("counting")
 
     private fun getMuteRole(guild: Guild) =
         configurationManager[guild].optional<String>("counting.mute-role")?.let(guild::getRoleById)
-
-    fun close() {
-        checkpointTask.cancel(true)
-    }
 }
 
 class CountingMessage {
