@@ -311,8 +311,7 @@ class MessageListener : EventSubscriber<Moderation> {
             guild.getGuildChannelById(it) ?: return@mapNotNull null
         } ?: emptyList()
 
-    private fun saveMessage(message: Message) {
-        val collection = messageLogCollection(message.guild)
+    private fun saveMessage(message: Message) = messageLogCollection(message.guild).let { collection ->
         collection.updateOne(
             Document("_id", message.id),
             Document("\$set", Document().also {
