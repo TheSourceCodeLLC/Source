@@ -39,57 +39,64 @@ class StarboardListener(
     }
 
     private fun onReactionAdd(event: GuildMessageReactionAddEvent) {
-        val message = listenReaction(event) ?: return
-        if (event.user == message.author) return event.reaction.removeReaction(message.author).queue()
-        val data = dataManager[event.guild]
-        val threshold = data.required<Long>("threshold")
-        val count = message.reactions.find { it.reactionEmote.name == UNICODE_STAR }?.count ?: 0
-        if (count < threshold) return
-        val channel = data.optional<String>("channel")?.let {
-            event.guild.getTextChannelById(it)
-        } ?: return
-        val linkObject = getLinkObject(event.guild, message.id)
-        if (linkObject != null) {
-            val starredId = linkObject["starred"] as String
-            val starred = channel.retrieveMessageById(starredId).complete()
-            starred.editMessage(StarboardResponse.fromMessage(message, count)).queue()
-        } else {
-            channel.sendMessage(StarboardResponse.fromMessage(message, count)).queue {
-                getCollection(event.guild).insertOne(
-                    Document(
-                        mapOf(
-                            "original" to message.id,
-                            "starred" to it.id
+        listenReaction(event) { message ->
+            if (event.user == message.author) return@listenReaction event.reaction.removeReaction(message.author)
+                .queue()
+            val data = dataManager[event.guild]
+            val threshold = data.required<Long>("threshold")
+            val count = message.reactions.find { it.reactionEmote.name == UNICODE_STAR }?.count ?: 0
+            if (count < threshold) return@listenReaction
+            val channel = data.optional<String>("channel")?.let {
+                event.guild.getTextChannelById(it)
+            } ?: return@listenReaction
+            val linkObject = getLinkObject(event.guild, message.id)
+            if (linkObject != null) {
+                val starredId = linkObject["starred"] as String
+                val starred = channel.retrieveMessageById(starredId).complete()
+                starred.editMessage(StarboardResponse.fromMessage(message, count)).queue()
+            } else {
+                channel.sendMessage(StarboardResponse.fromMessage(message, count)).queue {
+                    getCollection(event.guild).insertOne(
+                        Document(
+                            mapOf(
+                                "original" to message.id,
+                                "starred" to it.id
+                            )
                         )
                     )
-                )
+                }
             }
         }
     }
 
     private fun onReactionRemove(event: GuildMessageReactionRemoveEvent) {
-        val message = listenReaction(event) ?: return
-        val data = dataManager[event.guild]
-        val linkObject = getLinkObject(event.guild, message.id)
-        val starredId = linkObject?.get("starred") as String? ?: return
-        val count = message.reactions.find { it.reactionEmote.name == UNICODE_STAR }?.count ?: 0
-        val channel = data.optional<String>("channel")?.let {
-            event.guild.getTextChannelById(it)
-        } ?: return
-        if (count < data.required<Long>("threshold")) {
-            channel.deleteMessageById(starredId).queue({}, {})
-            getCollection(event.guild).deleteOne(linkObject!!)
-        } else {
-            val starred = channel.retrieveMessageById(starredId).complete()
-            starred.editMessage(StarboardResponse.fromMessage(message, count)).queue()
+        listenReaction(event) { message ->
+            val data = dataManager[event.guild]
+            val linkObject = getLinkObject(event.guild, message.id)
+            val starredId = linkObject?.get("starred") as String? ?: return@listenReaction
+            val count = message.reactions.find { it.reactionEmote.name == UNICODE_STAR }?.count ?: 0
+            val channel = data.optional<String>("channel")?.let {
+                event.guild.getTextChannelById(it)
+            } ?: return@listenReaction
+            if (count < data.required<Long>("threshold")) {
+                channel.deleteMessageById(starredId).queue({}, {})
+                getCollection(event.guild).deleteOne(linkObject!!)
+            } else {
+                val starred = channel.retrieveMessageById(starredId).complete()
+                starred.editMessage(StarboardResponse.fromMessage(message, count)).queue()
+            }
         }
     }
 
-    private fun listenReaction(event: GenericGuildMessageReactionEvent): Message? {
-        if (event.reactionEmote.name != UNICODE_STAR) return null
-        val message = event.retrieveMessage().complete()
-        if (message.author.isBot) return null
-        return message
+    private fun listenReaction(
+        event: GenericGuildMessageReactionEvent,
+        consumer: (Message) -> Unit
+    ) {
+        if (event.reactionEmote.name != UNICODE_STAR) return
+        event.retrieveMessage().queue { message ->
+            if (message.author.isBot) return@queue
+            consumer(message)
+        }
     }
 
     private fun onMessageDelete(event: GuildMessageDeleteEvent) {

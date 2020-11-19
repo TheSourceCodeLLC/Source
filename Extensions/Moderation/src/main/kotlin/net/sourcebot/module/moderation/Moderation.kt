@@ -17,9 +17,12 @@ class Moderation : SourceModule() {
             node("whitelist", "Array of Guild IDs that users may send invites to.")
             node("member-limit", "Minimum members in a Guild invite to be ignored.")
         }
+        section("message-log") {
+            node("channel", "Channel ID for the message log channel.")
+            node("blacklist", "Channel IDs blacklisted from message logging.")
+        }
         node("mention-threshold", "Maximum number of member mentions permitted in a message.")
         node("incident-log", "Channel ID for the incident log channel.")
-        node("message-log", "Channel ID for the message log channel.")
         node("report-log", "Channel ID for the reports channel.")
         node("blacklist-role", "Role ID for the blacklist role.")
         node("mute-role", "Role ID for the mute role.")

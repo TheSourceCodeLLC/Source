@@ -132,7 +132,13 @@ class MessageListener : EventSubscriber<Moderation> {
             handleCapsCheck(event) -> true
             else -> false
         }
-        if (delete) message.delete().queue() else saveMessage(message)
+        val channel = event.channel
+        val parent = channel.parent
+        if (delete) message.delete().queue() else {
+            val blacklist = messageLogBlacklist(event.guild)
+            if (channel in blacklist || (parent != null && parent in blacklist)) return
+            saveMessage(message)
+        }
     }
 
     private val capsViolations = HashMap<String, LoadingCache<String, Int>>()
@@ -296,9 +302,14 @@ class MessageListener : EventSubscriber<Moderation> {
         mongo.getCollection(guild.id, "message-log")
 
     private fun messageLogChannel(guild: Guild) =
-        configManager[guild].optional<String>("moderation.message-log")?.let(
+        configManager[guild].optional<String>("moderation.message-log.channel")?.let(
             guild::getTextChannelById
         )
+
+    private fun messageLogBlacklist(guild: Guild) =
+        configManager[guild].optional<List<String>>("moderation.message-log.blacklist")?.mapNotNull {
+            guild.getGuildChannelById(it) ?: return@mapNotNull null
+        } ?: emptyList()
 
     private fun saveMessage(message: Message) {
         val collection = messageLogCollection(message.guild)
