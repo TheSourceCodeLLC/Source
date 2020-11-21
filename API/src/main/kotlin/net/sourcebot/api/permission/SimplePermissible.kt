@@ -6,7 +6,7 @@ abstract class SimplePermissible(stored: Set<SourcePermission>) : Permissible {
     private val permissions: MutableSet<SourcePermission> = TreeSet(
         compareByDescending(SourcePermission::node).thenBy {
             it.node.count { it == '.' }
-        }
+        }.thenBy(SourcePermission::context)
     ).apply { addAll(stored) }
 
     override fun hasPermission(
