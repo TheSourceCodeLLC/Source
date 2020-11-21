@@ -11,12 +11,12 @@ abstract class SimplePermissible(stored: Set<SourcePermission>) : Permissible {
 
     override fun hasPermission(
         node: String
-    ) = getPermissions().find { it.node == node && it.context == null }?.flag
+    ) = permissions.find { it.node == node && it.context == null }?.flag
 
     override fun hasPermission(
         node: String,
         context: String
-    ) = getPermissions().find { it.node == node && it.context == context }?.flag
+    ) = permissions.find { it.node == node && it.context == context }?.flag
 
     override fun setPermission(node: String, flag: Boolean) {
         unsetPermission(node)

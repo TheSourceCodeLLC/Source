@@ -101,18 +101,14 @@ class CommandHandler(
         if (command.permission != null) {
             val permission = command.permission!!
             if (inGuild && !hasGlobal) {
-                val permissionData = permissionHandler.getData(message.guild)
                 val guild = message.guild
                 val member = message.member!!
-                val roles = member.roles.toMutableList().apply {
-                    add(guild.publicRole)
-                }
-                if (roles.none { it.hasPermission(Permission.ADMINISTRATOR) }) {
-                    val sourceUser = permissionData.getUser(member).also {
-                        it.roles = roles.map(permissionData::getRole).distinct()
-                    }
-                    if (
-                        !permissionHandler.hasPermission(sourceUser, permission, message.channel)
+                if (member.roles.toMutableList().apply {
+                        add(guild.publicRole)
+                    }.none { it.hasPermission(Permission.ADMINISTRATOR) }) {
+                    if (!permissionHandler.memberHasPermission(
+                            member, permission, message.channel
+                        )
                     ) return PermissionCheck(command, NO_PERMISSION)
                 }
             }

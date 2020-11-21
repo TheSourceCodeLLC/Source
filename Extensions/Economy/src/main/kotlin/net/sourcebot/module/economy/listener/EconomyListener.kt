@@ -38,7 +38,7 @@ class EconomyListener : EventSubscriber<Economy> {
         val member = event.member
         val changer = event.guild.retrieveAuditLogs().type(ActionType.MEMBER_UPDATE).complete()[0]
         if (changer.user != member.user) return
-        if (Source.PERMISSION_HANDLER.userHasPermission(member, "economy.ignore-nickname-cost")) return
+        if (Source.PERMISSION_HANDLER.memberHasPermission(member, "economy.ignore-nickname-cost")) return
         val cost = Source.CONFIG_MANAGER[event.guild].required("economy.nickname-cost") { 0L }
         val economy = EconomyData[event.member]
         if (cost > economy.balance) {

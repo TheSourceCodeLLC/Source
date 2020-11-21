@@ -6,9 +6,10 @@ import net.sourcebot.api.database.MongoSerial
 import org.bson.Document
 
 class SourceUser internal constructor(
-    val id: String, stored: Set<SourcePermission> = emptySet()
+    val id: String,
+    internal var roles: List<SourceRole> = emptyList(),
+    stored: Set<SourcePermission> = emptySet()
 ) : SimplePermissible(stored) {
-    internal var roles: List<SourceRole> = emptyList()
     override fun update(data: PermissionData): UpdateResult = data.updateUser(this)
     override fun delete(data: PermissionData): DeleteResult = data.deleteUser(this)
     override fun asMention() = "<@$id>"
@@ -18,7 +19,7 @@ class SourceUser internal constructor(
         override fun deserialize(document: Document) = document.let {
             val id = it["_id"] as String
             val permissions = permissionHandler.getPermissions(it)
-            SourceUser(id, permissions)
+            SourceUser(id, stored = permissions)
         }
 
         override fun serialize(obj: SourceUser) = queryDocument(obj).apply {

@@ -1,6 +1,9 @@
 package net.sourcebot.api
 
 import com.fasterxml.jackson.core.type.TypeReference
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.cache.LoadingCache
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
@@ -13,6 +16,7 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 import kotlin.math.max
 
 fun String.urlEncoded(charset: Charset = StandardCharsets.UTF_8): String = URLEncoder.encode(this, charset)
@@ -57,3 +61,12 @@ fun <U> Message.MentionType.listMatches(
     }
     return list
 }
+
+fun <K, V> weakCache(
+    expire: Duration = Duration.ofMinutes(10),
+    loader: (K) -> V
+): LoadingCache<K, V> =
+    CacheBuilder.newBuilder().weakKeys().expireAfterWrite(expire)
+        .build(object : CacheLoader<K, V>() {
+            override fun load(key: K) = loader(key)
+        })
