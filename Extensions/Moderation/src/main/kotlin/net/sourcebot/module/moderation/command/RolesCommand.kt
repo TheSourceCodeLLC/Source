@@ -33,8 +33,8 @@ class RolesCommand : ModerationRootCommand(
             val target = args.next(Adapter.member(guild), "You did not specify a valid member to update!")
             val role = args.next(Adapter.role(guild), "You did not specify a valid role to add!")
             val reason = args.slurp(" ", "You did not specify a reason for adding this role!")
-            if (!canAssign(sender, role)) return StandardErrorResponse(
-                "Role Add Failure!", "You do not have permission to assign that role!"
+            if (!canModify(sender, role)) return StandardErrorResponse(
+                "Role Add Failure!", "You do not have permission to modify that role!"
             )
             if (role.isPublicRole) return StandardErrorResponse(
                 "Role Add Failure!", "You may not add members to the default role!"
@@ -69,8 +69,8 @@ class RolesCommand : ModerationRootCommand(
             val target = args.next(Adapter.member(guild), "You did not specify a valid member to update!")
             val role = args.next(Adapter.role(guild), "You did not specify a valid role to remove!")
             val reason = args.slurp(" ", "You did not specify a reason for removing this role!")
-            if (!canAssign(sender, role)) return StandardErrorResponse(
-                "Role Remove Failure!", "You do not have permission to assign that role!"
+            if (!canModify(sender, role)) return StandardErrorResponse(
+                "Role Remove Failure!", "You do not have permission to modify that role!"
             )
             if (role.isPublicRole) return StandardErrorResponse(
                 "Role Remove Failure!", "You may not remove members from the default role!"
@@ -100,11 +100,11 @@ class RolesCommand : ModerationRootCommand(
             val roles = guild.roles
                 .filter { !it.isPublicRole && !it.isManaged }
                 .filter { member.getHighestRole().position > it.position }
-                .filter { canAssign(member, it) }
+                .filter { canModify(member, it) }
             val listing =
-                if (roles.isEmpty()) "You do not have permission to assign any roles."
+                if (roles.isEmpty()) "You do not have permission to modify any roles."
                 else """
-                    You have access to assign each of the following roles:
+                    You have access to modify each of the following roles:
                     
                     ${roles.joinToString("\n") { "**${it.name}**" }}
                 """.trimIndent()
@@ -120,7 +120,7 @@ class RolesCommand : ModerationRootCommand(
         )
     }
 
-    private fun canAssign(member: Member, role: Role) = Source.PERMISSION_HANDLER.memberHasPermission(
+    private fun canModify(member: Member, role: Role) = Source.PERMISSION_HANDLER.memberHasPermission(
         member, "moderation.roles.modify.${role.id}", null
     )
 }

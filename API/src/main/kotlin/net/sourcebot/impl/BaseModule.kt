@@ -47,7 +47,8 @@ class BaseModule(
             TimingsCommand(),
             PermissionsCommand(),
             ConfigurationCommand(),
-            *lifecycleCommands(Source.properties.required("lifecycle"))
+            *lifecycleCommands(Source.properties.required("lifecycle")),
+            SudoCommand()
         )
         subscribeEvents(ConnectionListener())
     }

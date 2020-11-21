@@ -29,25 +29,30 @@ class CommandHandler(
     override fun cascade(
         message: Message, label: String, arguments: Arguments
     ) {
-        if (message.author.isBot) return
-        val rootCommand = commandMap[label] ?: return
-        if (!rootCommand.module.enabled) return
+        val (command, response) = runCommand(message, label, arguments)
+        if (command != null && response !is EmptyResponse)
+            respond(command, message, response)
+    }
+
+    internal fun runCommand(
+        message: Message, label: String, arguments: Arguments
+    ): Pair<Command?, Response> {
+        if (message.author.isBot) return null to EmptyResponse()
+        val rootCommand = commandMap[label] ?: return null to EmptyResponse()
+        if (!rootCommand.module.enabled) return rootCommand to EmptyResponse()
         val permissionCheck = checkPermissions(message, rootCommand, arguments)
         val command = permissionCheck.command
-        when (permissionCheck.type) {
-            GLOBAL_ONLY -> respond(permissionCheck.command, message, GlobalAdminOnlyResponse())
-            GUILD_ONLY -> respond(permissionCheck.command, message, GuildOnlyCommandResponse())
-            NO_PERMISSION -> respond(
-                command, message, permissionHandler.getPermissionAlert(
-                    command.guildOnly, message.jda,
-                    permissionHandler.getData(message.guild).getUser(message.member!!),
-                    command.permission!!
-                )
+        return command to when (permissionCheck.type) {
+            GLOBAL_ONLY -> GlobalAdminOnlyResponse()
+            GUILD_ONLY -> GuildOnlyCommandResponse()
+            NO_PERMISSION -> permissionHandler.getPermissionAlert(
+                command.guildOnly, message.jda,
+                permissionHandler.getData(message.guild).getUser(message.member!!),
+                command.permission!!
             )
             VALID -> {
                 try {
-                    val response = command.execute(message, arguments)
-                    if (response !is EmptyResponse) return respond(command, message, response)
+                    command.execute(message, arguments)
                 } catch (exception: Exception) {
                     val error = if (exception is InvalidSyntaxException) {
                         StandardErrorResponse(
@@ -66,7 +71,7 @@ class CommandHandler(
                         exception.printStackTrace()
                         ExceptionResponse(exception)
                     }
-                    return respond(command, message, error)
+                    error
                 }
             }
         }
@@ -101,10 +106,9 @@ class CommandHandler(
         if (command.permission != null) {
             val permission = command.permission!!
             if (inGuild && !hasGlobal) {
-                val guild = message.guild
                 val member = message.member!!
                 if (member.roles.toMutableList().apply {
-                        add(guild.publicRole)
+                        add(member.guild.publicRole)
                     }.none { it.hasPermission(Permission.ADMINISTRATOR) }) {
                     if (!permissionHandler.memberHasPermission(
                             member, permission, message.channel
@@ -116,7 +120,7 @@ class CommandHandler(
         return PermissionCheck(command, VALID)
     }
 
-    private fun respond(command: Command, message: Message, response: Response) {
+    fun respond(command: Command, message: Message, response: Response): Response {
         message.channel.sendMessage(response.asMessage(message.author)).queue {
             command.postResponse(response, message.author, it)
             if (!command.cleanupResponse) return@queue
@@ -131,6 +135,7 @@ class CommandHandler(
                 }
             }, command.deleteSeconds ?: deleteSeconds, TimeUnit.SECONDS)
         }
+        return response
     }
 
     fun getPrefix() = defaultPrefix
