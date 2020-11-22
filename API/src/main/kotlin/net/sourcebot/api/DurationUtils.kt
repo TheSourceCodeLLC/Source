@@ -9,7 +9,6 @@ object DurationUtils {
 
     @JvmStatic
     fun parseDuration(input: String): Duration {
-        if (!pattern.matches(input)) throw IllegalArgumentException("Parse input does not match pattern!")
         var seconds: Long = 0
         pattern.findAll(input).forEach {
             val (amount, unit) = it.destructured
