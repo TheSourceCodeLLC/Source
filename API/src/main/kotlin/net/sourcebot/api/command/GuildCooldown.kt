@@ -6,7 +6,9 @@ import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-class GuildCooldown {
+class GuildCooldown(
+    private val duration: Duration
+) {
     private val handler = HashMap<String, MutableMap<String, Instant>>()
 
     fun <T> test(
@@ -20,7 +22,7 @@ class GuildCooldown {
         inner.compute(member.id) { _, v ->
             if (v == null || v.isBefore(now)) {
                 returnVal = onSuccess()
-                now.plusSeconds(5)
+                now.plus(duration)
             } else {
                 val difference = Duration.between(now, v).truncatedTo(ChronoUnit.SECONDS)
                 returnVal = when {

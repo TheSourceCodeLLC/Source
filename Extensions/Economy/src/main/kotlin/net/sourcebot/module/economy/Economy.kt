@@ -1,10 +1,14 @@
 package net.sourcebot.module.economy
 
+import net.dv8tion.jda.api.entities.Member
 import net.sourcebot.api.configuration.ConfigurationInfo
+import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.economy.command.BalanceCommand
 import net.sourcebot.module.economy.command.GambleCommand
+import net.sourcebot.module.economy.data.EconomyData
 import net.sourcebot.module.economy.listener.EconomyListener
+import net.sourcebot.module.profiles.Profiles
 
 class Economy : SourceModule() {
     override val configurationInfo = ConfigurationInfo("economy") {
@@ -17,5 +21,10 @@ class Economy : SourceModule() {
             GambleCommand()
         )
         subscribeEvents(EconomyListener())
+    }
+
+    companion object {
+        @JvmStatic operator fun get(member: Member) =
+            Profiles[member].required("economy", ::JsonConfiguration).let(::EconomyData)
     }
 }

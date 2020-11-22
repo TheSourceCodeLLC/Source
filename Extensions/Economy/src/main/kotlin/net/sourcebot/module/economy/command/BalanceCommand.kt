@@ -8,7 +8,7 @@ import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.api.wrapped
-import net.sourcebot.module.economy.data.EconomyData
+import net.sourcebot.module.economy.Economy
 
 class BalanceCommand : EconomyRootCommand(
     "balance", "Manage Member balances."
@@ -20,10 +20,10 @@ class BalanceCommand : EconomyRootCommand(
 
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild)) ?: message.member!!
-        val economy = EconomyData[target]
+        val economy = Economy[target]
         return StandardInfoResponse(
             "${target.effectiveName}'s Balance:",
-            "${target.formatted()} has ${economy.balance} coins."
+            ":moneybag: **${target.formatted()}** has ${economy.balance} coins."
         ).wrapped(target)
     }
 
@@ -41,7 +41,7 @@ class BalanceCommand : EconomyRootCommand(
                 Adapter.long(0, error = "New balance may not be negative!"),
                 "You did not specify a valid balance for the member!"
             )
-            val economy = EconomyData[target].also {
+            val economy = Economy[target].also {
                 it.balance = balance
             }
             return StandardSuccessResponse(
@@ -65,7 +65,7 @@ class BalanceCommand : EconomyRootCommand(
                 Adapter.long(1, error = "Amount to add must not be less than 1!"),
                 "You did not specify a valid number of coins to add!"
             )
-            EconomyData[target].balance += amount
+            Economy[target].balance += amount
             return StandardSuccessResponse(
                 "Balance Updated!",
                 "$amount coins have been added to ${target.formatted()}'s balance!"
@@ -83,7 +83,7 @@ class BalanceCommand : EconomyRootCommand(
 
         override fun execute(message: Message, args: Arguments): Response {
             val target = args.next(Adapter.member(message.guild)) ?: message.member!!
-            val economy = EconomyData[target]
+            val economy = Economy[target]
             val balance = economy.balance
             if (balance < 1) return StandardErrorResponse(
                 "Balance Update Failure!",

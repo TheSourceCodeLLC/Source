@@ -6,7 +6,6 @@ import com.google.common.cache.LoadingCache
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.sourcebot.Source
-import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.profiles.command.ProfileCommand
 import net.sourcebot.module.profiles.data.ProfileHandler
@@ -27,12 +26,6 @@ class Profiles : SourceModule() {
     companion object {
         private lateinit var profiles: LoadingCache<Guild, ProfileHandler>
 
-        @JvmStatic fun getProfile(member: Member) = profiles[member.guild][member.id]
-
-        @JvmStatic
-        fun saveProfile(
-            member: Member,
-            profile: JsonConfiguration
-        ) = profiles[member.guild].save(member.id, profile)
+        @JvmStatic operator fun get(member: Member) = profiles[member.guild][member]
     }
 }

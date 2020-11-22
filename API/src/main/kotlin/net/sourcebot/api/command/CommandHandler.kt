@@ -1,6 +1,5 @@
 package net.sourcebot.api.command
 
-import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
@@ -107,14 +106,8 @@ class CommandHandler(
             val permission = command.permission!!
             if (inGuild && !hasGlobal) {
                 val member = message.member!!
-                if (member.roles.toMutableList().apply {
-                        add(member.guild.publicRole)
-                    }.none { it.hasPermission(Permission.ADMINISTRATOR) }) {
-                    if (!permissionHandler.memberHasPermission(
-                            member, permission, message.channel
-                        )
-                    ) return PermissionCheck(command, NO_PERMISSION)
-                }
+                if (!permissionHandler.memberHasPermission(member, permission, message.channel))
+                    return PermissionCheck(command, NO_PERMISSION)
             }
         }
         return PermissionCheck(command, VALID)

@@ -22,7 +22,7 @@ class ProfileCommand : RootCommand(
 
     override fun execute(message: Message, args: Arguments): Response {
         val target = args.next(Adapter.member(message.guild)) ?: message.member!!
-        val profile = Profiles.getProfile(target)
+        val profile = Profiles[target]
         val embed = StandardInfoResponse(
             "${target.formatted()}'s Profile"
         ).also {

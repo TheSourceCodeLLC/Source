@@ -10,7 +10,6 @@ import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.module.economy.Economy
-import net.sourcebot.module.economy.data.EconomyData
 import net.sourcebot.module.profiles.event.ProfileRenderEvent
 
 class EconomyListener : EventSubscriber<Economy> {
@@ -25,10 +24,11 @@ class EconomyListener : EventSubscriber<Economy> {
 
     private fun onProfileRender(event: ProfileRenderEvent) {
         val (embed, member) = event
-        val economy = EconomyData[member]
+        val economy = Economy[member]
         embed.addField(
             "Economy:", """
             **Balance:** ${economy.balance} coins
+            **Daily Streak:** ${economy.daily} days
         """.trimIndent(), false
         )
     }
@@ -40,7 +40,7 @@ class EconomyListener : EventSubscriber<Economy> {
         if (changer.user != member.user) return
         if (Source.PERMISSION_HANDLER.memberHasPermission(member, "economy.ignore-nickname-cost")) return
         val cost = Source.CONFIG_MANAGER[event.guild].required("economy.nickname-cost") { 0L }
-        val economy = EconomyData[event.member]
+        val economy = Economy[event.member]
         if (cost > economy.balance) {
             member.modifyNickname(event.oldNickname).queue()
             member.user.openPrivateChannel().queue {
@@ -48,7 +48,7 @@ class EconomyListener : EventSubscriber<Economy> {
                     StandardErrorResponse(
                         "Invalid Balance!", "You cannot afford a nickname change! (Cost: $cost coins)"
                     ).asMessage(member)
-                )
+                ).queue()
             }
             return
         }

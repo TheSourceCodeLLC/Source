@@ -6,11 +6,12 @@ import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.durationOf
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.api.round
-import net.sourcebot.module.economy.data.EconomyData
+import net.sourcebot.module.economy.Economy
 import java.util.concurrent.ThreadLocalRandom
 import kotlin.math.ceil
 
@@ -22,11 +23,11 @@ class GambleCommand : EconomyRootCommand(
         Argument("wager", "The amount of coins you want to wager.")
     )
 
-    private val cooldown = GuildCooldown()
+    private val cooldown = GuildCooldown(durationOf("2m30s"))
     override fun execute(message: Message, args: Arguments): Response {
         val member = message.member!!
         return cooldown.test(member, {
-            val economy = EconomyData[member]
+            val economy = Economy[member]
             if (economy.balance < 1) return@test StandardErrorResponse(
                 "Gamble Failure!",
                 "You do not have enough money to wager!"
@@ -46,10 +47,10 @@ class GambleCommand : EconomyRootCommand(
             val response = if (won) {
                 StandardSuccessResponse(
                     "Gamble Win!",
-                    "You have won $amount coins!"
+                    "You won $amount coins!"
                 ).also {
                     if (booster != null) it.appendDescription(
-                        "\n\nYou have received an extra x coins due to your $multiplier coin booster!"
+                        "\n\nYou have received an extra ${amount - wager} coins due to your $multiplier coin booster!"
                     )
                 }
             } else StandardErrorResponse("Gamble Loss!", "You lost $wager coins!")

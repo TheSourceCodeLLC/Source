@@ -70,3 +70,5 @@ fun <K, V> weakCache(
         .build(object : CacheLoader<K, V>() {
             override fun load(key: K) = loader(key)
         })
+
+fun Member.allRoles() = ArrayList(roles).also { it.add(guild.publicRole) }.toList()

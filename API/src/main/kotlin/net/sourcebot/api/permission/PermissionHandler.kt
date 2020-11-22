@@ -1,8 +1,10 @@
 package net.sourcebot.api.permission
 
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.*
 import net.sourcebot.Source
+import net.sourcebot.api.allRoles
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.error.InvalidChannelResponse
@@ -60,6 +62,7 @@ class PermissionHandler(private val globalAdmins: Set<String>) {
         node: String,
         channel: MessageChannel? = null
     ): Boolean {
+        if (member.allRoles().any { it.hasPermission(Permission.ADMINISTRATOR) }) return true
         val subject = getData(member.guild).getUser(member)
         return hasPermission(subject, node, channel)
     }
@@ -69,6 +72,7 @@ class PermissionHandler(private val globalAdmins: Set<String>) {
         node: String,
         channel: MessageChannel? = null
     ): Boolean {
+        if (role.hasPermission(Permission.ADMINISTRATOR)) return true
         val subject = getData(role.guild).getRole(role)
         return hasPermission(subject, node, channel)
     }
