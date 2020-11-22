@@ -24,7 +24,15 @@ class Economy : SourceModule() {
     }
 
     companion object {
-        @JvmStatic operator fun get(member: Member) =
-            Profiles[member].required("economy", ::JsonConfiguration).let(::EconomyData)
+        @JvmStatic operator fun get(member: Member): EconomyData {
+            val profile = Profiles[member]
+            val config = profile.required("economy", ::JsonConfiguration)
+            val proxy = object : JsonConfiguration(config) {
+                override fun onChange() {
+                    profile["economy"] = this
+                }
+            }
+            return EconomyData(proxy)
+        }
     }
 }
