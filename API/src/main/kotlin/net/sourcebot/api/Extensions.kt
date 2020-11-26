@@ -72,3 +72,7 @@ fun <K, V> weakCache(
         })
 
 fun Member.allRoles() = ArrayList(roles).also { it.add(guild.publicRole) }.toList()
+
+fun formatPlural(amount: Long, unit: String): String {
+    return if (amount == 1L) "$amount $unit" else "$amount ${unit}s"
+}

@@ -5,6 +5,7 @@ import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.economy.command.BalanceCommand
+import net.sourcebot.module.economy.command.DailyCommand
 import net.sourcebot.module.economy.command.GambleCommand
 import net.sourcebot.module.economy.data.EconomyData
 import net.sourcebot.module.economy.listener.EconomyListener
@@ -18,7 +19,8 @@ class Economy : SourceModule() {
     override fun onEnable() {
         registerCommands(
             BalanceCommand(),
-            GambleCommand()
+            GambleCommand(),
+            DailyCommand()
         )
         subscribeEvents(EconomyListener())
     }

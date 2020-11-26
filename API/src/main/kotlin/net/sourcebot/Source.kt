@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory
 import uk.org.lidalia.sysoutslf4j.context.SysOutOverSLF4J
 import java.io.File
 import java.nio.file.Files
+import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -71,6 +72,15 @@ object Source {
         MongoSerial.register(SourcePermission.Serial())
         MongoSerial.register(SourceUser.Serial(PERMISSION_HANDLER))
         MongoSerial.register(SourceRole.Serial(PERMISSION_HANDLER))
+        JsonSerial.register(object : JsonSerial<Instant> {
+            override val serializer = JsonSerial.createSerializer<Instant> { obj, gen, _ ->
+                gen.writeNumber(obj.toEpochMilli())
+            }
+
+            override val deserializer = JsonSerial.createDeserializer { parser, _ ->
+                Instant.ofEpochMilli(parser.longValue)
+            }
+        })
     }
 
     private fun loadModules() {

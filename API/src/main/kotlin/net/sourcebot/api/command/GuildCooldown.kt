@@ -6,9 +6,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-class GuildCooldown(
-    private val duration: Duration
-) {
+class GuildCooldown(private val duration: Duration) {
     private val handler = HashMap<String, MutableMap<String, Instant>>()
 
     fun <T> test(

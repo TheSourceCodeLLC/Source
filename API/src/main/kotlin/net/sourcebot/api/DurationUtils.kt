@@ -2,6 +2,7 @@ package net.sourcebot.api
 
 import java.time.Duration
 import java.time.temporal.ChronoUnit
+import java.time.temporal.Temporal
 
 object DurationUtils {
     @JvmStatic
@@ -68,3 +69,7 @@ object DurationUtils {
 
 fun durationOf(format: String) = DurationUtils.parseDuration(format)
 fun Duration.formatted() = DurationUtils.formatDuration(this)
+
+fun differenceBetween(first: Temporal, second: Temporal): String {
+    return Duration.between(first, second).truncatedTo(ChronoUnit.SECONDS).formatted()
+}

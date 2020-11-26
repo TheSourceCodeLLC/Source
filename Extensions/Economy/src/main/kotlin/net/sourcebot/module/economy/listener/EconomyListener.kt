@@ -8,6 +8,7 @@ import net.sourcebot.api.asMessage
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
+import net.sourcebot.api.formatPlural
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.module.economy.Economy
 import net.sourcebot.module.profiles.event.ProfileRenderEvent
@@ -27,8 +28,8 @@ class EconomyListener : EventSubscriber<Economy> {
         val economy = Economy[member]
         embed.addField(
             "Economy:", """
-            **Balance:** ${economy.balance} coins
-            **Daily Streak:** ${economy.daily} days
+            **Balance:** ${formatPlural(economy.balance, "coin")}
+            ${economy.daily?.let { "**Daily Streak:** ${formatPlural(it.count, "day")}" } ?: ""}
         """.trimIndent(), false
         )
     }
