@@ -38,10 +38,10 @@ fun <A, B> List<A>.zipAll(other: List<B>) =
 fun EmbedResponse.wrapped(forWho: User) = WrappedEmbedResponse(this.asEmbed(forWho))
 fun EmbedResponse.wrapped(forWho: Member) = this.wrapped(forWho.user)
 
-fun <T> T?.ifPresentOrElse(
-    ifPresent: (T) -> Unit,
-    orElse: () -> T
-) = this?.also(ifPresent) ?: orElse()
+fun <T, U> T?.ifPresentOrElse(
+    ifPresent: (T) -> U,
+    orElse: () -> U
+) = this?.let(ifPresent) ?: orElse()
 
 fun Member.getHighestRole() = roles.getOrNull(0) ?: guild.publicRole
 

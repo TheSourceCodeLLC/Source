@@ -140,7 +140,7 @@ class CountingListener : EventSubscriber<Counting> {
         }
         toSend += "\nCurrent record: $record\n"
         val checkpoint: Long = checkpoints.remove(channel.id).ifPresentOrElse(
-            { toSend += "Resuming from checkpoint!\n$it" },
+            { toSend += "Resuming from checkpoint!\n$it"; it },
             { toSend += "Restarting...\n1"; 1 }
         )
         channel.sendMessage(toSend).complete()

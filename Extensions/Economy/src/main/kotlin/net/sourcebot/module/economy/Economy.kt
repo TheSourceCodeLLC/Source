@@ -5,6 +5,7 @@ import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.economy.command.BalanceCommand
+import net.sourcebot.module.economy.command.CoinLeaderboardCommand
 import net.sourcebot.module.economy.command.DailyCommand
 import net.sourcebot.module.economy.command.GambleCommand
 import net.sourcebot.module.economy.data.EconomyData
@@ -20,7 +21,8 @@ class Economy : SourceModule() {
         registerCommands(
             BalanceCommand(),
             GambleCommand(),
-            DailyCommand()
+            DailyCommand(),
+            CoinLeaderboardCommand()
         )
         subscribeEvents(EconomyListener())
     }
