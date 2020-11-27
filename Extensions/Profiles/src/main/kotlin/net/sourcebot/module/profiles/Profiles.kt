@@ -50,5 +50,7 @@ class Profiles : SourceModule() {
 
         @JvmStatic operator fun get(member: Member) = profiles[member.guild][member.id]
         @JvmStatic operator fun get(guild: Guild, id: String) = profiles[guild][id]
+
+        @JvmStatic val VALID_PROFILE = Document("data.expiry", Document("\$exists", false))
     }
 }

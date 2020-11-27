@@ -10,6 +10,7 @@ import net.sourcebot.api.formatPlural
 import net.sourcebot.api.formatted
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.module.profiles.Profiles
 import org.bson.Document
 import kotlin.math.ceil
 
@@ -24,12 +25,11 @@ class CoinLeaderboardCommand : EconomyRootCommand(
     override fun execute(message: Message, args: Arguments): Response {
         val guild = message.guild
         val profiles = Source.MONGODB.getCollection(guild.id, "profiles")
-        val valid = profiles.find(Document("data.expiry", Document("\$exists", false)))
-        val pages = ceil(valid.count() / 10.0).toInt()
+        val pages = ceil(profiles.countDocuments() / 10.0).toInt()
         val page = (args.next(
             Adapter.int(1, pages, "Page must be between 1 and $pages!")
         ) ?: 1) - 1
-        val leaderboard = valid.skip(10 * page).limit(10).sort(
+        val leaderboard = profiles.find(Profiles.VALID_PROFILE).skip(10 * page).limit(10).sort(
             Document("data.economy.balance", -1)
         ).map {
             it["_id"] as String to it.getEmbedded(listOf("data", "economy", "balance"), 0L)
