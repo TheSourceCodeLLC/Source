@@ -96,7 +96,7 @@ class Arguments(private val raw: Array<String>) : Iterator<String?> {
                         insideQuotes = true; continue
                     }
                 }
-                if (it == ' ' && !insideQuotes) {
+                if (it.isWhitespace() && !insideQuotes) {
                     if (current.isNotEmpty()) {
                         raw += current
                         current = String()
