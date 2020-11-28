@@ -54,7 +54,13 @@ class HelpCommand : RootCommand() {
                     Module names may be passed into this command for more detail.
                     Command names may be passed into this command for usage information.
                 """.trimIndent()
-            ).addField("Modules", sorted, false) as Response
+            ).also {
+                if (message.isFromGuild) {
+                    val prefix = commandHandler.getPrefix(message.guild)
+                    it.appendDescription("\nThis Guild's prefix is: `$prefix`")
+                }
+                it.addField("Modules", sorted, false) as Response
+            }
         }
         val asCommand = commandHandler.getCommand(topic)
         if (asCommand != null) {
