@@ -69,7 +69,9 @@ class MessageListener : EventSubscriber<Moderation> {
         }
         @Suppress("NestedLambdaShadowedImplicitParameter")
         channel?.let {
-            val mentionedUsers = Message.MentionType.USER.listMatches(content, guild::getMemberById)
+            val mentionedUsers = Message.MentionType.USER.listMatches(content, guild::getMemberById).filterNot {
+                it.user.isBot
+            }
             val mentionedRoles = Message.MentionType.ROLE.listMatches(content, guild::getRoleById)
             if (mentionedUsers.isEmpty() && mentionedRoles.isEmpty()) return
             it.sendMessage(
@@ -103,9 +105,13 @@ class MessageListener : EventSubscriber<Moderation> {
         }
         @Suppress("NAME_SHADOWING")
         oldContent?.let { oldContent: String ->
-            val oldUsers = Message.MentionType.USER.listMatches(oldContent, guild::getMemberById)
+            val oldUsers = Message.MentionType.USER.listMatches(oldContent, guild::getMemberById).filterNot {
+                it.user.isBot
+            }
             val oldRoles = Message.MentionType.ROLE.listMatches(oldContent, guild::getRoleById)
-            val newUsers = Message.MentionType.USER.listMatches(newContent, guild::getMemberById)
+            val newUsers = Message.MentionType.USER.listMatches(newContent, guild::getMemberById).filterNot {
+                it.user.isBot
+            }
             val newRoles = Message.MentionType.ROLE.listMatches(newContent, guild::getRoleById)
             if (newUsers.containsAll(oldUsers) && newRoles.containsAll(oldRoles)) return@let
             channel.sendMessage(
