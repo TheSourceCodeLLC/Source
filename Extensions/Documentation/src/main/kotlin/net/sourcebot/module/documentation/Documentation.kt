@@ -13,7 +13,8 @@ class Documentation : SourceModule() {
             BungeeCordCommand(),
             DJSCommand(),
             MDNCommand(),
-            KotlinCommand()
+            KotlinCommand(),
+            NPMCommand()
         )
     }
 
