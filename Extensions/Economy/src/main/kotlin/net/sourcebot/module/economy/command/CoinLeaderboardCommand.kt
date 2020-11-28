@@ -26,9 +26,7 @@ class CoinLeaderboardCommand : EconomyRootCommand(
         val guild = message.guild
         val profiles = Source.MONGODB.getCollection(guild.id, "profiles")
         val pages = ceil(
-            profiles.countDocuments(
-                Profiles.VALID_PROFILE
-            ) / 10.0
+            profiles.countDocuments(Profiles.VALID_PROFILE) / 10.0
         ).toInt()
         val page = (args.next(
             Adapter.int(1, pages, "Page must be between 1 and $pages!")

@@ -20,9 +20,9 @@ abstract class AbstractMessageHandler : ListenerAdapter() {
         val prefixes = getViablePrefixes(event)
         var matched = false
         for (prefix in prefixes) {
-            val (match) = Regex("^(${Regex.escape(prefix)}).*$").matchEntire(content)?.destructured ?: continue
+            if (!content.startsWith(prefix)) continue
             matched = true
-            content = content.substring(match.length)
+            content = content.substring(prefix.length)
             break
         }
         if (!matched) return
