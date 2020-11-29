@@ -1,14 +1,10 @@
 package net.sourcebot.impl.command
 
-import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.MessageChannel
+import net.dv8tion.jda.api.entities.*
 import net.sourcebot.Source
 import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.RootCommand
-import net.sourcebot.api.command.argument.Adapter
-import net.sourcebot.api.command.argument.Argument
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.command.argument.*
 import net.sourcebot.api.permission.Permissible
 import net.sourcebot.api.permission.SourceUser
 import net.sourcebot.api.response.Response
@@ -47,14 +43,14 @@ class PermissionsCommand : RootCommand() {
         val command = subcommands[operation] ?: throw InvalidSyntaxException(
             "Invalid Operation!\nValid operations: $valid"
         )
-        return command(type, user, permissible, message.channel, args).also { permissible.update(permissionData) }
+        return command(type, user, permissible, message.textChannel, args).also { permissible.update(permissionData) }
     }
 
     private fun performSubcommand(
         type: String,
         label: String,
         permissible: Permissible,
-        channel: MessageChannel,
+        channel: TextChannel,
         supplier: () -> Response
     ) = permissionHandler.checkPermission(permissible, "permission.$type.$label", channel, supplier)
 
@@ -62,7 +58,9 @@ class PermissionsCommand : RootCommand() {
         performSubcommand(type, "set", user, channel) {
             val node = args.next("You did not specify a node to set!")
             val flag = args.next(Adapter.boolean(), "You did not specify a flag for the node!")
-            val context = args.next()
+            val context = args.next(
+                Adapter.textChannel(channel.guild) or Adapter.category(channel.guild)
+            )?.id
             val description = if (context != null) {
                 target.setPermission(node, flag, context)
                 "Set permission for ${target.asMention()}: `$node` = `$flag` @ `$context`"
@@ -76,7 +74,9 @@ class PermissionsCommand : RootCommand() {
     private val unsetCommand: PermissionsSubcommand = { type, user, target, channel, args ->
         performSubcommand(type, "unset", user, channel) {
             val node = args.next("You did not specify a node to unset!")
-            val context = args.next()
+            val context = args.next(
+                Adapter.textChannel(channel.guild) or Adapter.category(channel.guild)
+            )?.id
             val description = if (context != null) {
                 target.unsetPermission(node, context)
                 "Unset `$node` for ${target.asMention()} @ `$context`"
@@ -103,7 +103,9 @@ class PermissionsCommand : RootCommand() {
     private val checkCommand: PermissionsSubcommand = { type, user, target, channel, args ->
         performSubcommand(type, "check", user, channel) {
             val node = args.next("You did not specify a node to check!")
-            val context = args.next()
+            val context = args.next(
+                Adapter.textChannel(channel.guild) or Adapter.category(channel.guild)
+            )?.id
             val description = if (context != null) {
                 val has = target.hasPermission(node, context)
                 "Permission check for ${target.asMention()}; `$node` @ `$context`: `$has`"
@@ -116,10 +118,12 @@ class PermissionsCommand : RootCommand() {
     }
     private val clearCommand: PermissionsSubcommand = { type, user, target, channel, args ->
         performSubcommand(type, "clear", user, channel) {
-            val context = args.next()
+            val context = args.next(
+                Adapter.textChannel(channel.guild) or Adapter.category(channel.guild)
+            )?.id
             val description = if (context != null) {
                 target.clearPermissions(context)
-                "Permissions cleared for ${target.asMention()} @ `$context`"
+                "Permissions cleared for ${target.asMention()} @ `context`"
             } else {
                 target.clearPermissions()
                 "Permissions cleared for ${target.asMention()}"
@@ -130,7 +134,9 @@ class PermissionsCommand : RootCommand() {
     private val testCommand: PermissionsSubcommand = { type, user, target, channel, args ->
         performSubcommand(type, "test", user, channel) {
             val node = args.next("You did not specify a node to test!")
-            val context = args.next()
+            val context = args.next(
+                Adapter.textChannel(channel.guild) or Adapter.category(channel.guild)
+            )?.id
             val description = if (context != null) {
                 val test = permissionHandler.hasPermission(target, node, context)
                 "Permission test for ${target.asMention()}; `$node` @ `$context`: `$test`"
@@ -158,4 +164,4 @@ class PermissionsCommand : RootCommand() {
     )
 }
 
-typealias PermissionsSubcommand = (String, SourceUser, Permissible, MessageChannel, Arguments) -> Response
+typealias PermissionsSubcommand = (String, SourceUser, Permissible, TextChannel, Arguments) -> Response

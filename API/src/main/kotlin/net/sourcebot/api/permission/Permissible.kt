@@ -23,4 +23,5 @@ interface Permissible {
     fun delete(data: PermissionData): DeleteResult
 
     fun asMention(): String
+    fun dropContext(context: String)
 }

@@ -12,8 +12,15 @@ import java.time.Duration
 @Suppress("UNCHECKED_CAST", "UNUSED")
 class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
     companion object {
-        @JvmStatic
-        fun <T> ofSingleArg(adapter: (String) -> T?): Adapter<T> = Adapter {
+        /**
+         * Creates an [Adapter] using a single [String] argument from a set of [Arguments]
+         * If [Arguments.next] returns null, this method returns null.
+         * If the [adapter] returns null, the active [Arguments] instance is backtracked and null is returned.
+         *
+         * @param adapter The function to turn a [String] into an instance of [T] or null
+         * @return The transformed argument as [T] or null if the argument could not be transformed.
+         */
+        @JvmStatic fun <T> ofSingleArg(adapter: (String) -> T?): Adapter<T> = Adapter {
             val arg = it.next() ?: return@Adapter null
             val result = arg.runCatching(adapter).getOrNull()
             return@Adapter if (result == null) {
@@ -21,8 +28,17 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             } else result
         }
 
+        /**
+         * Creates an [Adapter] that turns a [String] into a [Boolean]
+         */
         @JvmStatic fun boolean() = ofSingleArg(String::toBoolean)
 
+        /**
+         * Creates an [Adapter] that turns a [String] into a [Short]
+         * @param min The minimum value (inclusive) for this [Short] or null if not needed
+         * @param max The maximum value (inclusive) for this [Short] or null if not needed
+         * @param error The error to send if this [Short] is not between [min] and [max]
+         */
         @JvmStatic @JvmOverloads
         fun short(
             min: Short? = null,
@@ -35,6 +51,12 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             else -> ofSingleArg(String::toShort)
         }
 
+        /**
+         * Creates an [Adapter] that turns a [String] into a [Int]
+         * @param min The minimum value (inclusive) for this [Int] or null if not needed
+         * @param max The maximum value (inclusive) for this [Int] or null if not needed
+         * @param error The error to send if this [Int] is not between [min] and [max]
+         */
         @JvmStatic @JvmOverloads
         fun int(
             min: Int? = null,
@@ -47,6 +69,12 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             else -> ofSingleArg(String::toInt)
         }
 
+        /**
+         * Creates an [Adapter] that turns a [String] into a [Long]
+         * @param min The minimum value (inclusive) for this [Long] or null if not needed
+         * @param max The maximum value (inclusive) for this [Long] or null if not needed
+         * @param error The error to send if this [Long] is not between [min] and [max]
+         */
         @JvmStatic @JvmOverloads
         fun long(
             min: Long? = null,
@@ -59,6 +87,12 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             else -> ofSingleArg(String::toLong)
         }
 
+        /**
+         * Creates an [Adapter] that turns a [String] into a [Float]
+         * @param min The minimum value (inclusive) for this [Float] or null if not needed
+         * @param max The maximum value (inclusive) for this [Float] or null if not needed
+         * @param error The error to send if this [Float] is not between [min] and [max]
+         */
         @JvmStatic @JvmOverloads
         fun float(
             min: Float? = null,
@@ -71,6 +105,12 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             else -> ofSingleArg(String::toFloat)
         }
 
+        /**
+         * Creates an [Adapter] that turns a [String] into a [Double]
+         * @param min The minimum value (inclusive) for this [Double] or null if not needed
+         * @param max The maximum value (inclusive) for this [Double] or null if not needed
+         * @param error The error to send if this [Double] is not between [min] and [max]
+         */
         @JvmStatic @JvmOverloads
         fun double(
             min: Double? = null,
@@ -83,6 +123,12 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             else -> ofSingleArg(String::toDouble)
         }
 
+        /**
+         * Creates an [Adapter] that returns a Member for a given [Guild]
+         * If multiple Members are matched, [InvalidSyntaxException] is thrown
+         *
+         * @param guild The [Guild] to search the Member in
+         */
         @JvmStatic
         fun member(guild: Guild) = ofSingleArg {
             val target = it.replace("<@!?(\\d+)>".toRegex(), "$1")
@@ -96,6 +142,12 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             return@ofSingleArg byName[0]
         }
 
+        /**
+         * Creates an [Adapter] that returns a User for a given [JDA]
+         * If multiple Users are matched, [InvalidSyntaxException] is thrown
+         *
+         * @param jda The [JDA] instance to search the User in
+         */
         @JvmStatic fun user(jda: JDA) = ofSingleArg {
             val target = it.replace("<@!?(\\d+)>".toRegex(), "$1")
             val byId = runCatching { jda.retrieveUserById(target).complete() }.getOrNull()
@@ -107,6 +159,13 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
             if (byName.size != 1) throw InvalidSyntaxException("Argument '$target' matches multiple users!")
             return@ofSingleArg byName[0]
         }
+
+        /**
+         * Creates an [Adapter] that returns a Role for a given [Guild]
+         * If multiple Roles are matched, [InvalidSyntaxException] is thrown
+         *
+         * @param guild The [Guild] instance to search the Role in
+         */
         @JvmStatic
         fun role(guild: Guild) = ofSingleArg {
             val target = it.replace("<@&(\\d+)>".toRegex(), "$1").toLowerCase()
@@ -189,4 +248,8 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
         )
         else return@Adapter read
     }
+}
+
+infix fun <V, T : V, U : V> Adapter<T>.or(other: Adapter<U>) = Adapter {
+    this(it) ?: other(it)
 }

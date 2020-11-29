@@ -9,6 +9,7 @@ import net.sourcebot.api.module.ModuleDescriptor
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.module.exception.InvalidModuleException
 import net.sourcebot.impl.command.*
+import net.sourcebot.impl.listener.ChannelDeleteListener
 import net.sourcebot.impl.listener.ConnectionListener
 
 class BaseModule(
@@ -57,6 +58,9 @@ class BaseModule(
             *lifecycleCommands(Source.properties.required("lifecycle")),
             SudoCommand()
         )
-        subscribeEvents(ConnectionListener())
+        subscribeEvents(
+            ConnectionListener(),
+            ChannelDeleteListener()
+        )
     }
 }
