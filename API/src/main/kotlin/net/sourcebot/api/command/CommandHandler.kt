@@ -116,7 +116,13 @@ class CommandHandler(
     fun respond(command: Command, message: Message, response: Response): Response {
         message.channel.sendMessage(response.asMessage(message.author)).queue {
             command.postResponse(response, message.author, it)
-            if (!command.cleanupResponse) return@queue
+            val cleanup = if (message.isFromGuild) {
+                configManager[message.guild].required("source.command.cleanup.enabled") { true }
+            } else command.cleanupResponse
+            if (!cleanup) return@queue
+            val deleteAfter = if (message.isFromGuild) {
+                configManager[message.guild].required("source.command.cleanup.seconds") { deleteSeconds }
+            } else command.deleteSeconds ?: deleteSeconds
             Source.SCHEDULED_EXECUTOR_SERVICE.schedule({
                 //Prevent error logging for failed message deletions
                 try {
@@ -126,7 +132,7 @@ class CommandHandler(
                     it.delete().complete()
                 } catch (err: Throwable) {
                 }
-            }, command.deleteSeconds ?: deleteSeconds, TimeUnit.SECONDS)
+            }, deleteAfter, TimeUnit.SECONDS)
         }
         return response
     }
@@ -134,7 +140,7 @@ class CommandHandler(
     fun getPrefix() = defaultPrefix
     override fun getPrefix(
         guild: Guild
-    ) = configManager[guild].required("command-prefix") { defaultPrefix }
+    ) = configManager[guild].required("source.command.prefix") { defaultPrefix }
 
     private fun getSyntax(prefix: String, command: Command) = "$prefix${command.getUsage()}".trim()
     fun getSyntax(guild: Guild, command: Command) = getSyntax(getPrefix(guild), command)

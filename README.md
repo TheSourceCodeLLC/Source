@@ -36,10 +36,17 @@ Global Admins are the ONLY people who may use commands marked as global. <br>
 
 # Base Module Information
 Configuration Values:
-  - `source.connections.channel`: The channel ID join / leave messages will be sent to.
-  - `source.connections.joinMessages`: Messages to be sent when Members join
-  - `source.connections.leaveMessages`: Messages to be sent when Members leave
-  
+  Root Node: `source`
+  - `connections`: Configuration data for the join / leave listener
+      `channel`: The channel ID join / leave messages will be sent to.
+      `joinMessages`: Messages to be sent when Members join
+      `leaveMessages`: Messages to be sent when Members leave
+  - `command`: Configuration data for the command handler
+      `prefix`: The prefix to use for commands
+      `cleanup`: Configuration data for the cleanup system
+        `enabled`: Whether the cleanup system is active
+        `seconds`: The number of seconds after a command has been run to cleanup the response.
+        
 # Artifact Information
 Note: `x.y.z` must be replaced with the version of Source you wish to use!
 

@@ -20,6 +20,13 @@ class BaseModule(
             node("joinMessages", "Messages to be sent when members join.")
             node("leaveMessages", "Messages to be sent when members leave.")
         }
+        section("command") {
+            node("prefix", "The prefix to use for commands.")
+            section("cleanup") {
+                node("enabled", "Whether or not to cleanup executed commands.")
+                node("seconds", "The amount of seconds to clean up a command after it has been run.")
+            }
+        }
     }
 
     init {
