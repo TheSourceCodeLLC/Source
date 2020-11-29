@@ -116,9 +116,9 @@ class CommandHandler(
     fun respond(command: Command, message: Message, response: Response): Response {
         message.channel.sendMessage(response.asMessage(message.author)).queue {
             command.postResponse(response, message.author, it)
-            val cleanup = if (message.isFromGuild) {
+            val cleanup = (if (message.isFromGuild) {
                 configManager[message.guild].required("source.command.cleanup.enabled") { true }
-            } else command.cleanupResponse
+            } else command.cleanupResponse) && command.cleanupResponse
             if (!cleanup) return@queue
             val deleteAfter = if (message.isFromGuild) {
                 configManager[message.guild].required("source.command.cleanup.seconds") { deleteSeconds }
