@@ -9,6 +9,7 @@ import net.sourcebot.api.module.ModuleDescriptor
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.module.exception.InvalidModuleException
 import net.sourcebot.impl.command.*
+import net.sourcebot.impl.listener.ChannelDeleteListener
 import net.sourcebot.impl.listener.ConnectionListener
 
 class BaseModule(
@@ -19,6 +20,13 @@ class BaseModule(
             node("channel", "The channel ID join / leave messages will be sent to.")
             node("joinMessages", "Messages to be sent when members join.")
             node("leaveMessages", "Messages to be sent when members leave.")
+        }
+        section("command") {
+            node("prefix", "The prefix to use for commands.")
+            section("cleanup") {
+                node("enabled", "Whether or not to cleanup executed commands.")
+                node("seconds", "The amount of seconds to clean up a command after it has been run.")
+            }
         }
     }
 
@@ -50,6 +58,9 @@ class BaseModule(
             *lifecycleCommands(Source.properties.required("lifecycle")),
             SudoCommand()
         )
-        subscribeEvents(ConnectionListener())
+        subscribeEvents(
+            ConnectionListener(),
+            ChannelDeleteListener()
+        )
     }
 }

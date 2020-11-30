@@ -49,4 +49,8 @@ abstract class SimplePermissible(stored: Set<SourcePermission>) : Permissible {
     override fun getContexts(node: String) = permissions.filter {
         it.node == node && it.context != null && it.flag
     }.mapNotNull(SourcePermission::context).toSet()
+
+    final override fun dropContext(context: String) {
+        permissions.removeIf { it.context == context }
+    }
 }
