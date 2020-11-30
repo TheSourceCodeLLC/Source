@@ -88,20 +88,24 @@ class MessageListener : EventSubscriber<Moderation> {
 
     private fun onMessageEdit(event: MessageEditEvent) {
         val (guild, author, channel, newContent, oldContent) = event
-        messageLogChannel(guild)?.let { log ->
-            val embed = StandardWarningResponse(
-                "Message Edited", """
-                **Author:** ${author.formatted()} (${author.id})
-                **Channel:** ${channel.name} (${channel.id})
-                **Edited At:** ${Source.DATE_TIME_FORMAT.format(Instant.now())}
-                **Jump Link:** [${MarkdownUtil.maskedLink("Click", event.message.jumpUrl)}]
-            """.trimIndent()
-            )
-            if (oldContent != null)
-                embed.addField("Old Content:", oldContent.truncate(1024), false)
-            embed.addField("New Content:", newContent.truncate(1024), false)
-            saveMessage(event.message)
-            log.sendMessage(embed.asMessage(event.author)).queue()
+        val parent = channel.parent
+        val blacklist = messageLogBlacklist(event.guild)
+        if (channel !in blacklist && !(parent != null && parent in blacklist)) {
+            messageLogChannel(guild)?.let { log ->
+                val embed = StandardWarningResponse(
+                    "Message Edited", """
+                                    **Author:** ${author.formatted()} (${author.id})
+                                    **Channel:** ${channel.name} (${channel.id})
+                                    **Edited At:** ${Source.DATE_TIME_FORMAT.format(Instant.now())}
+                                    **Jump Link:** [${MarkdownUtil.maskedLink("Click", event.message.jumpUrl)}]
+                                """.trimIndent()
+                )
+                if (oldContent != null)
+                    embed.addField("Old Content:", oldContent.truncate(1024), false)
+                embed.addField("New Content:", newContent.truncate(1024), false)
+                saveMessage(event.message)
+                log.sendMessage(embed.asMessage(event.author)).queue()
+            }
         }
         @Suppress("NAME_SHADOWING")
         oldContent?.let { oldContent: String ->
@@ -117,8 +121,8 @@ class MessageListener : EventSubscriber<Moderation> {
             channel.sendMessage(
                 StandardErrorResponse(
                     "Ghost Ping!", """
-                        **User:** ${author.let { "${it.formatted()} (${it.id})" }}
-                    """.trimIndent()
+                            **User:** ${author.let { "${it.formatted()} (${it.id})" }}
+                        """.trimIndent()
                 ).also {
                     it.addField("Message:", oldContent.truncate(1024), false)
                 }.asMessage(author)
