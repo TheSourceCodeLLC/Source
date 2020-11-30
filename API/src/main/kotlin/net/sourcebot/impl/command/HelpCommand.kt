@@ -30,7 +30,6 @@ class HelpCommand : RootCommand() {
         )
     )
     override val deleteSeconds = 60L
-
     private val permissionHandler = Source.PERMISSION_HANDLER
     private val commandHandler = Source.COMMAND_HANDLER
     private val moduleHandler = Source.MODULE_HANDLER

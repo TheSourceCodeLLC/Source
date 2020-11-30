@@ -11,6 +11,7 @@ import net.sourcebot.api.module.exception.InvalidModuleException
 import net.sourcebot.impl.command.*
 import net.sourcebot.impl.listener.ChannelDeleteListener
 import net.sourcebot.impl.listener.ConnectionListener
+import net.sourcebot.impl.listener.MentionListener
 
 class BaseModule(
     private val extClassLoader: ClassLoader
@@ -61,7 +62,8 @@ class BaseModule(
         )
         subscribeEvents(
             ConnectionListener(),
-            ChannelDeleteListener()
+            ChannelDeleteListener(),
+            MentionListener()
         )
     }
 }

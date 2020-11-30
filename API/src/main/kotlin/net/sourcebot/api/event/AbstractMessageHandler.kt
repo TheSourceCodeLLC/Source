@@ -1,6 +1,5 @@
 package net.sourcebot.api.event
 
-import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
@@ -17,15 +16,9 @@ abstract class AbstractMessageHandler : ListenerAdapter() {
     override fun onMessageReceived(event: MessageReceivedEvent) {
         val message = event.message
         var content = message.contentRaw
-        val prefixes = getViablePrefixes(event)
-        var matched = false
-        for (prefix in prefixes) {
-            if (!content.startsWith(prefix)) continue
-            matched = true
-            content = content.substring(prefix.length)
-            break
-        }
-        if (!matched) return
+        val prefix = getPrefix(event)
+        if (!content.startsWith(prefix)) return
+        content = content.substring(prefix.length)
         if (content.isBlank()) return
         val args = Arguments.parse(content)
         val label = args.next()?.toLowerCase() ?: return
@@ -33,6 +26,5 @@ abstract class AbstractMessageHandler : ListenerAdapter() {
     }
 
     protected abstract fun cascade(message: Message, label: String, arguments: Arguments)
-    protected abstract fun getViablePrefixes(event: MessageReceivedEvent): List<String>
-    abstract fun getPrefix(guild: Guild): String
+    protected abstract fun getPrefix(event: MessageReceivedEvent): String
 }

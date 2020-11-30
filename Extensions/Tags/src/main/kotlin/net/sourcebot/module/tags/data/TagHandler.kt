@@ -48,11 +48,11 @@ class TagHandler(private val defaultPrefix: String) : AbstractMessageHandler(), 
         tagCache.tags.updateOne(MongoSerial.getQueryDocument(tag), Document("\$set", MongoSerial.toDocument(tag)))
     }
 
-    override fun getViablePrefixes(
-        event: MessageReceivedEvent
-    ) = listOf(if (event.isFromGuild) getPrefix(event.guild) else defaultPrefix)
-
     override fun getPrefix(
+        event: MessageReceivedEvent
+    ) = if (event.isFromGuild) getPrefix(event.guild) else defaultPrefix
+
+    private fun getPrefix(
         guild: Guild
     ) = configManager[guild].required("tags.prefix") { defaultPrefix }
 

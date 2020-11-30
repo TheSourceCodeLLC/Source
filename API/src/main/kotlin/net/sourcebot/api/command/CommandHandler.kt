@@ -84,12 +84,8 @@ class CommandHandler(
         }
     }
 
-    override fun getViablePrefixes(
-        event: MessageReceivedEvent
-    ) = mutableListOf(
-        "<@!${event.jda.selfUser.id}> ",
-        "<@${event.jda.selfUser.id}> "
-    ) + if (event.isFromGuild) getPrefix(event.guild) else defaultPrefix
+    override fun getPrefix(event: MessageReceivedEvent) =
+        if (event.isFromGuild) getPrefix(event.guild) else defaultPrefix
 
     fun checkPermissions(
         message: Message,
@@ -147,9 +143,8 @@ class CommandHandler(
     }
 
     fun getPrefix() = defaultPrefix
-    override fun getPrefix(
-        guild: Guild
-    ) = configManager[guild].required("source.command.prefix") { defaultPrefix }
+    fun getPrefix(guild: Guild) =
+        configManager[guild].required("source.command.prefix") { defaultPrefix }
 
     private fun getSyntax(prefix: String, command: Command) = "$prefix${command.getUsage()}".trim()
     fun getSyntax(guild: Guild, command: Command) = getSyntax(getPrefix(guild), command)
