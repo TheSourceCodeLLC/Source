@@ -18,4 +18,6 @@ class CommandMap<C : Command> {
         labels.entries.removeIf { predicate(it.value) }
         aliases.entries.removeIf { predicate(it.value) }
     }
+
+    fun find(predicate: (C) -> Boolean): C? = labels.values.find(predicate)
 }

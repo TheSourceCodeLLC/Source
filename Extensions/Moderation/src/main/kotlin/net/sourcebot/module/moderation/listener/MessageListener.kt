@@ -94,11 +94,11 @@ class MessageListener : EventSubscriber<Moderation> {
             messageLogChannel(guild)?.let { log ->
                 val embed = StandardWarningResponse(
                     "Message Edited", """
-                                    **Author:** ${author.formatted()} (${author.id})
-                                    **Channel:** ${channel.name} (${channel.id})
-                                    **Edited At:** ${Source.DATE_TIME_FORMAT.format(Instant.now())}
-                                    **Jump Link:** [${MarkdownUtil.maskedLink("Click", event.message.jumpUrl)}]
-                                """.trimIndent()
+                        **Author:** ${author.formatted()} (${author.id})
+                        **Channel:** ${channel.name} (${channel.id})
+                        **Edited At:** ${Source.DATE_TIME_FORMAT.format(Instant.now())}
+                        **Jump Link:** [${MarkdownUtil.maskedLink("Click", event.message.jumpUrl)}]
+                    """.trimIndent()
                 )
                 if (oldContent != null)
                     embed.addField("Old Content:", oldContent.truncate(1024), false)

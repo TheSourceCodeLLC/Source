@@ -37,9 +37,17 @@ class CommandHandler(
         message: Message, label: String, arguments: Arguments
     ): Pair<Command?, Response> {
         if (message.author.isBot) return null to EmptyResponse()
-        val rootCommand = commandMap[label] ?: return null to EmptyResponse()
+        var identifier = label
+        var args = arguments
+        val rootCommand = commandMap[identifier] ?: commandMap.find {
+            val transformer = it.transformer ?: return@find false
+            if (!transformer.matches(identifier)) return@find false
+            args = transformer.transformArguments(identifier, args)
+            identifier = args.next()!!.toLowerCase()
+            true
+        } ?: return null to EmptyResponse()
         if (!rootCommand.module.enabled) return rootCommand to EmptyResponse()
-        val permissionCheck = checkPermissions(message, rootCommand, arguments)
+        val permissionCheck = checkPermissions(message, rootCommand, args)
         val command = permissionCheck.command
         return command to when (permissionCheck.type) {
             GLOBAL_ONLY -> GlobalAdminOnlyResponse()
@@ -51,7 +59,7 @@ class CommandHandler(
             )
             VALID -> {
                 try {
-                    command.execute(message, arguments)
+                    command.execute(message, args)
                 } catch (exception: Exception) {
                     val error = if (exception is InvalidSyntaxException) {
                         StandardErrorResponse(
@@ -92,8 +100,9 @@ class CommandHandler(
         val inGuild = message.channelType == ChannelType.TEXT
         var command: Command = root
         do {
+            val children = command.children
             val nextId = arguments.next() ?: break
-            val nextCommand = command[nextId]
+            val nextCommand = children[nextId]
             if (nextCommand == null) {
                 arguments.backtrack()
                 break

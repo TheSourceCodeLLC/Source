@@ -19,6 +19,10 @@ allprojects {
     }
 
     tasks {
+        compileJava {
+            sourceCompatibility = "11"
+            targetCompatibility = "11"
+        }
         compileKotlin {
             kotlinOptions.jvmTarget = "11"
             kotlinOptions.freeCompilerArgs = List(1) {

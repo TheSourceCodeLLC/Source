@@ -10,7 +10,7 @@ import net.sourcebot.api.response.Response
  * Represents a command to be executed via tha [CommandHandler]
  */
 abstract class Command {
-    private val children = CommandMap<Command>()
+    val children = CommandMap<Command>()
 
     abstract val name: String
     abstract val description: String
@@ -40,8 +40,6 @@ abstract class Command {
             if (subcommands.isEmpty()) "" else subcommands.joinToString("|", "<", ">")
         } else arguments).trimEnd()
     }
-
-    operator fun get(identifier: String) = children[identifier]
 
     fun getChildren() = children.getCommandNames()
 

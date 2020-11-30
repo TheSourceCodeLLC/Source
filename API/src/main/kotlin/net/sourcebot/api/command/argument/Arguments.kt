@@ -62,7 +62,21 @@ class Arguments(private val raw: Array<String>) : Iterator<String?> {
         index -= amount
     }
 
+    /**
+     * Returns a copy of this [Arguments] raw [String] arguments
+     */
     fun rawCopy(): Array<String> = raw.copyOf()
+
+    /**
+     * Returns a slice of the raw arguments from the current index
+     */
+    fun remaining(): Array<String> = raw.slice(index until raw.size).toTypedArray()
+
+    fun current() = raw[index]
+
+    operator fun plus(other: Arguments) = Arguments(
+        remaining() + other.remaining()
+    )
 
     companion object {
         /**

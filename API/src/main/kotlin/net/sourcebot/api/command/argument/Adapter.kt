@@ -22,7 +22,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
          */
         @JvmStatic fun <T> ofSingleArg(adapter: (String) -> T?): Adapter<T> = Adapter {
             val arg = it.next() ?: return@Adapter null
-            val result = arg.runCatching(adapter).getOrNull()
+            val result = adapter(arg)
             return@Adapter if (result == null) {
                 it.backtrack(); null
             } else result
@@ -34,94 +34,82 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
         @JvmStatic fun boolean() = ofSingleArg(String::toBoolean)
 
         /**
+         * Creates an [Adapter] that turns a [String] into a [Byte]
+         * @param min The minimum value (inclusive) for this [Byte]
+         * @param max The maximum value (inclusive) for this [Byte]
+         * @param error The error to send if this [Byte] is not between [min] and [max]
+         */
+        @JvmStatic @JvmOverloads
+        fun byte(
+            min: Byte = Byte.MIN_VALUE,
+            max: Byte = Byte.MAX_VALUE,
+            error: String? = null
+        ): Adapter<Byte> = ofSingleArg(String::toByte).between(min, max, error) { it }
+
+        /**
          * Creates an [Adapter] that turns a [String] into a [Short]
-         * @param min The minimum value (inclusive) for this [Short] or null if not needed
-         * @param max The maximum value (inclusive) for this [Short] or null if not needed
+         * @param min The minimum value (inclusive) for this [Short]
+         * @param max The maximum value (inclusive) for this [Short]
          * @param error The error to send if this [Short] is not between [min] and [max]
          */
         @JvmStatic @JvmOverloads
         fun short(
-            min: Short? = null,
-            max: Short? = null,
+            min: Short = Short.MIN_VALUE,
+            max: Short = Short.MAX_VALUE,
             error: String? = null
-        ): Adapter<Short> = when {
-            min == null && max != null -> short().max<Short>(max, error)
-            min != null && max == null -> short().min<Short>(min, error)
-            min != null && max != null -> short().between<Short>(min, max, error)
-            else -> ofSingleArg(String::toShort)
-        }
+        ): Adapter<Short> = ofSingleArg(String::toShort).between(min, max, error) { it }
 
         /**
          * Creates an [Adapter] that turns a [String] into a [Int]
-         * @param min The minimum value (inclusive) for this [Int] or null if not needed
-         * @param max The maximum value (inclusive) for this [Int] or null if not needed
+         * @param min The minimum value (inclusive) for this [Int]
+         * @param max The maximum value (inclusive) for this [Int]
          * @param error The error to send if this [Int] is not between [min] and [max]
          */
         @JvmStatic @JvmOverloads
         fun int(
-            min: Int? = null,
-            max: Int? = null,
+            min: Int = Int.MIN_VALUE,
+            max: Int = Int.MAX_VALUE,
             error: String? = null
-        ): Adapter<Int> = when {
-            min == null && max != null -> int().max<Int>(max, error)
-            min != null && max == null -> int().min<Int>(min, error)
-            min != null && max != null -> int().between<Int>(min, max, error)
-            else -> ofSingleArg(String::toInt)
-        }
+        ): Adapter<Int> = ofSingleArg(String::toInt).between(min, max, error) { it }
 
         /**
          * Creates an [Adapter] that turns a [String] into a [Long]
-         * @param min The minimum value (inclusive) for this [Long] or null if not needed
-         * @param max The maximum value (inclusive) for this [Long] or null if not needed
+         * @param min The minimum value (inclusive) for this [Long]
+         * @param max The maximum value (inclusive) for this [Long]
          * @param error The error to send if this [Long] is not between [min] and [max]
          */
         @JvmStatic @JvmOverloads
         fun long(
-            min: Long? = null,
-            max: Long? = null,
+            min: Long = Long.MIN_VALUE,
+            max: Long = Long.MAX_VALUE,
             error: String? = null
-        ): Adapter<Long> = when {
-            min == null && max != null -> long().max<Long>(max, error)
-            min != null && max == null -> long().min<Long>(min, error)
-            min != null && max != null -> long().between<Long>(min, max, error)
-            else -> ofSingleArg(String::toLong)
-        }
+        ): Adapter<Long> = ofSingleArg(String::toLong).between(min, max, error) { it }
 
         /**
          * Creates an [Adapter] that turns a [String] into a [Float]
-         * @param min The minimum value (inclusive) for this [Float] or null if not needed
-         * @param max The maximum value (inclusive) for this [Float] or null if not needed
+         * @param min The minimum value (inclusive) for this [Float]
+         * @param max The maximum value (inclusive) for this [Float]
          * @param error The error to send if this [Float] is not between [min] and [max]
          */
         @JvmStatic @JvmOverloads
         fun float(
-            min: Float? = null,
-            max: Float? = null,
+            min: Float = Float.MIN_VALUE,
+            max: Float = Float.MAX_VALUE,
             error: String? = null
-        ): Adapter<Float> = when {
-            min == null && max != null -> float().max<Float>(max, error)
-            min != null && max == null -> float().min<Float>(min, error)
-            min != null && max != null -> float().between<Float>(min, max, error)
-            else -> ofSingleArg(String::toFloat)
-        }
+        ): Adapter<Float> = ofSingleArg(String::toFloat).between(min, max, error) { it }
 
         /**
          * Creates an [Adapter] that turns a [String] into a [Double]
-         * @param min The minimum value (inclusive) for this [Double] or null if not needed
-         * @param max The maximum value (inclusive) for this [Double] or null if not needed
+         * @param min The minimum value (inclusive) for this [Double]
+         * @param max The maximum value (inclusive) for this [Double]
          * @param error The error to send if this [Double] is not between [min] and [max]
          */
         @JvmStatic @JvmOverloads
         fun double(
-            min: Double? = null,
-            max: Double? = null,
+            min: Double = Double.MIN_VALUE,
+            max: Double = Double.MAX_VALUE,
             error: String? = null
-        ): Adapter<Double> = when {
-            min == null && max != null -> double().max<Double>(max, error)
-            min != null && max == null -> double().min<Double>(min, error)
-            min != null && max != null -> double().between<Double>(min, max, error)
-            else -> ofSingleArg(String::toDouble)
-        }
+        ): Adapter<Double> = ofSingleArg(String::toDouble).between(min, max, error) { it }
 
         /**
          * Creates an [Adapter] that returns a Member for a given [Guild]
@@ -217,9 +205,12 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
     }
 
     private fun <N> between(
-        min: T, max: T, error: String? = null, mapper: (T) -> N = { it as N }
-    ): Adapter<T> where N : Comparable<N>, N : Number = Adapter {
-        val read = this(it) ?: return@Adapter null
+        min: T, max: T, error: String? = null, mapper: (T) -> N
+    ): Adapter<T> where N : Comparable<N>, N : Number = Adapter { args ->
+        val read = args.runCatching(this).getOrElse {
+            val errored = args.current()
+            throw InvalidSyntaxException("Expected `$min` <= value <= `$max`, actual: `$errored`!")
+        } ?: return@Adapter null
         val check = mapper(read)
         if (check < mapper(min) || check > mapper(max)) throw InvalidSyntaxException(
             error ?: "Expected `$min` <= value <= `$max`, actual: `$check`!"
