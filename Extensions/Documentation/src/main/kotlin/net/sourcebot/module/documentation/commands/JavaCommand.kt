@@ -34,7 +34,9 @@ class JavaCommand : JavadocCommand(
     }
 
     override fun execute(message: Message, args: Arguments): Response {
-        val version = args.next(Adapter.int()) ?: defaultVersion
+        val version = args.next(
+            Adapter.int(7, 15, "Java Version should be between 7 and 15!")
+        ) ?: defaultVersion
         val jenkinsHandler = javadocCache.computeIfAbsent(version, jenkinsCompute)
         val query = args.next()
         return if (query != null) {

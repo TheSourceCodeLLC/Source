@@ -26,7 +26,7 @@ class Arguments(private val raw: Array<String>) : Iterator<String?> {
      */
     fun <T> next(adapter: (Arguments) -> T?) =
         try {
-            adapter(this)
+            adapter(this).let { if (it == null) { backtrack(); null } else it }
         } catch (ex: InvalidSyntaxException) {
             throw InvalidSyntaxException(ex.message!!)
         } catch (ex: Throwable) {
@@ -72,7 +72,7 @@ class Arguments(private val raw: Array<String>) : Iterator<String?> {
      */
     fun remaining(): Array<String> = raw.slice(index until raw.size).toTypedArray()
 
-    fun current() = raw[index]
+    fun current() = raw[index - 1]
 
     operator fun plus(other: Arguments) = Arguments(
         remaining() + other.remaining()

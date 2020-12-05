@@ -20,13 +20,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
          * @param adapter The function to turn a [String] into an instance of [T] or null
          * @return The transformed argument as [T] or null if the argument could not be transformed.
          */
-        @JvmStatic fun <T> ofSingleArg(adapter: (String) -> T?): Adapter<T> = Adapter {
-            val arg = it.next() ?: return@Adapter null
-            val result = adapter(arg)
-            return@Adapter if (result == null) {
-                it.backtrack(); null
-            } else result
-        }
+        @JvmStatic fun <T> ofSingleArg(adapter: (String) -> T?): Adapter<T> = Adapter { it.next()?.let(adapter) }
 
         /**
          * Creates an [Adapter] that turns a [String] into a [Boolean]
@@ -207,10 +201,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
     private fun <N> between(
         min: T, max: T, error: String? = null, mapper: (T) -> N
     ): Adapter<T> where N : Comparable<N>, N : Number = Adapter { args ->
-        val read = args.runCatching(this).getOrElse {
-            val errored = args.current()
-            throw InvalidSyntaxException("Expected `$min` <= value <= `$max`, actual: `$errored`!")
-        } ?: return@Adapter null
+        val read = args.runCatching(this).getOrNull() ?: return@Adapter null
         val check = mapper(read)
         if (check < mapper(min) || check > mapper(max)) throw InvalidSyntaxException(
             error ?: "Expected `$min` <= value <= `$max`, actual: `$check`!"
@@ -221,7 +212,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
     fun <N> min(
         min: T, error: String? = null, mapper: (T) -> N = { it as N }
     ): Adapter<T> where N : Comparable<N>, N : Number = Adapter {
-        val read = this(it) ?: return@Adapter null
+        val read = it.runCatching(this).getOrNull() ?: return@Adapter null
         val check = mapper(read)
         if (check < mapper(min)) throw InvalidSyntaxException(
             error ?: "Expected value >= `$min`, actual: `$check`!"
@@ -232,7 +223,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
     fun <N> max(
         max: T, error: String? = null, mapper: (T) -> N = { it as N }
     ): Adapter<T> where N : Comparable<N>, N : Number = Adapter {
-        val read = this(it) ?: return@Adapter null
+        val read = it.runCatching(this).getOrNull() ?: return@Adapter null
         val check = mapper(read)
         if (check > mapper(max)) throw InvalidSyntaxException(
             error ?: "Expected value <= `$max`, actual: `$read`!"
