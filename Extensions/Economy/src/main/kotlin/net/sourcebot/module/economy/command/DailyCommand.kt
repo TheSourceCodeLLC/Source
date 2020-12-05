@@ -28,11 +28,9 @@ class DailyCommand : EconomyRootCommand(
             if (now.isAfter(expiry)) {
                 updateDaily(economy, 1)
                 return StandardErrorResponse(
-                    description = "You have lost your daily streak of $count!"
+                    description = "You claimed your daily reward of ${formatPlural(baseWin, "coin")}, but lost your daily streak of $count!"
                 ).also {
-                    it.appendDescription(
-                        "\nYou have claimed your daily reward of ${formatPlural(baseWin, "coin")}!"
-                    )
+                    economy.balance += baseWin
                 }
             }
             val runBy = expiry.minus(1, ChronoUnit.DAYS)
