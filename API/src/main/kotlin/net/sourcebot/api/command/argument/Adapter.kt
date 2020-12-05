@@ -20,12 +20,14 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
          * @param adapter The function to turn a [String] into an instance of [T] or null
          * @return The transformed argument as [T] or null if the argument could not be transformed.
          */
-        @JvmStatic fun <T> ofSingleArg(adapter: (String) -> T?): Adapter<T> = Adapter { it.next()?.let(adapter) }
+        @JvmStatic
+        fun <T> ofSingleArg(adapter: (String) -> T?): Adapter<T> = Adapter { it.next()?.let(adapter) }
 
         /**
          * Creates an [Adapter] that turns a [String] into a [Boolean]
          */
-        @JvmStatic fun boolean() = ofSingleArg(String::toBoolean)
+        @JvmStatic
+        fun boolean() = ofSingleArg(String::toBoolean)
 
         /**
          * Creates an [Adapter] that turns a [String] into a [Byte]
@@ -33,7 +35,8 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
          * @param max The maximum value (inclusive) for this [Byte]
          * @param error The error to send if this [Byte] is not between [min] and [max]
          */
-        @JvmStatic @JvmOverloads
+        @JvmStatic
+        @JvmOverloads
         fun byte(
             min: Byte = Byte.MIN_VALUE,
             max: Byte = Byte.MAX_VALUE,
@@ -46,7 +49,8 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
          * @param max The maximum value (inclusive) for this [Short]
          * @param error The error to send if this [Short] is not between [min] and [max]
          */
-        @JvmStatic @JvmOverloads
+        @JvmStatic
+        @JvmOverloads
         fun short(
             min: Short = Short.MIN_VALUE,
             max: Short = Short.MAX_VALUE,
@@ -59,7 +63,8 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
          * @param max The maximum value (inclusive) for this [Int]
          * @param error The error to send if this [Int] is not between [min] and [max]
          */
-        @JvmStatic @JvmOverloads
+        @JvmStatic
+        @JvmOverloads
         fun int(
             min: Int = Int.MIN_VALUE,
             max: Int = Int.MAX_VALUE,
@@ -72,7 +77,8 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
          * @param max The maximum value (inclusive) for this [Long]
          * @param error The error to send if this [Long] is not between [min] and [max]
          */
-        @JvmStatic @JvmOverloads
+        @JvmStatic
+        @JvmOverloads
         fun long(
             min: Long = Long.MIN_VALUE,
             max: Long = Long.MAX_VALUE,
@@ -85,7 +91,8 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
          * @param max The maximum value (inclusive) for this [Float]
          * @param error The error to send if this [Float] is not between [min] and [max]
          */
-        @JvmStatic @JvmOverloads
+        @JvmStatic
+        @JvmOverloads
         fun float(
             min: Float = Float.MIN_VALUE,
             max: Float = Float.MAX_VALUE,
@@ -98,7 +105,8 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
          * @param max The maximum value (inclusive) for this [Double]
          * @param error The error to send if this [Double] is not between [min] and [max]
          */
-        @JvmStatic @JvmOverloads
+        @JvmStatic
+        @JvmOverloads
         fun double(
             min: Double = Double.MIN_VALUE,
             max: Double = Double.MAX_VALUE,
@@ -114,14 +122,17 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
         @JvmStatic
         fun member(guild: Guild) = ofSingleArg {
             val target = it.replace("<@!?(\\d+)>".toRegex(), "$1")
-            val byId = runCatching { guild.retrieveMemberById(target).complete() }.getOrNull()
-            if (byId != null) return@ofSingleArg byId
-            val byTag = target.runCatching(guild::getMemberByTag).getOrNull()
-            if (byTag != null) return@ofSingleArg byTag
-            val byName = guild.getMembersByEffectiveName(target, true)
-            if (byName.isEmpty()) return@ofSingleArg null
-            if (byName.size != 1) throw InvalidSyntaxException("Argument '$target' matches multiple members!")
-            return@ofSingleArg byName[0]
+            runCatching { guild.retrieveMemberById(target).complete() }.getOrElse {
+                target.runCatching(guild::getMemberByTag).getOrElse {
+                    guild.getMembersByEffectiveName(target, true).let {
+                        when {
+                            it.isEmpty() -> null
+                            it.size == 1 -> it[0]
+                            else -> throw InvalidSyntaxException("Argument '$target' matches multiple members!")
+                        }
+                    }
+                }
+            }
         }
 
         /**
@@ -130,16 +141,20 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
          *
          * @param jda The [JDA] instance to search the User in
          */
-        @JvmStatic fun user(jda: JDA) = ofSingleArg {
+        @JvmStatic
+        fun user(jda: JDA) = ofSingleArg {
             val target = it.replace("<@!?(\\d+)>".toRegex(), "$1")
-            val byId = runCatching { jda.retrieveUserById(target).complete() }.getOrNull()
-            if (byId != null) return@ofSingleArg byId
-            val byTag = target.runCatching(jda::getUserByTag).getOrNull()
-            if (byTag != null) return@ofSingleArg byTag
-            val byName = jda.getUsersByName(target, true)
-            if (byName.isEmpty()) return@ofSingleArg null
-            if (byName.size != 1) throw InvalidSyntaxException("Argument '$target' matches multiple users!")
-            return@ofSingleArg byName[0]
+            runCatching { jda.retrieveUserById(target).complete() }.getOrElse {
+                target.runCatching(jda::getUserByTag).getOrElse {
+                    jda.getUsersByName(target, true).let {
+                        when {
+                            it.isEmpty() -> null
+                            it.size == 1 -> it[0]
+                            else -> throw InvalidSyntaxException("Argument '$target' matches multiple users!")
+                        }
+                    }
+                }
+            }
         }
 
         /**
@@ -152,36 +167,48 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
         fun role(guild: Guild) = ofSingleArg {
             val target = it.replace("<@&(\\d+)>".toRegex(), "$1").toLowerCase()
             if (target == "everyone") return@ofSingleArg guild.publicRole
-            val byId = target.runCatching(guild::getRoleById).getOrNull()
-            if (byId != null) return@ofSingleArg byId
-            val byName = guild.getRolesByName(target, true)
-            if (byName.isEmpty()) return@ofSingleArg null
-            if (byName.size != 1) throw InvalidSyntaxException("Argument '$target' matches multiple roles!")
-            return@ofSingleArg byName[0]
+            target.runCatching(guild::getRoleById).getOrElse {
+                guild.getRolesByName(target, true).let {
+                    when {
+                        it.isEmpty() -> null
+                        it.size == 1 -> it[0]
+                        else -> throw InvalidSyntaxException("Argument '$target' matches multiple roles!")
+                    }
+                }
+            }
         }
 
         @JvmStatic
-        fun textChannel(guild: Guild) = ofSingleArg {
-            val target = it.replace("<#(\\d+)>".toRegex(), "$1")
-            val byId = target.runCatching(guild::getTextChannelById).getOrNull()
-            if (byId != null) return@ofSingleArg byId
-            val byName = guild.getTextChannelsByName(target, true)
-            if (byName.isEmpty()) return@ofSingleArg null
-            if (byName.size != 1) throw InvalidSyntaxException("Argument '${target}' matches multiple channels!")
-            return@ofSingleArg byName[0]
+        fun textChannel(guild: Guild) = ofSingleArg { arg ->
+            val target = arg.replace("<#(\\d+)>".toRegex(), "$1")
+            target.runCatching(guild::getTextChannelById).getOrElse {
+                guild.getTextChannelsByName(target, true).let {
+                    when {
+                        it.isEmpty() -> null
+                        it.size == 1 -> it[0]
+                        else -> throw InvalidSyntaxException(
+                            "Argument '$target' matches multiple channels!"
+                        )
+                    }
+                }
+            }
         }
 
         @JvmStatic
         fun category(guild: Guild) = ofSingleArg { target ->
-            val byId = target.runCatching(guild::getCategoryById).getOrNull()
-            if (byId != null) return@ofSingleArg byId
-            val byName = guild.getCategoriesByName(target, true)
-            if (byName.isEmpty()) return@ofSingleArg null
-            if (byName.size != 1) throw InvalidSyntaxException("Argument '$target' matches multiple categories!")
-            return@ofSingleArg byName[0]
+            target.runCatching(guild::getCategoryById).getOrElse {
+                guild.getCategoriesByName(target, true).let {
+                    when {
+                        it.isEmpty() -> null
+                        it.size == 1 -> it[0]
+                        else -> throw InvalidSyntaxException("Argument '$target' matches multiple categories!")
+                    }
+                }
+            }
         }
 
-        @JvmStatic @JvmOverloads
+        @JvmStatic
+        @JvmOverloads
         fun duration(
             min: String? = null,
             max: String? = null,
@@ -210,7 +237,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
     }
 
     fun <N> min(
-        min: T, error: String? = null, mapper: (T) -> N = { it as N }
+        min: T, error: String? = null, mapper: (T) -> N
     ): Adapter<T> where N : Comparable<N>, N : Number = Adapter {
         val read = it.runCatching(this).getOrNull() ?: return@Adapter null
         val check = mapper(read)
@@ -221,7 +248,7 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
     }
 
     fun <N> max(
-        max: T, error: String? = null, mapper: (T) -> N = { it as N }
+        max: T, error: String? = null, mapper: (T) -> N
     ): Adapter<T> where N : Comparable<N>, N : Number = Adapter {
         val read = it.runCatching(this).getOrNull() ?: return@Adapter null
         val check = mapper(read)
@@ -232,6 +259,4 @@ class Adapter<T>(adapter: (Arguments) -> T?) : (Arguments) -> T? by adapter {
     }
 }
 
-infix fun <V, T : V, U : V> Adapter<T>.or(other: Adapter<U>) = Adapter {
-    this(it) ?: other(it)
-}
+infix fun <V, T : V, U : V> Adapter<T>.or(other: Adapter<U>) = Adapter { this(it) ?: other(it) }

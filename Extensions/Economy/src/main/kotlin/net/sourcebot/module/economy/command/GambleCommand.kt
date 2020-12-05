@@ -26,19 +26,19 @@ class GambleCommand : EconomyRootCommand(
     private val cooldown = GuildCooldown(durationOf("2m30s"))
     override fun execute(message: Message, args: Arguments): Response {
         val member = message.member!!
+        val economy = Economy[member]
+        if (economy.balance < 1) return StandardErrorResponse(
+            "Gamble Failure!",
+            "You do not have enough money to wager!"
+        )
+        val wager = args.next(
+            Adapter.long(1, error = "You must wager at least 1 coin!"),
+            "You did not specify a valid amount of coins to wager!"
+        )
+        if (wager > economy.balance) return StandardErrorResponse(
+            "Gamble Failure!", "You may not wager more than your balance!"
+        )
         return cooldown.test(member, {
-            val economy = Economy[member]
-            if (economy.balance < 1) return@test StandardErrorResponse(
-                "Gamble Failure!",
-                "You do not have enough money to wager!"
-            )
-            val wager = args.next(
-                Adapter.long(1, error = "You must wager at least 1 coin!"),
-                "You did not specify a valid amount of coins to wager!"
-            )
-            if (wager > economy.balance) return@test StandardErrorResponse(
-                "Gamble Failure!", "You may not wager more than your balance!"
-            )
             val won = ThreadLocalRandom.current().nextInt(1, 100) < 40
             val booster = economy.booster
             val multiplier = (booster?.multiplier ?: 1.0).round(2)

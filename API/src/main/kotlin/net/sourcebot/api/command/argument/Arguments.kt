@@ -45,9 +45,7 @@ class Arguments(private val raw: Array<String>) : Iterator<String?> {
      */
     fun slurp(delimiter: String): String? {
         val slurped = raw.copyOfRange(index, raw.size).joinToString(delimiter).trim()
-        return if (slurped.isEmpty()) {
-            null
-        } else slurped
+        return if (slurped.isEmpty()) { null } else slurped
     }
 
     /**
