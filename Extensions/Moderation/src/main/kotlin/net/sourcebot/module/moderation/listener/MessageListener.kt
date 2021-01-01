@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Invite
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.GenericEvent
+import net.dv8tion.jda.api.events.guild.GuildBanEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
@@ -37,11 +38,16 @@ class MessageListener : EventSubscriber<Moderation> {
     private val configManager = Source.CONFIG_MANAGER
     private val mongo = Source.MONGODB
 
+    private val recentBans = CacheBuilder.newBuilder()
+        .expireAfterWrite(10, TimeUnit.SECONDS)
+        .build<String, String>()
+
     override fun subscribe(
         module: Moderation,
         jdaEvents: EventSystem<GenericEvent>,
         sourceEvents: EventSystem<SourceEvent>
     ) {
+        jdaEvents.listen(module, this::onMemberBanned)
         jdaEvents.listen(module, this::onMessageReceive)
         jdaEvents.listen(module, this::submitMessageEdit)
         jdaEvents.listen(module, this::submitMessageDelete)
@@ -51,8 +57,14 @@ class MessageListener : EventSubscriber<Moderation> {
         sourceEvents.listen(module, this::onMessageEdit)
     }
 
+    private fun onMemberBanned(event: GuildBanEvent) {
+        val id = event.user.id
+        recentBans.put(id, id)
+    }
+
     private fun onMessageDelete(event: MessageDeleteEvent) {
         val (guild, authorId, content, channelId, sent) = event
+        if (recentBans.asMap().containsKey(authorId)) return
         val author = event.author
         val channel = event.channel
         messageLogChannel(guild)?.let { log ->
@@ -88,6 +100,7 @@ class MessageListener : EventSubscriber<Moderation> {
 
     private fun onMessageEdit(event: MessageEditEvent) {
         val (guild, author, channel, newContent, oldContent) = event
+        if (recentBans.asMap().containsKey(author.id)) return
         val parent = channel.parent
         val blacklist = messageLogBlacklist(event.guild)
         if (channel !in blacklist && !(parent != null && parent in blacklist)) {

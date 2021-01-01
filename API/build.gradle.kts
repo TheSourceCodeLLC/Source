@@ -1,7 +1,7 @@
 dependencies {
     api(kotlin("stdlib", "1.4.10"))
     api(kotlin("reflect", "1.4.10"))
-    api("net.dv8tion:JDA:4.2.0_204")
+    api("net.dv8tion:JDA:4.2.0_225")
     api("ch.qos.logback:logback-classic:1.2.3")
     api("com.google.guava:guava:28.2-jre")
     api("com.fasterxml.jackson.core:jackson-databind:2.11.2")

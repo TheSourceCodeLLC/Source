@@ -335,7 +335,7 @@ class PunishmentHandler(private val guild: Guild) {
             "I do not have permission to unmute that member!"
         )
         if (!sender.canInteract(member)) return UnmuteFailureResponse(
-            "You do not have permission to unban that member!"
+            "You do not have permission to unmute that member!"
         )
         val muteRole = muteRole() ?: return PunishmentFailureResponse(
             "No Mute Role!", "The mute role has not been configured!"
