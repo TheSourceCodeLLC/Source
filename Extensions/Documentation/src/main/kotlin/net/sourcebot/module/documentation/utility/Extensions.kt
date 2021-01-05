@@ -116,7 +116,7 @@ fun EmbedBuilder.attemptAddEmbedField(fieldName: String, fieldDescription: Strin
  */
 fun Element.anchorsToHyperlinks(baseUrl: String): String {
     var html = this.html()
-    val documentUrl = this.ownerDocument().baseUri().removeSuffix("/")
+    val documentUrl = this.ownerDocument()?.baseUri()?.removeSuffix("/") ?: this.baseUri().removeSuffix("/")
     val isDocUrlBlank = documentUrl.isBlank()
 
     val baseClassUrl = if (isDocUrlBlank) {
@@ -151,7 +151,7 @@ fun Element.anchorsToHyperlinks(baseUrl: String): String {
                     val pkgUrl = baseUrl.substringBeforeLast("/")
                     "$pkgUrl/$this"
                 }
-                else -> "$baseUrl/$href"
+                else -> "$baseUrl/${href.removePrefix("/")}"
             }
         }
 
@@ -161,6 +161,7 @@ fun Element.anchorsToHyperlinks(baseUrl: String): String {
 
         val isCodeBlock = it.parent().tagName()?.equals("code", true) ?: false
         val modifiedText = if (isCodeBlock && !text.contains("`")) "`$text`" else text
+
         val hyperlink = "[$modifiedText]($sanitizedUrl)"
 
         html = html.replace(it.outerHtml(), hyperlink)

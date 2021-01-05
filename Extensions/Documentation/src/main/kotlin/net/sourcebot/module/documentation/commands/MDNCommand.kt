@@ -58,7 +58,9 @@ class MDNCommand : DocumentationCommand(
             val resultList: MutableList<JsonNode> = mutableListOf()
 
             documentArray.filter {
-                val title = it["title"].asText()?.removeSuffix("()") ?: return@filter false
+                val title = it["title"].asText()
+                    ?.replace(".prototype", "")
+                    ?.removeSuffix("()") ?: return@filter false
                 return@filter title.equals(query, true)
             }.toCollection(resultList)
 
@@ -67,7 +69,7 @@ class MDNCommand : DocumentationCommand(
 
                 documentArray.forEach {
                     val title: String = it["title"].asText() ?: return@forEach
-                    val url = "$baseUrl/${it["slug"].asText() ?: return@forEach}"
+                    val url = "$baseUrl/en-US/docs/${it["slug"].asText() ?: return@forEach}"
                     if (title.isEmpty()) return@forEach
                     val itemHyperlink = "[$title]($url)"
                     responseDescSB.append("**$itemHyperlink**\n")
@@ -84,8 +86,9 @@ class MDNCommand : DocumentationCommand(
                 return searchResultResponse
             }
 
+
             val docObjectResult = resultList[0]
-            val resultUrl = "$baseUrl/${docObjectResult["slug"].asText()}"
+            val resultUrl = "$baseUrl/en-US/docs/${docObjectResult["slug"].asText()}"
 
             val resultDocument = Jsoup.connect(resultUrl)
                 .ignoreContentType(true)
@@ -95,10 +98,10 @@ class MDNCommand : DocumentationCommand(
             val docResponse = DocResponse()
             docResponse.setAuthor("MDN Documentation", null, iconUrl)
 
-            val wikiElement = resultDocument.selectFirst("article#wikiArticle")
+            val wikiElement = resultDocument.selectFirst("article.article")
             wikiElement.html(wikiElement.html().replace("<p></p>", ""))
 
-            val descriptionElement = wikiElement.selectFirst("article > p")
+            val descriptionElement = wikiElement.selectFirst("div > p")
                 ?: return StandardErrorResponse(user.name, "Unable to find article description!")
 
             val description = descriptionElement.anchorsToHyperlinks(baseUrl)
