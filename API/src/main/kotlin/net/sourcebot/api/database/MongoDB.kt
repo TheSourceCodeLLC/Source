@@ -11,7 +11,7 @@ import java.io.Closeable
 class MongoDB(uri: String) : Closeable {
     private val encodingPattern = "://(.+):(.+)@".toRegex()
     private val client = MongoClient(MongoClientURI(
-        encodingPattern.replace("$uri?maxIdleTimeMS=30000") {
+        encodingPattern.replace(uri) {
             val (username, password) = it.destructured
             "://${username.urlEncoded()}:${password.urlEncoded()}@"
         }
