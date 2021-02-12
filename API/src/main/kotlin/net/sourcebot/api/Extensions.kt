@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
@@ -75,4 +76,8 @@ fun Member.allRoles() = ArrayList(roles).also { it.add(guild.publicRole) }.toLis
 
 fun formatPlural(amount: Long, unit: String): String {
     return if (amount == 1L) "$amount $unit" else "$amount ${unit}s"
+}
+
+fun <T : EmbedBuilder> T.sortFields() = this.also {
+    fields.sortBy { it.name }
 }

@@ -1,7 +1,6 @@
 package net.sourcebot.api.permission
 
 import com.google.common.cache.Cache
-import com.google.common.cache.LoadingCache
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.result.DeleteResult

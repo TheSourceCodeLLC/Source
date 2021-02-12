@@ -6,6 +6,7 @@ import com.google.common.cache.LoadingCache
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.sourcebot.Source
+import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.profiles.command.ProfileCommand
 import net.sourcebot.module.profiles.data.ProfileHandler
@@ -52,5 +53,36 @@ class Profiles : SourceModule() {
         @JvmStatic operator fun get(guild: Guild, id: String) = profiles[guild][id]
 
         @JvmStatic val VALID_PROFILE = Document("data.expiry", Document("\$exists", false))
+
+        @JvmStatic fun <T> proxyObject(
+            member: Member,
+            field: String,
+            constructor: (JsonConfiguration) -> T
+        ): T {
+            val profile = Profiles[member]
+            val stored = profile.required(field, ::JsonConfiguration)
+            val proxy = object : JsonConfiguration(stored) {
+                override fun onChange() {
+                    profile[field] = this
+                }
+            }
+            return constructor(proxy)
+        }
+
+        @JvmStatic fun <T> proxyObject(
+            guild: Guild,
+            id: String,
+            field: String,
+            constructor: (JsonConfiguration) -> T
+        ): T {
+            val profile = Profiles[guild, id]
+            val stored = profile.required(field, ::JsonConfiguration)
+            val proxy = object : JsonConfiguration(stored) {
+                override fun onChange() {
+                    profile[field] = this
+                }
+            }
+            return constructor(proxy)
+        }
     }
 }

@@ -10,6 +10,7 @@ import net.sourcebot.api.ifPresentOrElse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.api.response.StandardSuccessResponse
+import net.sourcebot.api.sortFields
 import net.sourcebot.api.wrapped
 import net.sourcebot.module.profiles.Profiles
 import net.sourcebot.module.profiles.event.ProfileRenderEvent
@@ -45,7 +46,7 @@ class ProfileCommand : RootCommand(
             }
         }
         Source.SOURCE_EVENTS.fireEvent(ProfileRenderEvent(embed, target, profile))
-        return embed.wrapped(target)
+        return embed.sortFields().wrapped(target)
     }
 
     private inner class ProfileSetCommand : Command(

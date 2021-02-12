@@ -2,7 +2,6 @@ package net.sourcebot.module.economy
 
 import net.dv8tion.jda.api.entities.Member
 import net.sourcebot.api.configuration.ConfigurationInfo
-import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.economy.command.BalanceCommand
 import net.sourcebot.module.economy.command.CoinLeaderboardCommand
@@ -28,15 +27,6 @@ class Economy : SourceModule() {
     }
 
     companion object {
-        @JvmStatic operator fun get(member: Member): EconomyData {
-            val profile = Profiles[member]
-            val config = profile.required("economy", ::JsonConfiguration)
-            val proxy = object : JsonConfiguration(config) {
-                override fun onChange() {
-                    profile["economy"] = this
-                }
-            }
-            return EconomyData(proxy)
-        }
+        @JvmStatic operator fun get(member: Member) = Profiles.proxyObject(member, "economy", ::EconomyData)
     }
 }

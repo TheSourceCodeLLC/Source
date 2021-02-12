@@ -30,6 +30,7 @@ class EconomyListener : EventSubscriber<Economy> {
             "Economy:", """
             **Balance:** ${formatPlural(economy.balance, "coin")}
             ${economy.daily?.let { "**Daily Streak:** ${formatPlural(it.count, "day")}" } ?: ""}
+            ${economy.booster?.let { "**Booster:** ${it.multiplier}x" } ?: ""}
         """.trimIndent(), false
         )
     }

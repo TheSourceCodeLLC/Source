@@ -1,0 +1,10 @@
+{
+  "main": "net.sourcebot.module.experience.Experience",
+  "name": "${project.name}",
+  "version": "${project.version}",
+  "description": "${project.description}",
+  "author": "Hwiggy#0001",
+  "hard-depend": [
+    "Profiles"
+  ]
+}
