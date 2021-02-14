@@ -1,17 +1,19 @@
 plugins {
     id("org.jetbrains.kotlin.jvm").version("1.4.10")
-    id("com.github.johnrengelman.shadow").version("6.0.0")
+    id("com.github.johnrengelman.shadow").version("6.1.0")
     id("maven-publish")
+    id("java-library")
 }
 
 allprojects {
     group = "net.sourcebot"
-    version = "5.2.0"
+    version = "5.2.1"
     buildDir = File(rootProject.projectDir, "target/output/$name")
 
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "com.github.johnrengelman.shadow")
     apply(plugin = "maven-publish")
+    apply(plugin = "java-library")
 
     repositories {
         jcenter()
@@ -37,31 +39,26 @@ allprojects {
 
     publishing {
         repositories {
-            maven {
-                if (project.version.toString().endsWith("-SNAPSHOT")) {
-                    setUrl("https://nexus.dveloped.net/repository/dveloped-snapshots/")
-                    mavenContent { snapshotsOnly() }
-                } else {
-                    setUrl("https://nexus.dveloped.net/repository/dveloped-releases/")
-                    mavenContent { releasesOnly() }
-                }
-                credentials {
-                    username = System.getenv("NEXUS_USERNAME")
-                    password = System.getenv("NEXUS_PASSWORD")
+            when (project.findProperty("deploy") ?: "local") {
+                "local" -> mavenLocal()
+                "remote" -> maven {
+                    if (project.version.toString().endsWith("-SNAPSHOT")) {
+                        setUrl("https://nexus.dveloped.net/repository/dveloped-snapshots/")
+                        mavenContent { snapshotsOnly() }
+                    } else {
+                        setUrl("https://nexus.dveloped.net/repository/dveloped-releases/")
+                        mavenContent { releasesOnly() }
+                    }
+                    credentials {
+                        username = System.getenv("NEXUS_USERNAME")
+                        password = System.getenv("NEXUS_PASSWORD")
+                    }
                 }
             }
         }
         publications {
             create<MavenPublication>("maven") {
-                artifact(tasks.shadowJar.get())
-                versionMapping {
-                    usage("java-api") {
-                        fromResolutionOf("runtimeClasspath")
-                    }
-                    usage("java-runtime") {
-                        fromResolutionResult()
-                    }
-                }
+                from(components["java"])
             }
         }
     }

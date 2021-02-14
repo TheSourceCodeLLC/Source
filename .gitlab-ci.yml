@@ -21,4 +21,4 @@ build:
 
 deploy:
   stage: deploy
-  script: ./gradlew publish
+  script: ./gradlew publish -Pdeploy=remote

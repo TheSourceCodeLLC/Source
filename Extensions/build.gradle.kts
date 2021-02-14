@@ -10,7 +10,6 @@ subprojects {
         shadowJar {
             dependsOn("deleteOld")
             destinationDirectory.set(modulesFolder)
-            archiveClassifier.set("")
             mergeServiceFiles()
         }
     }
