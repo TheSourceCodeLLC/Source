@@ -8,6 +8,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.VoiceChannel
+import net.sourcebot.api.audio.AudioSender
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.error.ExceptionResponse
 import net.sourcebot.module.music.Music

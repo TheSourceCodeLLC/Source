@@ -1,16 +1,15 @@
-package net.sourcebot.module.music.audio
+package net.sourcebot.api.audio
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrame
 import net.dv8tion.jda.api.audio.AudioSendHandler
 import java.nio.ByteBuffer
 
-class AudioSender(
-    private val player: AudioPlayer
-) : AudioSendHandler {
+class AudioSender(private val audioPlayer: AudioPlayer) : AudioSendHandler {
     private var lastFrame: AudioFrame? = null
+
     override fun canProvide(): Boolean {
-        lastFrame = player.provide()
+        lastFrame = audioPlayer.provide()
         return lastFrame != null
     }
 
