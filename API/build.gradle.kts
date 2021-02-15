@@ -9,6 +9,7 @@ dependencies {
     api("uk.org.lidalia:sysout-over-slf4j:1.0.2")
     api("org.mongodb:mongo-java-driver:3.12.4")
     api("org.fusesource.jansi:jansi:1.18")
+    api("com.sedmelluq:lavaplayer:1.3.69")
 }
 
 tasks.shadowJar {
