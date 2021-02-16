@@ -37,6 +37,11 @@ allprojects {
         }
     }
 
+    java {
+        withSourcesJar()
+        withJavadocJar()
+    }
+
     publishing {
         repositories {
             when (project.findProperty("deploy") ?: "local") {
@@ -57,7 +62,7 @@ allprojects {
             }
         }
         publications {
-            create<MavenPublication>("maven") {
+            create<MavenPublication>("assembly") {
                 from(components["java"])
             }
         }

@@ -9,7 +9,8 @@ import net.sourcebot.api.module.exception.ModuleLifecycleException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.nio.file.Files
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 
 abstract class SourceModule {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
@@ -42,16 +43,23 @@ abstract class SourceModule {
 
     open val configurationInfo: ConfigurationInfo? = null
 
-    fun saveResource(absPath: String): File {
-        if (!absPath.startsWith("/")) throw IllegalArgumentException("Resource path must be absolute!")
-        val relPath = absPath.substring(1)
-        return this::class.java.getResourceAsStream(absPath).use {
-            if (it == null) throw IllegalStateException("Could not locate '$relPath' in module JAR!")
-            val asPath = dataFolder.toPath().resolve(relPath)
-            dataFolder.mkdirs()
-            Files.copy(it, asPath)
-            asPath.toFile()
-        }
+    fun saveResource(source: String, target: String = source) {
+        if (!source.startsWith("/")) throw IllegalArgumentException("Resource path must be absolute!")
+        val targetPath = dataFolder.toPath().resolve(target)
+        val jarRoot = this::class.java.getResource("").toURI()
+        val fileSystem = FileSystems.newFileSystem(jarRoot, emptyMap<String, String>())
+        val sourceFolder = fileSystem.getPath(source)
+        Files.walkFileTree(sourceFolder, object : SimpleFileVisitor<Path>() {
+            override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+                Files.createDirectories(targetPath.resolve(sourceFolder.relativize(dir)))
+                return FileVisitResult.CONTINUE
+            }
+
+            override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+                Files.copy(file, targetPath.resolve(sourceFolder.relativize(file)))
+                return FileVisitResult.CONTINUE
+            }
+        })
     }
 
     fun load(postLoad: () -> Unit) = try {
