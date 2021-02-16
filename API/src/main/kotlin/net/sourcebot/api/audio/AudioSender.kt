@@ -5,7 +5,7 @@ import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrame
 import net.dv8tion.jda.api.audio.AudioSendHandler
 import java.nio.ByteBuffer
 
-class AudioSender(private val audioPlayer: AudioPlayer) : AudioSendHandler {
+class AudioSender(val audioPlayer: AudioPlayer) : AudioSendHandler {
     private var lastFrame: AudioFrame? = null
 
     override fun canProvide(): Boolean {
