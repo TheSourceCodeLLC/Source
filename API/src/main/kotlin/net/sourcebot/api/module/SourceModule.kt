@@ -5,10 +5,12 @@ import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.event.EventSubscriber
+import net.sourcebot.api.insert
 import net.sourcebot.api.module.exception.ModuleLifecycleException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 
@@ -37,29 +39,40 @@ abstract class SourceModule {
 
     val config: JsonConfiguration by lazy {
         val file = File(dataFolder, "config.json")
-        if (!file.exists()) saveResource("/config.json")
+        if (!file.exists()) saveResource("config.json")
         return@lazy file.let(JsonConfiguration::fromFile)
     }
 
     open val configurationInfo: ConfigurationInfo? = null
 
     fun saveResource(source: String, target: String = source) {
-        if (!source.startsWith("/")) throw IllegalArgumentException("Resource path must be absolute!")
         val targetPath = dataFolder.toPath().resolve(target)
-        val jarRoot = this::class.java.getResource("").toURI()
-        val fileSystem = FileSystems.newFileSystem(jarRoot, emptyMap<String, String>())
+        var jarRoot = this::class.java.getResource("").toString().replace("\\", "/")
+        if (jarRoot[9] != '/') {
+            jarRoot = jarRoot.insert(9, "/")
+        }
+        val extFs = dataFolder.toPath().fileSystem
+        val fileSystem = FileSystems.newFileSystem(URI(jarRoot), emptyMap<String, String>())
         val sourceFolder = fileSystem.getPath(source)
         Files.walkFileTree(sourceFolder, object : SimpleFileVisitor<Path>() {
             override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
-                Files.createDirectories(targetPath.resolve(sourceFolder.relativize(dir)))
+                Files.createDirectories(targetPath.resolve(pathTransform(extFs, sourceFolder.relativize(dir))))
                 return FileVisitResult.CONTINUE
             }
 
             override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-                Files.copy(file, targetPath.resolve(sourceFolder.relativize(file)))
+                Files.copy(file, targetPath.resolve(pathTransform(extFs, sourceFolder.relativize(file))))
                 return FileVisitResult.CONTINUE
             }
         })
+    }
+
+    private fun pathTransform(fs: FileSystem, path: Path): Path {
+        var ret = fs.getPath(if (path.isAbsolute) fs.separator else "")
+        path.forEach { component ->
+            ret = ret.resolve(component.fileName?.toString() ?: "")
+        }
+        return ret
     }
 
     fun load(postLoad: () -> Unit) = try {

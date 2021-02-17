@@ -81,3 +81,5 @@ fun formatPlural(amount: Long, unit: String): String {
 fun <T : EmbedBuilder> T.sortFields() = this.also {
     fields.sortBy { it.name }
 }
+
+fun String.insert(position: Int, other: String) = substring(0, position) + other + substring(position, length)
