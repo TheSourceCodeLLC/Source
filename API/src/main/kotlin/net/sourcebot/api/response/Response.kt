@@ -18,7 +18,9 @@ fun interface Response {
 /**
  * A type of control [Response] for when a command has no output.
  */
-class EmptyResponse : Response {
+class EmptyResponse(
+    val cleanup: Boolean = false
+) : Response {
     override fun asMessage(user: User): Message = throw UnsupportedOperationException()
 }
 

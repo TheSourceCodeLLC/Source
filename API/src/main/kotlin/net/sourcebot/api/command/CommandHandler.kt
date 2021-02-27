@@ -29,8 +29,7 @@ class CommandHandler(
         message: Message, label: String, arguments: Arguments
     ) {
         val (command, response) = runCommand(message, label, arguments)
-        if (command != null && response !is EmptyResponse)
-            respond(command, message, response)
+        if (command != null) respond(command, message, response)
     }
 
     internal fun runCommand(
@@ -118,28 +117,31 @@ class CommandHandler(
         return PermissionCheck(command, VALID)
     }
 
-    fun respond(command: Command, message: Message, response: Response): Response {
-        message.channel.sendMessage(response.asMessage(message.author)).queue {
-            command.postResponse(response, message.author, it)
-            val cleanup = (if (message.isFromGuild) {
-                configManager[message.guild].required("source.command.cleanup.enabled") { true }
-            } else command.cleanupResponse) && command.cleanupResponse
-            if (!cleanup) return@queue
-            val deleteAfter = if (message.isFromGuild) {
-                configManager[message.guild].required("source.command.cleanup.seconds") { deleteSeconds }
-            } else command.deleteSeconds ?: deleteSeconds
-            Source.SCHEDULED_EXECUTOR_SERVICE.schedule({
-                //Prevent error logging for failed message deletions
-                try {
-                    if (message.isFromGuild) {
-                        message.delete().complete()
-                    }
-                    it.delete().complete()
-                } catch (err: Throwable) {
+    fun respond(command: Command, message: Message, response: Response) {
+        val cleanup = (if (message.isFromGuild) {
+            configManager[message.guild].required("source.command.cleanup.enabled") { true }
+        } else command.cleanupResponse) && command.cleanupResponse
+        if (!cleanup) return
+        val deleteAfter = if (message.isFromGuild) {
+            configManager[message.guild].required("source.command.cleanup.seconds") { deleteSeconds }
+        } else command.deleteSeconds ?: deleteSeconds
+        var responseMessage: Message? = null
+        if (response !is EmptyResponse) {
+            message.channel.sendMessage(response.asMessage(message.author)).queue {
+                command.postResponse(response, message.author, it)
+                responseMessage = it
+            }
+        } else if (!response.cleanup) return
+        Source.SCHEDULED_EXECUTOR_SERVICE.schedule({
+            //Prevent error logging for failed message deletions
+            try {
+                if (message.isFromGuild) {
+                    message.delete().complete()
                 }
-            }, deleteAfter, TimeUnit.SECONDS)
-        }
-        return response
+                responseMessage?.delete()?.complete()
+            } catch (err: Throwable) {
+            }
+        }, deleteAfter, TimeUnit.SECONDS)
     }
 
     fun getPrefix() = defaultPrefix
@@ -169,8 +171,6 @@ class CommandHandler(
         val identifier = input.substring(defaultPrefix.length, input.length).split(" ")[0]
         return getCommand(identifier) != null
     }
-
-    fun unregister(module: SourceModule) = commandMap.removeIf { it.module == module }
 }
 
 class PermissionCheck(val command: Command, val type: Type) {
@@ -180,6 +180,4 @@ class PermissionCheck(val command: Command, val type: Type) {
         NO_PERMISSION,
         VALID
     }
-
-    fun isValid() = type == VALID
 }

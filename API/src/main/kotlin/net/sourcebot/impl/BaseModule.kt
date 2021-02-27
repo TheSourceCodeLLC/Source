@@ -58,7 +58,8 @@ class BaseModule(
             ConfigurationCommand(),
             *lifecycleCommands(Source.properties.required("lifecycle")),
             SudoCommand(),
-            DiceCommand()
+            DiceCommand(),
+            SayCommand()
         )
         subscribeEvents(
             ConnectionListener(),
