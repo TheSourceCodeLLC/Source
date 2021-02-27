@@ -121,7 +121,6 @@ class CommandHandler(
         val cleanup = (if (message.isFromGuild) {
             configManager[message.guild].required("source.command.cleanup.enabled") { true }
         } else command.cleanupResponse) && command.cleanupResponse
-        if (!cleanup) return
         val deleteAfter = if (message.isFromGuild) {
             configManager[message.guild].required("source.command.cleanup.seconds") { deleteSeconds }
         } else command.deleteSeconds ?: deleteSeconds
@@ -132,6 +131,7 @@ class CommandHandler(
                 responseMessage = it
             }
         } else if (!response.cleanup) return
+        if (!cleanup) return
         Source.SCHEDULED_EXECUTOR_SERVICE.schedule({
             //Prevent error logging for failed message deletions
             try {
