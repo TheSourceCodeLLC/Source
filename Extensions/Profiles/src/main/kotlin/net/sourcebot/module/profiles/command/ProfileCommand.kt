@@ -42,7 +42,7 @@ class ProfileCommand : RootCommand(
             """.trimIndent(), false
             )
             profile.optional<String>("bio")?.let {
-                embed.addField("Bio", it, false)
+                embed.addField("Bio:", it, false)
             }
         }
         Source.SOURCE_EVENTS.fireEvent(ProfileRenderEvent(embed, target, profile))
