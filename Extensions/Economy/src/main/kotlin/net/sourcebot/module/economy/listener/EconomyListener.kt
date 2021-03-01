@@ -3,6 +3,7 @@ package net.sourcebot.module.economy.listener
 import net.dv8tion.jda.api.audit.ActionType
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent
+import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.sourcebot.Source
 import net.sourcebot.api.asMessage
 import net.sourcebot.api.event.EventSubscriber
@@ -21,6 +22,7 @@ class EconomyListener : EventSubscriber<Economy> {
     ) {
         sourceEvents.listen(module, this::onProfileRender)
         jdaEvents.listen(module, this::onNameChange)
+        jdaEvents.listen(module, this::randomCoins)
     }
 
     private fun onProfileRender(event: ProfileRenderEvent) {
@@ -30,7 +32,6 @@ class EconomyListener : EventSubscriber<Economy> {
             "Economy:", """
             **Balance:** ${formatPlural(economy.balance, "coin")}
             ${economy.daily?.let { "**Daily Streak:** ${formatPlural(it.count, "day")}" } ?: ""}
-            ${economy.booster?.let { "**Booster:** ${it.multiplier}x" } ?: ""}
         """.trimIndent(), false
         )
     }
@@ -54,6 +55,10 @@ class EconomyListener : EventSubscriber<Economy> {
             }
             return
         }
-        economy.balance -= cost
+        economy.addBalance(-cost)
+    }
+
+    private fun randomCoins(event: GuildMessageReceivedEvent) {
+
     }
 }

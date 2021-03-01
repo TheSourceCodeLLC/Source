@@ -21,6 +21,8 @@ class ModuleHandler : ClassLoader() {
 
     fun getModules() = moduleIndex.values
 
+    fun moduleExists(name: String) = findModule<SourceModule>(name) != null
+
     fun <T : SourceModule> findModule(
         name: String
     ) = moduleIndex.values.find { it.name.startsWith(name, true) } as T?

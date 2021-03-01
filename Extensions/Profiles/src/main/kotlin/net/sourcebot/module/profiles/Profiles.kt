@@ -20,7 +20,6 @@ class Profiles : SourceModule() {
     private lateinit var cleanup: ScheduledFuture<*>
     override fun onEnable() {
         profiles = CacheBuilder.newBuilder().weakKeys()
-            .expireAfterWrite(10, TimeUnit.MINUTES)
             .removalListener<Guild, ProfileHandler> { (_, v) -> v.saveAll() }
             .build(object : CacheLoader<Guild, ProfileHandler>() {
                 override fun load(key: Guild) = ProfileHandler(key)
@@ -44,6 +43,7 @@ class Profiles : SourceModule() {
 
     override fun onDisable() {
         cleanup.cancel(true)
+        profiles.invalidateAll()
     }
 
     companion object {
@@ -54,35 +54,10 @@ class Profiles : SourceModule() {
 
         @JvmStatic val VALID_PROFILE = Document("data.expiry", Document("\$exists", false))
 
-        @JvmStatic fun <T> proxyObject(
+        @JvmStatic fun <T : Any> proxyObject(
             member: Member,
             field: String,
             constructor: (JsonConfiguration) -> T
-        ): T {
-            val profile = Profiles[member]
-            val stored = profile.required(field, ::JsonConfiguration)
-            val proxy = object : JsonConfiguration(stored) {
-                override fun onChange() {
-                    profile[field] = this
-                }
-            }
-            return constructor(proxy)
-        }
-
-        @JvmStatic fun <T> proxyObject(
-            guild: Guild,
-            id: String,
-            field: String,
-            constructor: (JsonConfiguration) -> T
-        ): T {
-            val profile = Profiles[guild, id]
-            val stored = profile.required(field, ::JsonConfiguration)
-            val proxy = object : JsonConfiguration(stored) {
-                override fun onChange() {
-                    profile[field] = this
-                }
-            }
-            return constructor(proxy)
-        }
+        ): T = Profiles[member].proxyObj(field, constructor)
     }
 }

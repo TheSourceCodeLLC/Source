@@ -1,13 +1,10 @@
 {
-  "main": "net.sourcebot.module.economy.Economy",
+  "main": "net.sourcebot.module.boosters.Boosters",
   "name": "${project.name}",
   "version": "${project.version}",
   "description": "${project.description}",
   "author": "Hwiggy#0001",
   "hard-depend": [
     "Profiles"
-  ],
-  "soft-depend": [
-    "Boosters"
   ]
 }

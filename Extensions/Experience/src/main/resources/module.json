@@ -6,5 +6,8 @@
   "author": "Hwiggy#0001",
   "hard-depend": [
     "Profiles"
+  ],
+  "soft-depend": [
+    "Boosters"
   ]
 }

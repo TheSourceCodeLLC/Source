@@ -10,10 +10,8 @@ import net.sourcebot.api.durationOf
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
-import net.sourcebot.api.round
 import net.sourcebot.module.economy.Economy
 import java.util.concurrent.ThreadLocalRandom
-import kotlin.math.ceil
 
 class GambleCommand : EconomyRootCommand(
     "gamble", "Wager some of your coins for a chance to win more."
@@ -40,21 +38,24 @@ class GambleCommand : EconomyRootCommand(
         )
         return cooldown.test(member, {
             val won = ThreadLocalRandom.current().nextInt(1, 100) < 40
-            val booster = economy.booster
-            val multiplier = (booster?.multiplier ?: 1.0).round(2)
-            val amount = ceil(multiplier * wager).toLong()
-            val delta = if (won) amount else -wager
+            val amount = if (won) wager else -wager
+            val (delta, changelog) = economy.addBalance(amount)
             val response = if (won) {
                 StandardSuccessResponse(
                     "Gamble Win!",
-                    "You won $amount coins!"
+                    "You won $wager coins!"
                 ).also {
-                    if (booster != null) it.appendDescription(
-                        "\n\nYou have received an extra ${amount - wager} coins due to your $multiplier coin booster!"
-                    )
+                    if (delta != wager) {
+                        val additional = changelog.joinToString("\n") { (amount, log) ->
+                            var lineItem = "$amount ($log)"
+                            if (amount > 0) lineItem = "+$lineItem"
+                            return@joinToString lineItem
+                        }
+                        it.addField("Additional Gains:", additional, false)
+                    }
                 }
             } else StandardErrorResponse("Gamble Loss!", "You lost $wager coins!")
-            economy.balance += delta
+
             return@test response.also {
                 it.appendDescription(
                     """

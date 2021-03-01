@@ -102,16 +102,17 @@ open class JsonConfiguration @JsonCreator constructor(
     }
 
     @JvmOverloads inline fun <reified T> delegateOptional(
-        path: String? = null
-    ) = OptionalDelegate<T?>(path, typeRefOf())
+        path: String? = null,
+    ) = OptionalDelegate(path, typeRefOf<T?>())
 
     @JvmOverloads inline fun <reified T> delegateRequired(
-        path: String? = null, noinline supplier: () -> T? = { null }
+        path: String? = null,
+        noinline supplier: () -> T? = { null }
     ) = RequiredDelegate(path, typeRefOf(), supplier)
 
     inner class OptionalDelegate<T>(
         private val path: String?,
-        private val typeReference: TypeReference<T>
+        private val typeReference: TypeReference<T>,
     ) : SimpleVarDelegate<T>(path) {
         operator fun getValue(
             thisRef: Any?, prop: KProperty<*>
@@ -123,13 +124,28 @@ open class JsonConfiguration @JsonCreator constructor(
         private val typeReference: TypeReference<T>,
         private val supplier: () -> T? = { null }
     ) : SimpleVarDelegate<T>(path) {
-        operator fun getValue(thisRef: Any?, prop: KProperty<*>) =
+        operator fun getValue(thisRef: Any?, prop: KProperty<*>): T =
             this@JsonConfiguration.required(path ?: prop.name, typeReference, supplier)
     }
 
     open inner class SimpleVarDelegate<T>(private val path: String?) {
         operator fun setValue(
             thisRef: Any?, prop: KProperty<*>, value: T
-        ) = this@JsonConfiguration.set(path ?: prop.name, value)
+        ) {
+            this@JsonConfiguration[path ?: prop.name] = value
+        }
+    }
+
+    private val proxyCache = HashMap<String, Any>()
+    fun <T : Any> proxyObj(path: String, constructor: (JsonConfiguration) -> T): T {
+        val exterior = this
+        val json = required(path, ::JsonConfiguration)
+        return (proxyCache[path] ?: object : JsonConfiguration(json) {
+            override fun onChange() {
+                exterior[path] = this
+            }
+        }.let<JsonConfiguration, T>(constructor).also {
+            proxyCache[path] = it
+        }) as T
     }
 }
