@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.asMessage
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.StandardWarningResponse
 import java.time.Duration
 
@@ -24,8 +24,8 @@ class BlacklistIncident(
     private val blacklist = StandardWarningResponse(
         "Blacklist - Case #$id",
         """
-            **Blacklisted By:** ${sender.formatted()} ($source)
-            **Blacklisted User:** ${member.formatted()} ($target)
+            **Blacklisted By:** ${sender.formatLong()} ($source)
+            **Blacklisted User:** ${member.formatLong()} ($target)
             **Duration:** ${DurationUtils.formatDuration(duration)}
             **Reason:** $reason
         """.trimIndent()

@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.exceptions.HierarchyException
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
 
@@ -26,8 +26,8 @@ class RoleUpdateIncident(
     }
     private val heading = "Role Update - #$id"
     private val description = """
-        **Updated By:** ${sender.formatted()} ($source)
-        **Updated User:** ${member.formatted()} ($target)
+        **Updated By:** ${sender.formatLong()} ($source)
+        **Updated User:** ${member.formatLong()} ($target)
         **Role $kind**: ${role.name} (${role.id})
         **Reason:** $reason
     """.trimIndent()

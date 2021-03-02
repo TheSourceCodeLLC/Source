@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.entities.*
 import net.sourcebot.Source
 import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.durationOf
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
@@ -80,7 +80,7 @@ class PunishmentHandler(private val guild: Guild) {
 
     private class WarnSuccessResponse(id: Long, warned: Member, reason: String) : PunishmentSuccessResponse(
         "Warn Success (#$id)",
-        "Warned ${warned.formatted()} for '$reason' !"
+        "Warned ${warned.formatLong()} for '$reason' !"
     )
 
     private class WarnFailureResponse(description: String) : PunishmentFailureResponse(
@@ -107,7 +107,7 @@ class PunishmentHandler(private val guild: Guild) {
 
     private class KickSuccessResponse(id: Long, kicked: Member, reason: String) : PunishmentSuccessResponse(
         "Kick Success (#$id)",
-        "Kicked ${kicked.formatted()} for '$reason' !"
+        "Kicked ${kicked.formatLong()} for '$reason' !"
     )
 
     private class KickFailureResponse(description: String) : PunishmentFailureResponse(
@@ -141,7 +141,7 @@ class PunishmentHandler(private val guild: Guild) {
         id: Long, member: Member, duration: Duration, reason: String
     ) : PunishmentSuccessResponse(
         "Mute Success (#$id)",
-        "Muted ${member.formatted()} for '$reason' ! (${duration.formatted()})"
+        "Muted ${member.formatLong()} for '$reason' ! (${duration.formatLong()})"
     )
 
     private class MuteFailureResponse(description: String) : PunishmentFailureResponse(
@@ -186,7 +186,7 @@ class PunishmentHandler(private val guild: Guild) {
         id: Long, member: Member, duration: Duration, reason: String
     ) : PunishmentSuccessResponse(
         "Blacklist Success (#$id)",
-        "Blacklisted ${member.formatted()} for '$reason' ! (${duration.formatted()})"
+        "Blacklisted ${member.formatLong()} for '$reason' ! (${duration.formatLong()})"
     )
 
     private class BlacklistFailureResponse(
@@ -248,7 +248,7 @@ class PunishmentHandler(private val guild: Guild) {
         id: Long, member: Member, duration: Duration, reason: String
     ) : PunishmentSuccessResponse(
         "Tempban Success (#$id)",
-        "Tempbanned ${member.formatted()} for '$reason'! (${duration.formatted()})"
+        "Tempbanned ${member.formatLong()} for '$reason'! (${duration.formatLong()})"
     )
 
     private class TempbanFailureResponse(
@@ -284,7 +284,7 @@ class PunishmentHandler(private val guild: Guild) {
         id: Long, member: Member, reason: String
     ) : PunishmentSuccessResponse(
         "Ban Success (#$id)",
-        "Banned ${member.formatted()} for '$reason'!"
+        "Banned ${member.formatLong()} for '$reason'!"
     )
 
     private class BanFailureResponse(
@@ -321,7 +321,7 @@ class PunishmentHandler(private val guild: Guild) {
 
     private class UnblacklistSuccessResponse(id: Long, member: Member, reason: String) : PunishmentSuccessResponse(
         "Unblacklist Success (#$id)",
-        "Unblacklisted ${member.formatted()} for '$reason'!"
+        "Unblacklisted ${member.formatLong()} for '$reason'!"
     )
 
     private class UnblacklistFailureResponse(description: String) : PunishmentFailureResponse(
@@ -360,7 +360,7 @@ class PunishmentHandler(private val guild: Guild) {
         id: Long, member: Member, reason: String
     ) : PunishmentSuccessResponse(
         "Unmute Success (#$id)",
-        "Unmuted ${member.formatted()} for '$reason'!"
+        "Unmuted ${member.formatLong()} for '$reason'!"
     )
 
     private class UnmuteFailureResponse(
@@ -388,7 +388,7 @@ class PunishmentHandler(private val guild: Guild) {
 
     private class UnbanSuccessResponse(id: Long, user: User, reason: String) : PunishmentSuccessResponse(
         "Unban Success (#$id)",
-        "Unbanned ${user.formatted()} for '$reason'!"
+        "Unbanned ${user.formatLong()} for '$reason'!"
     )
 
     private class UnbanFailureResponse(description: String) : PunishmentFailureResponse(
@@ -479,12 +479,12 @@ class PunishmentHandler(private val guild: Guild) {
 
     fun submitRoleAdd(sender: Member, target: Member, role: Role, reason: String) = submitRoleUpdate(
         sender, target, role, reason, Action.ADD,
-        "Added role ${role.name} to ${target.formatted()} for '$reason'!"
+        "Added role ${role.name} to ${target.formatLong()} for '$reason'!"
     )
 
     fun submitRoleRemove(sender: Member, target: Member, role: Role, reason: String) = submitRoleUpdate(
         sender, target, role, reason, Action.REMOVE,
-        "Removed role ${role.name} from ${target.formatted()} for '$reason'!"
+        "Removed role ${role.name} from ${target.formatLong()} for '$reason'!"
     )
 
     private class RoleUpdateSuccess(id: Long, description: String) : PunishmentSuccessResponse(
@@ -539,7 +539,7 @@ class PunishmentHandler(private val guild: Guild) {
         }
         return StandardSuccessResponse(
             "Report Submit! #$id",
-            "You have submit a report against ${target.formatted()}!"
+            "You have submit a report against ${target.formatLong()}!"
         )
     }
 
@@ -617,7 +617,7 @@ class PunishmentHandler(private val guild: Guild) {
         val channel = message.textChannel
         val embed = StandardWarningResponse(
             "Potential Advertising", """
-                **User:** ${sender.formatted()} (${sender.id})
+                **User:** ${sender.formatLong()} (${sender.id})
                 **Channel:** ${channel.name} (${channel.id})
             """.trimIndent()
         )

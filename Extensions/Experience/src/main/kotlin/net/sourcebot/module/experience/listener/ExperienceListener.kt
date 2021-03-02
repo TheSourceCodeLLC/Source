@@ -21,7 +21,6 @@ class ExperienceListener : EventSubscriber<Experience> {
         val experience = Experience[member]
         embed.addField("Experience", """
             ${"**Amount:** ${experience.amount}"}
-            ${experience.booster?.let { "**Booster:** ${it.multiplier}x" } ?: ""}
         """.trimIndent(), false)
     }
 }

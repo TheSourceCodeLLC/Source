@@ -35,7 +35,6 @@ class CommandHandler(
     internal fun runCommand(
         message: Message, label: String, arguments: Arguments
     ): Pair<Command?, Response> {
-        if (message.author.isBot) return null to EmptyResponse()
         var identifier = label
         var args = arguments
         val rootCommand = commandMap[identifier] ?: commandMap.find {

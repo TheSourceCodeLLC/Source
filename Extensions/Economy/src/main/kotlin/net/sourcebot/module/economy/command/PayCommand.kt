@@ -5,7 +5,7 @@ import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.Argument
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.module.economy.Economy
@@ -27,7 +27,7 @@ class PayCommand : EconomyRootCommand("pay", "Pay members using your coin balanc
         senderEco.balance -= amount
         targetEco.balance += amount
         return StandardSuccessResponse(
-            "Pay Success", "You have sent $amount coins to ${target.formatted()}!"
+            "Pay Success", "You have sent $amount coins to ${target.formatLong()}!"
         )
     }
 }

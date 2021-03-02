@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.asMessage
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.StandardSuccessResponse
 
 class UnmuteIncident(
@@ -21,8 +21,8 @@ class UnmuteIncident(
     private val unmute = StandardSuccessResponse(
         "Unmute - Case #$id",
         """
-            **Unmuted By:** ${sender.formatted()} ($source)
-            **Unmuted User:** ${member.formatted()} ($target)
+            **Unmuted By:** ${sender.formatLong()} ($source)
+            **Unmuted User:** ${member.formatLong()} ($target)
             **Reason:** $reason
         """.trimIndent()
     )

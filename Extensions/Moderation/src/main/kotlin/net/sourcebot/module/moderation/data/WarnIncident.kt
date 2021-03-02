@@ -3,7 +3,7 @@ package net.sourcebot.module.moderation.data
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.StandardWarningResponse
 
 class WarnIncident(
@@ -18,8 +18,8 @@ class WarnIncident(
     private val warning = StandardWarningResponse(
         "Warning - Case #$id",
         """
-            **Warned By:** ${sender.formatted()} ($source)
-            **Warned User:** ${member.formatted()} ($target)
+            **Warned By:** ${sender.formatLong()} ($source)
+            **Warned User:** ${member.formatLong()} ($target)
             **Reason:** $reason
         """.trimIndent()
     )

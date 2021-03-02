@@ -1,7 +1,7 @@
 package net.sourcebot.api.command
 
 import net.dv8tion.jda.api.entities.Member
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -25,7 +25,7 @@ class GuildCooldown(private val duration: Duration) {
                 val difference = Duration.between(now, v).truncatedTo(ChronoUnit.SECONDS)
                 returnVal = when {
                     difference.isZero || difference.isNegative -> onSuccess()
-                    else -> onFailure(difference.formatted())
+                    else -> onFailure(difference.formatLong())
                 }
                 v
             }

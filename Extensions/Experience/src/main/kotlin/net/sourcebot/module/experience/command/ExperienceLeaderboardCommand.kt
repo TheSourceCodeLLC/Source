@@ -6,8 +6,8 @@ import net.sourcebot.api.command.argument.Adapter
 import net.sourcebot.api.command.argument.ArgumentInfo
 import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.command.argument.OptionalArgument
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.formatPlural
-import net.sourcebot.api.formatted
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.profiles.Profiles
@@ -37,7 +37,7 @@ class ExperienceLeaderboardCommand : ExperienceRootCommand(
             it["_id"] as String to it.getEmbedded(listOf("data", "experience", "amount"), 0L)
         }.withIndex().joinToString("\n") { (index, data) ->
             val (id, balance) = data
-            val name = guild.getMemberById(id)?.formatted() ?: id
+            val name = guild.getMemberById(id)?.formatLong() ?: id
             "**#${(index + 1) + (page * 10)} $name**: ${formatPlural(balance, "point")}"
         }
         return StandardInfoResponse(

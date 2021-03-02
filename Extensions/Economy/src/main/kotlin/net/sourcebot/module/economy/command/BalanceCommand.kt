@@ -2,7 +2,7 @@ package net.sourcebot.module.economy.command
 
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.argument.*
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardInfoResponse
@@ -23,7 +23,7 @@ class BalanceCommand : EconomyRootCommand(
         val economy = Economy[target]
         return StandardInfoResponse(
             "${target.effectiveName}'s Balance:",
-            ":moneybag: **${target.formatted()}** has ${economy.balance} coins."
+            ":moneybag: **${target.formatLong()}** has ${economy.balance} coins."
         ).wrapped(target)
     }
 
@@ -46,7 +46,7 @@ class BalanceCommand : EconomyRootCommand(
             }
             return StandardSuccessResponse(
                 "Balance Updated!",
-                "${target.formatted()}'s balance has been set to ${economy.balance}!"
+                "${target.formatLong()}'s balance has been set to ${economy.balance}!"
             )
         }
     }
@@ -68,7 +68,7 @@ class BalanceCommand : EconomyRootCommand(
             Economy[target].balance += amount
             return StandardSuccessResponse(
                 "Balance Updated!",
-                "$amount coins have been added to ${target.formatted()}'s balance!"
+                "$amount coins have been added to ${target.formatLong()}'s balance!"
             )
         }
     }
@@ -87,7 +87,7 @@ class BalanceCommand : EconomyRootCommand(
             val balance = economy.balance
             if (balance < 1) return StandardErrorResponse(
                 "Balance Update Failure!",
-                "${target.formatted()} does not have any coins to subtract!"
+                "${target.formatLong()} does not have any coins to subtract!"
             )
             val amount = args.next(
                 Adapter.long(1, balance, "Amount to subtract must be between 1 and $balance!"),
@@ -96,7 +96,7 @@ class BalanceCommand : EconomyRootCommand(
             economy.balance -= amount
             return StandardSuccessResponse(
                 "Balance Updated!",
-                "$amount coins have been subtracted from ${target.formatted()}'s balance!"
+                "$amount coins have been subtracted from ${target.formatLong()}'s balance!"
             )
         }
     }

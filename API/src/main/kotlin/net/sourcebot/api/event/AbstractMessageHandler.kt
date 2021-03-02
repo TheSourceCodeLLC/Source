@@ -14,6 +14,7 @@ import net.sourcebot.api.command.argument.Arguments
  */
 abstract class AbstractMessageHandler : ListenerAdapter() {
     override fun onMessageReceived(event: MessageReceivedEvent) {
+        if (event.author.isBot) return
         val message = event.message
         var content = message.contentRaw
         val prefix = getPrefix(event)

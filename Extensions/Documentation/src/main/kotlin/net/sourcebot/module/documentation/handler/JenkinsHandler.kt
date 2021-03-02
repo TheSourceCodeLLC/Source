@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.utils.MarkdownSanitizer
 import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.Source
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.module.documentation.utility.*
@@ -42,7 +42,7 @@ class JenkinsHandler(
      * retrieved
      */
     fun retrieveResponse(user: User, query: String): Response {
-        val error = StandardErrorResponse(user.formatted(), "Unable to find `$query` in the $title!")
+        val error = StandardErrorResponse(user.formatLong(), "Unable to find `$query` in the $title!")
         try {
             val infoList = jenkins.search(query)
             if (infoList.isEmpty()) return error

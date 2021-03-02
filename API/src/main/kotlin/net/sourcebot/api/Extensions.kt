@@ -24,8 +24,8 @@ fun String.urlEncoded(charset: Charset = StandardCharsets.UTF_8): String = URLEn
 fun String.urlDecoded(charset: Charset = StandardCharsets.UTF_8): String = URLDecoder.decode(this, charset)
 inline fun <reified T> typeRefOf(): TypeReference<T> = object : TypeReference<T>() {}
 
-fun Member.formatted(): String = user.formatted()
-fun User.formatted(): String = "%#s".format(this)
+fun Member.formatLong(): String = user.formatLong()
+fun User.formatLong(): String = "%#s".format(this)
 
 fun Response.asMessage(member: Member) = asMessage(member.user)
 

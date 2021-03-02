@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.Source
 import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.argument.*
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.ifPresentOrElse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
@@ -26,7 +26,7 @@ class ProfileCommand : RootCommand(
         val target = args.next(Adapter.member(message.guild)) ?: message.member!!
         val profile = Profiles[target]
         val embed = StandardInfoResponse(
-            "${target.formatted()}'s Profile"
+            "${target.formatLong()}'s Profile"
         ).also { embed ->
             embed.setThumbnail(target.user.effectiveAvatarUrl)
             embed.addField(

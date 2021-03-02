@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageHistory
 import net.dv8tion.jda.api.entities.TextChannel
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.StandardInfoResponse
 
 class ClearIncident(
@@ -34,7 +34,7 @@ class ClearIncident(
         StandardInfoResponse(
             "Clear - Case #$id",
             """
-                **Cleared By:** ${sender.formatted()} ($source)
+                **Cleared By:** ${sender.formatLong()} ($source)
                 **Cleared Channel:** ${channel.name} ($target)
                 **Clear Amount:** $amount
                 **Reason:**: $reason

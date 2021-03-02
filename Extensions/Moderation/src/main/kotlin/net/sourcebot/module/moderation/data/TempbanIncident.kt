@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.asMessage
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.StandardErrorResponse
 import java.time.Duration
 
@@ -23,8 +23,8 @@ class TempbanIncident(
     private val tempban = StandardErrorResponse(
         "Tempban - Case #$id",
         """
-            **Tempbanned By:** ${sender.formatted()} ($source)
-            **Tempbanned User:** ${member.formatted()} ($target)
+            **Tempbanned By:** ${sender.formatLong()} ($source)
+            **Tempbanned User:** ${member.formatLong()} ($target)
             **Duration:** ${DurationUtils.formatDuration(duration)}
             **Reason:** $reason
         """.trimIndent()

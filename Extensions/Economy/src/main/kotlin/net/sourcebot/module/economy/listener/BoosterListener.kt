@@ -24,8 +24,7 @@ class BoosterListener : EventSubscriber<Economy> {
         val (multiplier) = Boosters[member, "economy"]
         if (multiplier <= 1.0) return
         val additional = (delta * multiplier) - delta
-        event.changelog += (
-                additional.toLong() to "${multiplier.round(2)}x Booster"
-                )
+        event.changelog +=
+            (additional.toLong() to "${multiplier.round(2)}x Booster")
     }
 }

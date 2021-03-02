@@ -2,7 +2,7 @@ package net.sourcebot.module.moderation.data
 
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.TextChannel
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.EmbedResponse
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
@@ -45,7 +45,7 @@ class Report(
         val targetMember = guild.getMemberById(target)!!
         val header = """
             ${guild.publicRole.asMention}
-            A report has been made against **${targetMember.formatted()}** by **${senderMember.formatted()}**
+            A report has been made against **${targetMember.formatLong()}** by **${senderMember.formatLong()}**
         """.trimIndent()
         val embed = render(guild)
         logChannel.sendMessage(header).embed(embed.asEmbed(targetMember.user)).queue {
@@ -55,8 +55,8 @@ class Report(
     }
 
     fun render(guild: Guild): EmbedResponse {
-        val by = runCatching { "${guild.getMemberById(sender)!!.formatted()} ($sender)" }.getOrDefault(sender)
-        val who = runCatching { "${guild.getMemberById(target)!!.formatted()} ($target)" }.getOrDefault(target)
+        val by = runCatching { "${guild.getMemberById(sender)!!.formatLong()} ($sender)" }.getOrDefault(sender)
+        val who = runCatching { "${guild.getMemberById(target)!!.formatLong()} ($target)" }.getOrDefault(target)
         val from = runCatching { "${guild.getTextChannelById(channel)!!.name} ($channel)" }.getOrDefault(channel)
         return when {
             deleted -> {
@@ -72,7 +72,7 @@ class Report(
                 val status = if (valid) "Handled" else "Marked as Invalid"
                 val handler = handling["handler"] as String
                 val staff =
-                    runCatching { "${guild.getMemberById(handler)!!.formatted()} ($handler)" }.getOrDefault(handler)
+                    runCatching { "${guild.getMemberById(handler)!!.formatLong()} ($handler)" }.getOrDefault(handler)
                 StandardSuccessResponse(
                     "Report #$id - Handled", """
                         **Reported By:** $by

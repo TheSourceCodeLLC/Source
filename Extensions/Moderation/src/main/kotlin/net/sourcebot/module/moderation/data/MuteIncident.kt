@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.asMessage
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.StandardWarningResponse
 import java.time.Duration
 
@@ -24,8 +24,8 @@ class MuteIncident(
     private val mute = StandardWarningResponse(
         "Mute - Case #$id",
         """
-            **Muted By:** ${sender.formatted()} ($source)
-            **Muted User:** ${member.formatted()} ($target)
+            **Muted By:** ${sender.formatLong()} ($source)
+            **Muted User:** ${member.formatLong()} ($target)
             **Duration:** ${DurationUtils.formatDuration(duration)}
             **Reason:** $reason
         """.trimIndent()

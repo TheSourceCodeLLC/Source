@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.asMessage
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.StandardSuccessResponse
 
 class UnbanIncident(
@@ -21,8 +21,8 @@ class UnbanIncident(
     private val unban = StandardSuccessResponse(
         "Unban - Case #$id",
         """
-            **Unbanned By:** ${sender.formatted()} ($source)
-            **Unbanned User:** ${user.formatted()} ($target)
+            **Unbanned By:** ${sender.formatLong()} ($source)
+            **Unbanned User:** ${user.formatLong()} ($target)
             **Reason:** $reason
         """.trimIndent()
     )

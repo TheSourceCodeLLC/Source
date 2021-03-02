@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.asMessage
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.StandardWarningResponse
 
 class KickIncident(
@@ -19,8 +19,8 @@ class KickIncident(
     private val kick = StandardWarningResponse(
         "Kick - Case #$id",
         """
-            **Kicked By:** ${sender.formatted()} ($source)
-            **Kicked User:** ${member.formatted()} ($target)
+            **Kicked By:** ${sender.formatLong()} ($source)
+            **Kicked User:** ${member.formatLong()} ($target)
             **Reason:** $reason
         """.trimIndent()
     )

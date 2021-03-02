@@ -5,7 +5,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.asMessage
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.StandardSuccessResponse
 
 class UnblacklistIncident(
@@ -21,8 +21,8 @@ class UnblacklistIncident(
     private val unblacklist = StandardSuccessResponse(
         "Unblacklist - Case #$id",
         """
-            **Unblacklisted By:** ${sender.formatted()} ($source)
-            **Unblacklisted User:** ${member.formatted()} ($target)
+            **Unblacklisted By:** ${sender.formatLong()} ($source)
+            **Unblacklisted User:** ${member.formatLong()} ($target)
             **Reason:** $reason
         """.trimIndent()
     )

@@ -30,7 +30,9 @@ object DurationUtils {
     }
 
     @JvmStatic
-    fun formatDuration(duration: Duration): String {
+    fun formatDuration(
+        duration: Duration, strategy: FormatStrategy = FormatStrategy.EXPANDED
+    ): String {
         val perMonth = ChronoUnit.MONTHS.seconds()
         val perDay = ChronoUnit.DAYS.seconds()
         val perHour = ChronoUnit.HOURS.seconds()
@@ -52,24 +54,57 @@ object DurationUtils {
             ChronoUnit.MINUTES to minutes,
             ChronoUnit.SECONDS to seconds
         ).entries.filter { (_, a) -> a != 0L }.joinToString { (unit, amount) ->
-            var name = unit.name
-            if (amount == 1L) name = name.substring(0, name.length - 1)
-            "$amount $name"
-        }.toLowerCase()
+            "$amount${strategy.getSubstitute(amount, unit)}"
+        }
     }
 
     @JvmStatic
-    fun formatMillis(millis: Long) = formatDuration(Duration.ofMillis(millis))
+    fun formatMillis(
+        millis: Long, strategy: FormatStrategy = FormatStrategy.EXPANDED
+    ) = formatDuration(Duration.ofMillis(millis), strategy)
 
     @JvmStatic
-    fun formatSeconds(seconds: Long) = formatDuration(Duration.ofSeconds(seconds))
+    fun formatSeconds(
+        seconds: Long, strategy: FormatStrategy = FormatStrategy.EXPANDED
+    ) = formatDuration(Duration.ofSeconds(seconds), strategy)
 
     private fun ChronoUnit.seconds() = this.duration.seconds
 }
 
 fun durationOf(format: String) = DurationUtils.parseDuration(format)
-fun Duration.formatted() = DurationUtils.formatDuration(this)
+fun Duration.formatLong() = DurationUtils.formatDuration(this)
+fun Duration.formatShort() = DurationUtils.formatDuration(this, FormatStrategy.SHORT)
 
 fun differenceBetween(first: Temporal, second: Temporal): String {
-    return Duration.between(first, second).truncatedTo(ChronoUnit.SECONDS).formatted()
+    return Duration.between(first, second).truncatedTo(ChronoUnit.SECONDS).formatLong()
+}
+
+interface FormatStrategy {
+    fun getSubstitute(amount: Long, unit: ChronoUnit): String
+
+    companion object {
+        @JvmStatic val EXPANDED = object : FormatStrategy {
+            override fun getSubstitute(
+                amount: Long,
+                unit: ChronoUnit
+            ) = unit.name.let { plural ->
+                " " + if (amount == 1L) plural.substring(0, plural.length - 1) else plural
+            }.toLowerCase()
+        }
+
+        @JvmStatic val SHORT = object : FormatStrategy {
+            private val substitutes = mapOf(
+                ChronoUnit.MONTHS to "M",
+                ChronoUnit.DAYS to "d",
+                ChronoUnit.HOURS to "h",
+                ChronoUnit.MINUTES to "m",
+                ChronoUnit.SECONDS to "s"
+            )
+
+            override fun getSubstitute(
+                amount: Long,
+                unit: ChronoUnit
+            ) = substitutes[unit]!!
+        }
+    }
 }

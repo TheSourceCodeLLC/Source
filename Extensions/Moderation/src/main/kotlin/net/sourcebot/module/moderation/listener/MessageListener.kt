@@ -71,7 +71,7 @@ class MessageListener : EventSubscriber<Moderation> {
             if (author != null && author.user.isBot) return@let
             val embed = StandardErrorResponse(
                 "Message Deleted", """
-                **Author:** ${author?.let { "${it.formatted()} (${it.id})" } ?: authorId}
+                **Author:** ${author?.let { "${it.formatLong()} (${it.id})" } ?: authorId}
                 **Channel:** ${channel?.let { "${it.name} (${it.id})" } ?: channelId}
                 **Date Sent:** ${Source.DATE_TIME_FORMAT.format(sent)}
             """.trimIndent()
@@ -89,7 +89,7 @@ class MessageListener : EventSubscriber<Moderation> {
             it.sendMessage(
                 StandardErrorResponse(
                     "Ghost Ping!", """
-                        **User:** ${author?.let { "${it.formatted()} (${it.id})" } ?: authorId}
+                        **User:** ${author?.let { "${it.formatLong()} (${it.id})" } ?: authorId}
                     """.trimIndent()
                 ).also {
                     it.addField("Message:", content.truncate(1024), false)
@@ -107,7 +107,7 @@ class MessageListener : EventSubscriber<Moderation> {
             messageLogChannel(guild)?.let { log ->
                 val embed = StandardWarningResponse(
                     "Message Edited", """
-                        **Author:** ${author.formatted()} (${author.id})
+                        **Author:** ${author.formatLong()} (${author.id})
                         **Channel:** ${channel.name} (${channel.id})
                         **Edited At:** ${Source.DATE_TIME_FORMAT.format(Instant.now())}
                         **Jump Link:** [${MarkdownUtil.maskedLink("Click", event.message.jumpUrl)}]
@@ -134,7 +134,7 @@ class MessageListener : EventSubscriber<Moderation> {
             channel.sendMessage(
                 StandardErrorResponse(
                     "Ghost Ping!", """
-                            **User:** ${author.let { "${it.formatted()} (${it.id})" }}
+                            **User:** ${author.let { "${it.formatLong()} (${it.id})" }}
                         """.trimIndent()
                 ).also {
                     it.addField("Message:", oldContent.truncate(1024), false)
@@ -284,7 +284,7 @@ class MessageListener : EventSubscriber<Moderation> {
                 """
                
                 
-                **$handledMessage By:** ${event.user.formatted()} (${event.userId})
+                **$handledMessage By:** ${event.user.formatLong()} (${event.userId})
             """.trimIndent()
             ).setColor(SourceColor.SUCCESS.color).build()
         return message.editMessage(render).override(true).queue {

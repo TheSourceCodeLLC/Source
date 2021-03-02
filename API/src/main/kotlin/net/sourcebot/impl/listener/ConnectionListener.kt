@@ -9,7 +9,7 @@ import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.ErrorResponse
 import net.sourcebot.api.response.InfoResponse
 import net.sourcebot.impl.BaseModule
@@ -34,7 +34,7 @@ class ConnectionListener : EventSubscriber<BaseModule> {
         val toSend = joinMessages.random()
         val joiner = event.user
         val message = InfoResponse().setDescription(
-            toSend.format("**${joiner.formatted()}**")
+            toSend.format("**${joiner.formatLong()}**")
         )
         channel.sendMessage(message.build()).queue()
     }
@@ -48,7 +48,7 @@ class ConnectionListener : EventSubscriber<BaseModule> {
         val toSend = leaveMessages.random()
         val leaver = event.user
         val message = ErrorResponse().setDescription(
-            toSend.format("**${leaver.formatted()}**")
+            toSend.format("**${leaver.formatLong()}**")
         )
         channel.sendMessage(message.build()).queue()
     }

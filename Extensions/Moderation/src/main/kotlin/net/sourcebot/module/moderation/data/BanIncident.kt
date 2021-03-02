@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.asMessage
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.StandardErrorResponse
 
 class BanIncident(
@@ -20,8 +20,8 @@ class BanIncident(
     private val ban = StandardErrorResponse(
         "Ban - Case #$id",
         """
-            **Banned By:** ${sender.formatted()} ($source)
-            **Banned User:** ${member.formatted()} ($target)
+            **Banned By:** ${sender.formatLong()} ($source)
+            **Banned User:** ${member.formatLong()} ($target)
             **Reason:** $reason
         """.trimIndent()
     )

@@ -6,7 +6,7 @@ import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.Source
 import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.durationOf
-import net.sourcebot.api.formatted
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.api.round
@@ -119,7 +119,7 @@ abstract class ExpiringPunishment(
 
     fun render(guild: Guild): Response {
         val sender = guild.getMemberById(source)?.let {
-            "${it.formatted()} (${it.id})"
+            "${it.formatLong()} (${it.id})"
         } ?: source
         val time = Source.DATE_TIME_FORMAT.format(this.time)
         val header = "$heading - #$id"
@@ -132,7 +132,7 @@ abstract class ExpiringPunishment(
                         "${it.name} ($target)"
                     }
                     else guild.getMemberById(target)?.let {
-                        "${it.formatted()} ($target)"
+                        "${it.formatLong()} ($target)"
                     }) ?: target
                 )
                 appendDescription("\n")
