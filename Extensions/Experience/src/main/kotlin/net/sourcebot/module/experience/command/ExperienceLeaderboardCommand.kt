@@ -37,7 +37,7 @@ class ExperienceLeaderboardCommand : ExperienceRootCommand(
             it["_id"] as String to it.getEmbedded(listOf("data", "experience", "amount"), 0L)
         }.withIndex().joinToString("\n") { (index, data) ->
             val (id, balance) = data
-            val name = guild.getMemberById(id)?.formatLong() ?: id
+            val name = guild.jda.getUserById(id)?.formatLong() ?: id
             "**#${(index + 1) + (page * 10)} $name**: ${formatPlural(balance, "point")}"
         }
         return StandardInfoResponse(

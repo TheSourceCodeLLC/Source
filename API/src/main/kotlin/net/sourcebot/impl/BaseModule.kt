@@ -60,7 +60,8 @@ class BaseModule(
             SudoCommand(),
             DiceCommand(),
             SayCommand(),
-            ShutdownCommand()
+            ShutdownCommand(),
+            ReactCommand()
         )
         subscribeEvents(
             ConnectionListener(),

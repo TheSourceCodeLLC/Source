@@ -6,6 +6,7 @@ import net.sourcebot.module.experience.command.ExperienceLeaderboardCommand
 import net.sourcebot.module.experience.data.ExperienceData
 import net.sourcebot.module.experience.listener.ExperienceListener
 import net.sourcebot.module.profiles.Profiles
+import kotlin.math.pow
 
 class Experience : SourceModule() {
     override fun onEnable() {
@@ -16,5 +17,11 @@ class Experience : SourceModule() {
     companion object {
         @JvmStatic operator fun get(member: Member) =
             Profiles.proxyObject(member, "experience", ::ExperienceData)
+
+        @JvmStatic fun getLevel(points: Long) =
+            (points - 499.0).pow(1.0 / 3.0).toLong()
+
+        @JvmStatic fun totalPointsFor(level: Long) =
+            499 + level.toDouble().pow(3.0).toLong()
     }
 }
