@@ -22,7 +22,7 @@ class ExperienceListener : EventSubscriber<Experience> {
         val experience = Experience[member]
         val untilNext = Experience.totalPointsFor(experience.level + 1)
         embed.addField("Experience", """
-            ${"**Level:** ${experience.level + 1}"}
+            ${"**Level:** ${experience.level}"}
             ${"**Total:** ${formatPlural(experience.amount, "point")}"}
             ${"**Until Next:** ${formatPlural(untilNext - experience.amount, "point")}"}
         """.trimIndent(), false)

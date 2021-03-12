@@ -19,9 +19,9 @@ class Experience : SourceModule() {
             Profiles.proxyObject(member, "experience", ::ExperienceData)
 
         @JvmStatic fun getLevel(points: Long) =
-            (points - 499.0).pow(1.0 / 3.0).toLong()
+            (points - 499.0).pow(1.0 / 3.0).toLong() + 1
 
         @JvmStatic fun totalPointsFor(level: Long) =
-            499 + level.toDouble().pow(3.0).toLong()
+            499 + (level - 1.0).pow(3.0).toLong()
     }
 }
