@@ -10,6 +10,7 @@ import net.sourcebot.api.formatLong
 import net.sourcebot.api.formatPlural
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
+import net.sourcebot.module.experience.Experience
 import net.sourcebot.module.profiles.Profiles
 import org.bson.Document
 import kotlin.math.ceil
@@ -38,7 +39,9 @@ class ExperienceLeaderboardCommand : ExperienceRootCommand(
         }.withIndex().joinToString("\n") { (index, data) ->
             val (id, balance) = data
             val name = guild.jda.getUserById(id)?.formatLong() ?: id
-            "**#${(index + 1) + (page * 10)} $name**: ${formatPlural(balance, "point")}"
+            "**#${(index + 1) + (page * 10)} $name**: ${
+                "${"Level ${Experience.getLevel(balance)}"} (${formatPlural(balance, "point")})"
+            }"
         }
         return StandardInfoResponse(
             "Experience Leaderboard", """
