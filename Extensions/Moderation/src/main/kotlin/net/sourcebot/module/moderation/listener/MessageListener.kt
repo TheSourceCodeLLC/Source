@@ -172,7 +172,7 @@ class MessageListener : EventSubscriber<Moderation> {
                     override fun load(key: String) = 0
                 })
         }
-        val content = event.message.contentRaw
+        val content = event.message.contentRaw.trim()
         if (content.length < 7) return false
         val threshold = ceil(content.length * .8).toInt()
         if (content.count(Char::isUpperCase) < threshold) return false
