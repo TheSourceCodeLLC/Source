@@ -34,7 +34,7 @@ class OffensesCommand : ModerationRootCommand(
                 listing.forEach { (level, offenses) ->
                     it.addField(
                         "Level ${level.number} - ${level.points} Points",
-                        offenses.joinToString(separator = " | ") { (id, name) ->
+                        offenses.joinToString(separator = "\n") { (id, name) ->
                             "**$id** `$name`"
                         }, false
                     )
