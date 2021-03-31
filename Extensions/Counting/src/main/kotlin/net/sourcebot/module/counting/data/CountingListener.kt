@@ -161,12 +161,12 @@ class CountingListener : EventSubscriber<Counting> {
             }
             val violationLevel = channelViolations[blame] + 1
             channelViolations.put(blame, violationLevel)
-            if (violationLevel < 5) return
+            if (violationLevel < 3) return
             channel.guild.addRoleToMember(blame, muteRole).queue {
                 val member = channel.guild.getMemberById(blame) ?: return@queue
                 val embed = StandardWarningResponse(
                     "Incapable Of Counting!",
-                    "Role given to ${member.asMention} due to 5 failures over the past 5 minutes!"
+                    "Role given to ${member.asMention} due to 3 failures over the past 5 minutes!"
                 )
                 channel.sendMessage(embed.asMessage(member)).queue()
             }
