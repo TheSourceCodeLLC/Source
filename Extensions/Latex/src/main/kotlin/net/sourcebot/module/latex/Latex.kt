@@ -28,14 +28,6 @@ class Latex : SourceModule() {
         private val blockedMacros = listOf(
             "\\newcommand"
         )
-
-        private val allowedPackages = setOf(
-            "xcolor"
-        )
-        private val pkgPattern = Regex(
-            "\\\\(?:usepackage|requirepackage)\\{(?:(.+),)+}",
-            RegexOption.IGNORE_CASE
-        )
         @JvmStatic val DELETE_REACT = "❌"
         @JvmStatic val Database: (Guild) -> MongoCollection<Document> = {
             Source.MONGODB.getCollection(it.id, "latex")
@@ -45,12 +37,6 @@ class Latex : SourceModule() {
             blockedMacros.forEach {
                 if (!input.contains(it)) return@forEach
                 throw DisabledMacroException(it)
-            }
-            pkgPattern.matchEntire(input)?.groupValues?.toSet()?.also { packages ->
-                if (allowedPackages.containsAll(packages)) return@also
-                val difference = HashSet(packages)
-                allowedPackages.forEach { difference -= it }
-                throw DisabledPackageException(difference)
             }
             val expression = TeXFormula(input)
             val icon = expression.createTeXIcon(
@@ -93,8 +79,4 @@ class Latex : SourceModule() {
 open class LatexException(error: String) : RuntimeException(error)
 class DisabledMacroException(macro: String) : LatexException(
     "Macro is disabled: `$macro`!"
-)
-
-class DisabledPackageException(packages: Set<String>) : LatexException(
-    "Package(s) disabled: ${packages.joinToString(", ") { "`$it`" }}"
 )
