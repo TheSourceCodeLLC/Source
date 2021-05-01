@@ -26,7 +26,11 @@ class Latex : SourceModule() {
 
     companion object {
         private val blockedMacros = listOf(
-            "\\newcommand"
+            "\\newenvironment",
+            "\\renewcommand",
+            "\\newcommand",
+            "\\newcounter",
+            "\\def"
         )
         @JvmStatic val DELETE_REACT = "❌"
         @JvmStatic val Database: (Guild) -> MongoCollection<Document> = {

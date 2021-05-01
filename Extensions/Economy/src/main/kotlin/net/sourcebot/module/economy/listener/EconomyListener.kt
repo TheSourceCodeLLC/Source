@@ -1,6 +1,7 @@
 package net.sourcebot.module.economy.listener
 
 import net.dv8tion.jda.api.audit.ActionType
+import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
@@ -36,26 +37,38 @@ class EconomyListener : EventSubscriber<Economy> {
         )
     }
 
+    private val forbiddenNames = arrayOf(
+        "everyone", "here"
+    )
+
     private fun onNameChange(event: GuildMemberUpdateNicknameEvent) {
         if (event.newNickname == null) return
         val member = event.member
+        if (event.newNickname in forbiddenNames) return refuseNick(
+            member,
+            event.oldNickname,
+            "Forbidden Nickname!",
+            "You may not nick yourself '${event.newNickname}!'"
+        )
         val changer = event.guild.retrieveAuditLogs().type(ActionType.MEMBER_UPDATE).complete()[0]
         if (changer.user != member.user) return
         if (Source.PERMISSION_HANDLER.memberHasPermission(member, "economy.ignore-nickname-cost")) return
         val cost = Source.CONFIG_MANAGER[event.guild].required("economy.nickname-cost") { 0L }
         val economy = Economy[event.member]
-        if (cost > economy.balance) {
-            member.modifyNickname(event.oldNickname).queue()
-            member.user.openPrivateChannel().queue {
-                it.sendMessage(
-                    StandardErrorResponse(
-                        "Invalid Balance!", "You cannot afford a nickname change! (Cost: $cost coins)"
-                    ).asMessage(member)
-                ).queue()
-            }
-            return
-        }
+        if (cost > economy.balance) return refuseNick(
+            member,
+            event.oldNickname,
+            "Invalid Balance!",
+            "You cannot afford a nickname change! (Cost: $cost coins)"
+        )
         economy.addBalance(-cost)
+    }
+
+    private fun refuseNick(member: Member, old: String?, title: String, desc: String) {
+        member.modifyNickname(old).queue()
+        member.user.openPrivateChannel().queue {
+            it.sendMessage(StandardErrorResponse(title, desc).asMessage(member)).queue()
+        }
     }
 
     private fun randomCoins(event: GuildMessageReceivedEvent) {

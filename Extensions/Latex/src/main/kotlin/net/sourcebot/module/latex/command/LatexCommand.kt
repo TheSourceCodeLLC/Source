@@ -20,17 +20,15 @@ class LatexCommand : RootCommand() {
         Argument("expression", "The expression you would like to parse.")
     )
 
-    private val validator = Regex("`(.+)`")
     override fun execute(message: Message, args: Arguments): Response {
         val expression = args.next("You did not specify a LaTeX expression!")
-        validator.matchEntire(expression)?.also {
-            val image = Latex.parse(validator.matchEntire(expression)!!.groupValues[1])
-            message.delete().queue {
-                Latex.send(message.author, message.channel, image)
-            }
-        } ?: throw InvalidSyntaxException(
+        if (!expression.startsWith("`") and !expression.endsWith("`")) throw InvalidSyntaxException(
             "LaTeX expression must be surrounded by single backticks!"
         )
+        val image = Latex.parse(expression.substring(1, expression.length - 1))
+        message.delete().queue {
+            Latex.send(message.author, message.channel, image)
+        }
         return EmptyResponse()
     }
 }
