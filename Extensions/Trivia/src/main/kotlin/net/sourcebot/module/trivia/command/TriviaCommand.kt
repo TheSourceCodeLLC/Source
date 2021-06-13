@@ -12,7 +12,6 @@ import net.sourcebot.api.response.*
 import net.sourcebot.api.urlDecoded
 import net.sourcebot.module.trivia.data.Game
 import net.sourcebot.module.trivia.data.OpenTDB
-import java.util.*
 
 class TriviaCommand : RootCommand() {
     override val name: String = "trivia"
@@ -54,7 +53,7 @@ class TriviaCommand : RootCommand() {
             val activeGame = activeGames[message.guild.id]
             if (activeGame != null) return StandardWarningResponse(
                 "Trivia In Progress!",
-                "There is already an active game! [[Jump](${activeGame.getJumpUrl()})]"
+                "There is already an active game in ${activeGame.getChannel()}!"
             )
             val game = Game(amount, category)
             activeGames[message.guild.id] = game
@@ -74,7 +73,7 @@ class TriviaCommand : RootCommand() {
             val activeGame = activeGames.remove(message.guild.id) ?: return StandardErrorResponse(
                 "Trivia Stop", "There is no active Trivia game!"
             )
-            activeGame.stop()
+            activeGame.stop(Game.StopCause.ABORTED)
             //The response will be available as an edit to the original message
             return EmptyResponse()
         }

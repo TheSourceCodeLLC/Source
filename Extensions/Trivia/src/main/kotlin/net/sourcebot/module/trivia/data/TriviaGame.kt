@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.requests.RestAction
 import net.sourcebot.Source
+import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardEmbedResponse
 import net.sourcebot.api.response.StandardInfoResponse
@@ -13,7 +14,8 @@ import java.util.*
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class Game(amount: Int, category: Int?) {
+class Game(private val amount: Int, private val category: Int?) {
+    private val log = Collections.synchronizedList(ArrayList<String>())
     private val triviaListener = Trivia.TRIVIA_LISTENER
     private val questions = LinkedList(
         OpenTDB.requestQuestions(amount, category)
@@ -24,20 +26,25 @@ class Game(amount: Int, category: Int?) {
 
     private lateinit var postGame: () -> Unit
     private lateinit var message: Message
-    private lateinit var current: OpenTDB.Question
+    private var current: OpenTDB.Question? = null
     private var currentRound = 0
 
     private lateinit var lastTick: ScheduledFuture<out Any>
 
     internal fun setMessage(message: Message) {
         this.message = message
-        triviaListener.link(message.id, answers)
+        triviaListener.link(message, answers)
     }
 
-    fun getJumpUrl() = message.jumpUrl
+    fun getChannel() = "<#${message.channel.id}>"
 
     fun start(postGame: () -> Unit): Response {
         this.postGame = postGame
+        log.add("Trivia Started")
+        log.add("Questions: $amount")
+        if (category != null) {
+            log.add("Category: ${OpenTDB.categories[category].name}")
+        }
         //Dispatch initial tick after 10 seconds
         lastTick = Source.SCHEDULED_EXECUTOR_SERVICE.schedule(
             this::gameTick, 10, TimeUnit.SECONDS
@@ -51,53 +58,82 @@ class Game(amount: Int, category: Int?) {
     )
 
     private fun gameTick() {
-        var firstBonus = true
-        answers.forEach { (user, answer) ->
-            val score = scores.computeIfAbsent(user) { 0 }
-            if (current.answers[answer].correct) {
-                var toIncrement = 1
-                if (firstBonus) {
-                    toIncrement += 1
-                    firstBonus = false
-                }
-                scores[user] = score + toIncrement
+        if (current == null) {
+            //If there are no more questions, do not re-tick
+            current = questions.poll() ?: return stop(StopCause.FINISHED)
+            updateMessage(
+                QuestionResponse(
+                    ++currentRound,
+                    totalRounds,
+                    current!!
+                ).asEmbed(message.author)
+            ) {
+                setMessage(it)
+                validEmotes.map(message::addReaction).forEach(RestAction<Void>::queue)
+                //Re-tick after each question is posted
+                lastTick = Source.SCHEDULED_EXECUTOR_SERVICE.schedule(
+                    this::gameTick, 20, TimeUnit.SECONDS
+                )
             }
-        }
-        answers.clear()
-        if (this::current.isInitialized) {
+            return
+        } else {
+            val question = current!!
+            log.add("Current Question: \n\t${question.text}")
+            log.add("Possible Answers: \n${
+                question.answers.joinToString(
+                    separator = "\n",
+                    transform = { "\t${it.text}" })
+            }"
+            )
+            log.add("Correct Answer: ${question.correct}")
+            var firstBonus = true
+            log.add("Player Answers (User, Answer, Previous Score, New Score, First Correct?): ")
+            answers.forEach { (user, answer) ->
+                var logLine = "\t${Source.SHARD_MANAGER.getUserById(user)!!.formatLong()}: "
+                val score = scores.computeIfAbsent(user) { 0 }
+                val choice = question.answers[answer]
+                logLine += "${choice.text}, "
+                logLine += "${score}, "
+                if (choice.correct) {
+                    val toIncrement = if (firstBonus) {
+                        firstBonus = false
+                        2
+                    } else 1
+                    logLine += "${score + toIncrement}, "
+                    logLine += (if (toIncrement == 2) "true" else "false")
+                    scores[user] = score + toIncrement
+                }
+                log.add(logLine)
+            }
+            answers.clear()
             updateMessage(
                 PostRoundResponse(
                     currentRound,
                     totalRounds,
-                    current,
+                    question,
                     getTopFive(),
                     questions.size > 0
                 ).asEmbed(message.author)
             )
-            Thread.sleep(5000)
-        }
-        //If there are no more questions, do not re-tick
-        current = questions.poll() ?: return stop()
-        updateMessage(
-            QuestionResponse(
-                ++currentRound,
-                totalRounds,
-                current
-            ).asEmbed(message.author)
-        ) {
-            setMessage(it)
-            validEmotes.map(message::addReaction).forEach(RestAction<Void>::queue)
-            //Re-tick after each question is posted
+            current = null
             lastTick = Source.SCHEDULED_EXECUTOR_SERVICE.schedule(
-                this::gameTick, 20, TimeUnit.SECONDS
+                this::gameTick, 5, TimeUnit.SECONDS
             )
         }
     }
 
-    fun stop() {
+    fun stop(cause: StopCause) {
         updateMessage(ScoreResponse(getTopFive()).asEmbed(message.author))
-        postGame()
         lastTick.cancel(true)
+        log.add("Trivia ${cause.name.toLowerCase().capitalize()}")
+        if (scores.isNotEmpty()) {
+            log.add("Final Scores:")
+            scores.entries.sortedByDescending { (_, v) -> v }.forEach {
+                log.add("\t${Source.SHARD_MANAGER.getUserById(it.key)!!.formatLong()}: ${it.value}")
+            }
+        }
+        uploadLog()
+        postGame()
     }
 
     private fun updateMessage(newContent: MessageEmbed, post: ((Message) -> Unit)? = null) {
@@ -114,6 +150,12 @@ class Game(amount: Int, category: Int?) {
     private fun getTopFive() = scores.entries.sortedByDescending { (_, v) ->
         v
     }.take(5)
+
+    private fun uploadLog() {
+        log.joinToString("\n").byteInputStream().use {
+            message.channel.sendFile(it, "trivia.txt").queue()
+        }
+    }
 
     class PostRoundResponse(
         round: Int,
@@ -171,5 +213,9 @@ class Game(amount: Int, category: Int?) {
             addField("", "\uD83C\uDDE8 **${q3.text}**", false)
             addField("", "\uD83C\uDDE9 **${q4.text}**", false)
         }
+    }
+
+    enum class StopCause {
+        ABORTED, FINISHED
     }
 }

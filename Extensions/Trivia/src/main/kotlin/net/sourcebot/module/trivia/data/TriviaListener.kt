@@ -20,10 +20,11 @@ class TriviaListener : EventSubscriber<Trivia> {
     private val messageCache = HashMap<String, Message>()
 
     fun link(
-        messageId: String,
+        message: Message,
         answerMap: HashMap<String, Int>
     ) {
-        gameMap[messageId] = answerMap
+        gameMap[message.id] = answerMap
+        messageCache[message.id] = message
     }
 
     fun unlink(messageId: String) {
