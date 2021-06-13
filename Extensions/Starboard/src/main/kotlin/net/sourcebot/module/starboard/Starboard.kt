@@ -11,7 +11,7 @@ class Starboard : SourceModule() {
         node("threshold", "Star threshold for starboard messages.")
     }
 
-    override fun onEnable() {
+    override fun enable() {
         subscribeEvents(StarboardListener(StarboardDataManager()))
     }
 }

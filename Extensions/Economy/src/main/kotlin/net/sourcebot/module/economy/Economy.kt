@@ -15,7 +15,7 @@ class Economy : SourceModule() {
         node("nickname-cost", "The amount of coins a nickname change costs")
     }
 
-    override fun onEnable() {
+    override fun enable() {
         registerCommands(
             BalanceCommand(),
             GambleCommand(),

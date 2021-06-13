@@ -48,7 +48,7 @@ class BaseModule(
         }.let(::ModuleDescriptor)
     }
 
-    override fun onEnable() {
+    override fun enable() {
         registerCommands(
             InfoCommand(),
             HelpCommand(),

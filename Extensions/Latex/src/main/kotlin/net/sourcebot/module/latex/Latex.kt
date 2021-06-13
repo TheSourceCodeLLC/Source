@@ -19,7 +19,7 @@ import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 
 class Latex : SourceModule() {
-    override fun onEnable() {
+    override fun enable() {
         registerCommands(LatexCommand())
         subscribeEvents(LatexListener())
     }

@@ -17,13 +17,13 @@ class Counting : SourceModule() {
 
     private val countingListener = CountingListener()
     private val checkpointTask = countingListener.handleCheckpoints()
-    override fun onEnable() {
+    override fun enable() {
         Source.SHARD_MANAGER.guilds.forEach(::clearCountingOverride)
         registerCommands(CountingCommand())
         subscribeEvents(countingListener)
     }
 
-    override fun onDisable() {
+    override fun disable() {
         Source.SHARD_MANAGER.guilds.forEach(::denyCountingOverride)
         checkpointTask.cancel(true)
     }

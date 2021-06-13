@@ -29,7 +29,7 @@ class Moderation : SourceModule() {
     }
 
     private lateinit var task: ScheduledFuture<*>
-    override fun onEnable() {
+    override fun enable() {
         registerCommands(
             ClearCommand(),
             WarnCommand(),
@@ -61,7 +61,7 @@ class Moderation : SourceModule() {
         }, 0L, 1L, TimeUnit.SECONDS)
     }
 
-    override fun onDisable() {
+    override fun disable() {
         task.cancel(true)
     }
 

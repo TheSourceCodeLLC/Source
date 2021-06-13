@@ -5,7 +5,7 @@ import net.sourcebot.module.documentation.commands.*
 
 class Documentation : SourceModule() {
 
-    override fun onEnable() {
+    override fun enable() {
         registerCommands(
             JDACommand(),
             JavaCommand(),

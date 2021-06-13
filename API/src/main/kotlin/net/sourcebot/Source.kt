@@ -147,7 +147,7 @@ object Source {
         logger.info("Source is now online!")
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
-                MODULE_HANDLER.getModules().forEach(MODULE_HANDLER::disableModule)
+                MODULE_HANDLER.loader.getExtensions().forEach(MODULE_HANDLER::disableModule)
                 SHARD_MANAGER.shards.forEach(JDA::shutdown)
                 CONFIG_MANAGER.saveAll()
             }
