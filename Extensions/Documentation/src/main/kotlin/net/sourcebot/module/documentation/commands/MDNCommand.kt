@@ -12,7 +12,9 @@ import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.DocumentationCommand
 import net.sourcebot.module.documentation.utility.*
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Element
+import org.jsoup.nodes.Document
+import java.io.InputStreamReader
+import java.net.URL
 
 class MDNCommand : DocumentationCommand(
     "mdn", "Allows the user to query the MDN Documentation."
@@ -40,15 +42,15 @@ class MDNCommand : DocumentationCommand(
         val connectionStr = "https://developer.mozilla.org/api/v1/search/en-US?q=$query"
 
         try {
-            val searchDocument = Jsoup.connect(connectionStr)
-                .ignoreContentType(true)
-                .maxBodySize(0)
-                .get()
+            val searchInput = URL(connectionStr).openStream()
+            val searchReader = InputStreamReader(searchInput, "UTF-8")
 
             val notFoundResponse = StandardErrorResponse(user.name, "Unable to find `$query` in the MDN Documentation!")
+            val jsonObject = JsonSerial.mapper.readTree(searchReader)
 
+            searchInput.close()
+            searchReader.close()
 
-            val jsonObject = JsonSerial.mapper.readTree(searchDocument.body().text())
             val documentArray = jsonObject["documents"] as ArrayNode
 
             if (documentArray.isEmpty) {
@@ -58,10 +60,9 @@ class MDNCommand : DocumentationCommand(
             val resultList: MutableList<JsonNode> = mutableListOf()
 
             documentArray.filter {
-                val title = it["title"].asText()
-                    ?.replace(".prototype", "")
-                    ?.removeSuffix("()") ?: return@filter false
-                return@filter title.equals(query, true)
+                val title = it["title"].asText()?.removeSuffix("()") ?: return@filter false
+                val withoutPrototype = title.replace(".prototype", "")
+                return@filter query.equals(title, true) || query.equals(withoutPrototype, true)
             }.toCollection(resultList)
 
             if (resultList.isEmpty()) {
@@ -90,15 +91,15 @@ class MDNCommand : DocumentationCommand(
             val docObjectResult = resultList[0]
             val resultUrl = "$baseUrl/en-US/docs/${docObjectResult["slug"].asText()}"
 
-            val resultDocument = Jsoup.connect(resultUrl)
-                .ignoreContentType(true)
-                .maxBodySize(0)
-                .get()
+            val resultInput = URL(resultUrl).openStream()
+
+            val resultDocument = Jsoup.parse(resultInput, "UTF-8", resultUrl)
+            resultInput.close()
 
             val docResponse = DocResponse()
             docResponse.setAuthor("MDN Documentation", null, iconUrl)
 
-            val wikiElement = resultDocument.selectFirst("article.article")
+            val wikiElement = resultDocument.selectFirst("article.main-page-content")
             wikiElement.html(wikiElement.html().replace("<p></p>", ""))
 
             val descriptionElement = wikiElement.selectFirst("div > p")
@@ -108,22 +109,24 @@ class MDNCommand : DocumentationCommand(
                 .toMarkdown()
                 .truncate(600)
 
-            val anchorText = docObjectResult["title"].asText().replace(".", "#")
+            val anchorText = docObjectResult["title"].asText()
 
             val itemHyperlink = MarkdownUtil.maskedLink(anchorText, resultUrl)
 
             docResponse.setDescription("**__${itemHyperlink}__**\n$description")
 
-            val propertyString = retrieveFormattedAnchorList(wikiElement, "Properties")
-            docResponse.attemptAddEmbedField("Properties:", propertyString)
+            if (!anchorText.contains(".")) {
+                val propertyString = retrieveFormattedSidebarList(resultDocument, "Properties")
+                docResponse.attemptAddEmbedField("Properties:", propertyString)
 
-            val methodString = retrieveFormattedAnchorList(wikiElement, "Methods")
-            docResponse.attemptAddEmbedField("Methods:", methodString)
+                val methodString = retrieveFormattedSidebarList(resultDocument, "Methods")
+                docResponse.attemptAddEmbedField("Methods:", methodString)
+            }
 
-            val headerNames = arrayOf("Parameters", "Return_value", "Exceptions", "Value", "Throws")
+            val headerNames = arrayOf("parameters", "return_value", "returns", "exceptions", "value", "throws")
             headerNames.forEach {
-                val fieldName = if (it.equals("Return_value", true)) "Returns:" else "$it:"
-                val fieldDescription = retrieveFormattedElement(wikiElement, it)
+                val fieldName = if (it.equals("return_value", true)) "Returns:" else "${it.capitalize()}:"
+                val fieldDescription = retrieveFormattedElement(resultDocument, it)
 
                 docResponse.attemptAddEmbedField(fieldName, fieldDescription)
             }
@@ -137,45 +140,36 @@ class MDNCommand : DocumentationCommand(
 
     }
 
-    private fun retrieveFormattedAnchorList(wikiElement: Element, headerName: String): String {
-        val elementLocator = wikiElement.selectFirst("h2#$headerName") ?: wikiElement.selectFirst("div#$headerName")
-        ?: return ""
+    private fun retrieveFormattedSidebarList(document: Document, headerName: String): String {
+        val sidebar = document.selectFirst("nav#sidebar-quicklinks > div > ol") ?: return ""
 
-        var descListElement = if (elementLocator.tagName() == "div") {
-            elementLocator.selectFirst("dl")
-        } else {
-            elementLocator.nextElementSibling()
-        }
+        val listHeader = sidebar.select("li").first { it.selectFirst("a")?.text().equals(headerName, true) }
+        val listChildren = listHeader.selectFirst("ol")
 
-        if (descListElement.tagName() == "p") {
-            descListElement = descListElement.nextElementSibling()
-        }
+        val builder = StringBuilder()
+        listChildren.select("li").forEach {
+            val anchor = it.selectFirst("a") ?: return@forEach
+            val text = anchor.text()
+            if (text.contains(" ") || text.contains("[")) return@forEach
 
-        val returnSB = StringBuilder()
-        val descTagList = descListElement.select("dt")
-
-        descTagList.stream()
-            .filter { it.selectFirst("a") != null && returnSB.length < 512 }
-            .map { it.selectFirst("a") }
-            .forEach {
-                val text = it.text().substringAfter(".").removeSuffix("()")
-
-                returnSB.append("`$text` ")
+            if (builder.length < 512 && text.isNotBlank()) {
+                builder.append("`${text.substringAfterLast(".").removeSuffix("()")}` ")
+                if (builder.length >= 512) builder.append("...")
             }
 
-        returnSB.trimToSize()
-        return returnSB.toString()
+        }
+
+        return builder.toString()
     }
 
-    private fun retrieveFormattedElement(wikiElement: Element, headerName: String): String {
-        val header = wikiElement.selectFirst("h3#$headerName") ?: return ""
+    private fun retrieveFormattedElement(document: Document, headerName: String): String {
+        val header = document.selectFirst("h3#$headerName") ?: return ""
 
         val returnElement = header.nextElementSibling()
         val descTagList = returnElement.select("dt")
 
         if (descTagList.size == 0) {
-            return returnElement.anchorsToHyperlinks(baseUrl)
-                .toMarkdown()
+            return returnElement.anchorsToHyperlinks(baseUrl).toMarkdown()
         }
 
         val returnSB = StringBuilder()
@@ -207,9 +201,11 @@ class MDNCommand : DocumentationCommand(
                     .truncate(128)
 
                 val appendFormat = "$itemName - $itemDesc\n"
-                val appendString = if (count == 3 && descTagList.size > 4) "$appendFormat..." else "$appendFormat\n"
-
-                returnSB.append(appendString)
+                // Max field length is 1024, max itemDesc is 128, 1024-128-3(for truncation)=893
+                if (returnSB.length <= 893) {
+                    returnSB.append("$appendFormat\n")
+                    if (returnSB.length > 893) returnSB.append("...")
+                }
                 count++
             }
 
