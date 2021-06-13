@@ -1,7 +1,3 @@
-repositories {
-    maven("https://nexus.mcdevs.us/repository/mcdevs/")
-}
-
 dependencies {
     api(kotlin("stdlib", "1.4.10"))
     api(kotlin("reflect", "1.4.10"))
