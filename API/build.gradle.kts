@@ -10,7 +10,8 @@ dependencies {
     api("org.mongodb:mongo-java-driver:3.12.4")
     api("org.fusesource.jansi:jansi:1.18")
     api("com.sedmelluq:lavaplayer:1.3.69")
-    api("me.hwiggy:Extensible:1.2")
+
+    implementation("me.hwiggy:Extensible:1.2")
 }
 
 tasks.shadowJar {
