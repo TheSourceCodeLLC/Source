@@ -42,14 +42,11 @@ class MDNCommand : DocumentationCommand(
         val connectionStr = "https://developer.mozilla.org/api/v1/search/en-US?q=$query"
 
         try {
-            val searchInput = URL(connectionStr).openStream()
-            val searchReader = InputStreamReader(searchInput, "UTF-8")
-
             val notFoundResponse = StandardErrorResponse(user.name, "Unable to find `$query` in the MDN Documentation!")
-            val jsonObject = JsonSerial.mapper.readTree(searchReader)
-
-            searchInput.close()
-            searchReader.close()
+            val jsonObject = URL(connectionStr).openStream().use {
+                val reader = InputStreamReader(it, "UTF-8")
+                JsonSerial.mapper.readTree(reader)
+            }
 
             val documentArray = jsonObject["documents"] as ArrayNode
 
@@ -91,10 +88,9 @@ class MDNCommand : DocumentationCommand(
             val docObjectResult = resultList[0]
             val resultUrl = "$baseUrl/en-US/docs/${docObjectResult["slug"].asText()}"
 
-            val resultInput = URL(resultUrl).openStream()
-
-            val resultDocument = Jsoup.parse(resultInput, "UTF-8", resultUrl)
-            resultInput.close()
+            val resultDocument = URL(resultUrl).openStream().use {
+                Jsoup.parse(it, "UTF-8", resultUrl)
+            }
 
             val docResponse = DocResponse()
             docResponse.setAuthor("MDN Documentation", null, iconUrl)
@@ -152,14 +148,11 @@ class MDNCommand : DocumentationCommand(
             val text = anchor.text()
             if (text.contains(" ") || text.contains("[")) return@forEach
 
-            if (builder.length < 512 && text.isNotBlank()) {
-                builder.append("`${text.substringAfterLast(".").removeSuffix("()")}` ")
-                if (builder.length >= 512) builder.append("...")
-            }
-
+            builder.append("`${text.substringAfterLast(".").removeSuffix("()")}` ")
         }
 
-        return builder.toString()
+        return builder.toString().truncate(512).replace("\\s`[^`]*[.]{3}\$".toRegex(), "...")
+
     }
 
     private fun retrieveFormattedElement(document: Document, headerName: String): String {
@@ -169,12 +162,11 @@ class MDNCommand : DocumentationCommand(
         val descTagList = returnElement.select("dt")
 
         if (descTagList.size == 0) {
-            return returnElement.anchorsToHyperlinks(baseUrl).toMarkdown()
+            val desc = returnElement.selectFirst("p") ?: returnElement
+            return desc.anchorsToHyperlinks(baseUrl).toMarkdown()
         }
 
         val returnSB = StringBuilder()
-
-        var count = 0
         descTagList.stream().limit(4)
             .forEach {
                 // Prevents nested dl elements from showing up
@@ -201,16 +193,12 @@ class MDNCommand : DocumentationCommand(
                     .truncate(128)
 
                 val appendFormat = "$itemName - $itemDesc\n"
-                // Max field length is 1024, max itemDesc is 128, 1024-128-3(for truncation)=893
-                if (returnSB.length <= 893) {
-                    returnSB.append("$appendFormat\n")
-                    if (returnSB.length > 893) returnSB.append("...")
-                }
-                count++
+                returnSB.append("$appendFormat\n")
             }
 
         returnSB.trimToSize()
-        return returnSB.toString()
+        // Max field length is 1024, max itemDesc is 128, 1024-128-3(for truncation)=893
+        return returnSB.toString().truncate(893)
 
     }
 
