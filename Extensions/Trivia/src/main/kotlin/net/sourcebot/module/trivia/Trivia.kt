@@ -7,7 +7,7 @@ import net.sourcebot.module.trivia.data.TriviaListener
 class Trivia : SourceModule() {
 
     override fun enable() {
-        TRIVIA_LISTENER = TriviaListener(this)
+        TRIVIA_LISTENER = TriviaListener()
         registerCommands(TriviaCommand())
         subscribeEvents(TRIVIA_LISTENER)
     }

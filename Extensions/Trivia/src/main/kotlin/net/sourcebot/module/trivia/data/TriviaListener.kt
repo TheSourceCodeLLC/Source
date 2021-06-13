@@ -15,7 +15,7 @@ val validEmotes = arrayOf(
     "\uD83C\uDDE9"
 )
 
-class TriviaListener(trivia: Trivia) : EventSubscriber<Trivia> {
+class TriviaListener : EventSubscriber<Trivia> {
     private val gameMap = HashMap<String, HashMap<String, Int>>()
     private val messageCache = HashMap<String, Message>()
 

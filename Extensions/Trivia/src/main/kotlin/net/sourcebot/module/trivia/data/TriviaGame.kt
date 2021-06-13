@@ -1,6 +1,7 @@
 package net.sourcebot.module.trivia.data
 
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.requests.RestAction
 import net.sourcebot.Source
 import net.sourcebot.api.response.Response
@@ -64,7 +65,7 @@ class Game(amount: Int, category: Int?) {
         }
         answers.clear()
         if (this::current.isInitialized) {
-            message.editMessage(
+            updateMessage(
                 PostRoundResponse(
                     currentRound,
                     totalRounds,
@@ -72,19 +73,19 @@ class Game(amount: Int, category: Int?) {
                     getTopFive(),
                     questions.size > 0
                 ).asEmbed(message.author)
-            ).complete()
-            message.clearReactions().complete()
+            )
             Thread.sleep(5000)
         }
         //If there are no more questions, do not re-tick
         current = questions.poll() ?: return stop()
-        message.editMessage(
+        updateMessage(
             QuestionResponse(
                 ++currentRound,
                 totalRounds,
                 current
             ).asEmbed(message.author)
-        ).queue {
+        ) {
+            setMessage(it)
             validEmotes.map(message::addReaction).forEach(RestAction<Void>::queue)
             //Re-tick after each question is posted
             lastTick = Source.SCHEDULED_EXECUTOR_SERVICE.schedule(
@@ -94,12 +95,20 @@ class Game(amount: Int, category: Int?) {
     }
 
     fun stop() {
-        message.editMessage(
-            ScoreResponse(getTopFive()).asEmbed(message.author)
-        ).queue { it.clearReactions().queue() }
-        triviaListener.unlink(message.id)
+        updateMessage(ScoreResponse(getTopFive()).asEmbed(message.author))
         postGame()
         lastTick.cancel(true)
+    }
+
+    private fun updateMessage(newContent: MessageEmbed, post: ((Message) -> Unit)? = null) {
+        if (post != null) {
+            message.delete().queue { triviaListener.unlink(message.id) }
+            message.channel.sendMessage(newContent).queue(post)
+        } else {
+            message.delete().complete()
+            triviaListener.unlink(message.id)
+            setMessage(message.channel.sendMessage(newContent).complete())
+        }
     }
 
     private fun getTopFive() = scores.entries.sortedByDescending { (_, v) ->
