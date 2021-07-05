@@ -22,7 +22,7 @@ import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
 import net.sourcebot.api.logger.LoggerConfiguration
 import net.sourcebot.api.menus.MenuHandler
-import net.sourcebot.api.module.ModuleHandler
+import net.sourcebot.api.module.ModuleParentClassLoader
 import net.sourcebot.api.permission.PermissionHandler
 import net.sourcebot.api.permission.SourcePermission
 import net.sourcebot.api.permission.SourceRole
@@ -86,12 +86,12 @@ object Source {
     private fun loadModules() {
         val modulesFolder = File("modules")
         if (!modulesFolder.exists()) modulesFolder.mkdir()
-        MODULE_HANDLER.loadAndEnable(BaseModule(this::class.java.classLoader))
+        MODULE_HANDLER.loadAndEnable(BaseModule())
         MODULE_HANDLER.loadAndEnable(modulesFolder)
         logger.info("All modules have been enabled!")
     }
 
-    @JvmStatic val MODULE_HANDLER = ModuleHandler()
+    @JvmStatic val MODULE_HANDLER = ModuleParentClassLoader(ClassLoader.getSystemClassLoader())
     @JvmStatic val MENU_HANDLER = MenuHandler()
     @JvmStatic val MONGODB = MongoDB(properties.required("mongodb"))
     @JvmStatic val PERMISSION_HANDLER = PermissionHandler(properties.required("global-admins"))

@@ -11,7 +11,7 @@ dependencies {
     api("org.fusesource.jansi:jansi:1.18")
     api("com.sedmelluq:lavaplayer:1.3.69")
 
-    api("me.hwiggy:Extensible:1.2")
+    api("me.hwiggy:Extensible:1.3")
 }
 
 tasks.shadowJar {

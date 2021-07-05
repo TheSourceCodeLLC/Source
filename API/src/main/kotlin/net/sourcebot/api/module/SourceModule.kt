@@ -1,6 +1,6 @@
 package net.sourcebot.api.module
 
-import me.hwiggy.extensible.contract.Extension
+import me.hwiggy.extensible.binding.jvm.contract.JarExtension
 import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.configuration.ConfigurationInfo
@@ -15,20 +15,8 @@ import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 
-abstract class SourceModule : Extension {
+abstract class SourceModule : JarExtension<ModuleDescriptor>() {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
-
-    lateinit var classLoader: ModuleClassLoader
-        internal set
-
-    lateinit var descriptor: ModuleDescriptor
-        internal set
-
-    lateinit var lazySource: File
-        internal set
-
-    override val sourceFile: File
-        get() = lazySource
 
     val name by lazy { descriptor.name }
     val version by lazy { descriptor.version }

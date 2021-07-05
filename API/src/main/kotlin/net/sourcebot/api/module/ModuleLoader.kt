@@ -1,13 +1,13 @@
 package net.sourcebot.api.module
 
-import me.hwiggy.extensible.AbstractLoader
+import me.hwiggy.extensible.binding.AbstractLoader
 import me.hwiggy.extensible.exception.CompositeException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class ModuleLoader(moduleHandler: ModuleHandler) : AbstractLoader<ModuleDescriptor, SourceModule>() {
+class ModuleLoader(parentClassLoader: ModuleParentClassLoader) : AbstractLoader<ModuleDescriptor, SourceModule>() {
     private val logger: Logger = LoggerFactory.getLogger(ModuleLoader::class.java)
-    override val strategy = ModuleLoadStrategy(moduleHandler)
+    override val strategy = ModuleLoadStrategy(parentClassLoader)
 
     override fun findExtension(name: String) = extensionIndex.values.find {
         it.name.startsWith(name, true)

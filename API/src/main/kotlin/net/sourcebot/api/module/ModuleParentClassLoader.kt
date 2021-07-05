@@ -1,39 +1,19 @@
 package net.sourcebot.api.module
 
+import me.hwiggy.extensible.binding.jvm.classloader.JarParentClassLoader
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.util.concurrent.ConcurrentHashMap
 
 @Suppress("DEPRECATION", "UNCHECKED_CAST", "UNUSED")
-class ModuleHandler : ClassLoader() {
-    private val logger: Logger = LoggerFactory.getLogger(ModuleHandler::class.java)
-    private val classCache = ConcurrentHashMap<String, Class<*>>()
-    val loader = ModuleLoader(this)
-
-    fun findClass(
-        name: String, loader: JarModuleClassLoader
-    ): Class<*> = classCache[name] ?: try {
-        loader.findClass(name, false)
-    } catch (ex: Exception) {
-        null
-    }?.also { classCache[name] = it } ?: throw ClassNotFoundException(name)
+class ModuleParentClassLoader(
+    parent: ClassLoader
+) : JarParentClassLoader<ModuleDescriptor, SourceModule>(parent) {
+    private val logger: Logger = LoggerFactory.getLogger(ModuleParentClassLoader::class.java)
+    override val loader = ModuleLoader(this)
 
     fun moduleExists(name: String) = loader.findExtension(name) != null
     inline fun <reified T : SourceModule> getExtension() = loader.getExtension(T::class.java)
-
-    public override fun findClass(name: String): Class<*> {
-        val cached = classCache[name]
-        if (cached != null) return cached
-        var found: Class<*>? = null
-        for (it in loader.getExtensions().map(SourceModule::classLoader)) {
-            try {
-                found = it.findClass(name, false); break
-            } catch (ex: Exception) {
-            }
-        }
-        return found?.also { classCache[name] = it } ?: throw ClassNotFoundException(name)
-    }
 
     fun loadAndEnable(folder: File) = loadModules(folder).also {
         logger.info("Enabling modules from '${folder.path}'...")
@@ -80,5 +60,4 @@ class ModuleHandler : ClassLoader() {
     } catch (err: Throwable) {
         err.printStackTrace()
     }
-
 }
