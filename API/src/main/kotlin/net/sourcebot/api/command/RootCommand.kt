@@ -17,10 +17,4 @@ abstract class RootCommand : Command() {
     ) : InputTransformer() {
         final override fun matches(input: String) = regex.matches(input)
     }
-
-    abstract class OptionTransformer(
-        private val options: Collection<String>
-    ) : InputTransformer() {
-        final override fun matches(input: String) = input in options
-    }
 }

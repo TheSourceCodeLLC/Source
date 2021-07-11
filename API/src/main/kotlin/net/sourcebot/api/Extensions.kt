@@ -48,7 +48,7 @@ fun Member.getHighestRole() = roles.getOrNull(0) ?: guild.publicRole
 
 @JvmOverloads
 fun Double.round(
-    precision: Int,
+    precision: Int = 2,
     mode: RoundingMode = RoundingMode.HALF_UP
 ) = BigDecimal(this).setScale(precision, mode).toDouble()
 

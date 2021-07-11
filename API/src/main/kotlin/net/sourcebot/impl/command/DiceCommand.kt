@@ -34,13 +34,13 @@ class DiceCommand : RootCommand() {
 
     override fun execute(message: Message, args: Arguments): Response {
         val times = args.next(
-            Adapter.byte(1, error = "You may not roll a dice less than one time!")
+            Adapter.int(1, error = "You may not roll a dice less than one time!")
         ) ?: 1
         val sides = args.next(
-            Adapter.byte(3, error = "You may not roll a dice with less than 3 sides!")
+            Adapter.int(3, error = "You may not roll a dice with less than 3 sides!")
         ) ?: 6
-        val rolls = IntArray(times.toInt())
-        (1..times).forEach { rolls[it - 1] = ThreadLocalRandom.current().nextInt(1, sides.toInt()) }
+        val rolls = IntArray(times)
+        (1..times).forEach { rolls[it - 1] = ThreadLocalRandom.current().nextInt(1, sides) }
         return StandardInfoResponse(
             "Dice Roll - ${times}d${sides}",
             "```json\n${rolls.joinToString { it.toString() }}\n```"
