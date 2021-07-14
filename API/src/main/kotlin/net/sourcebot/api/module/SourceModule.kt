@@ -1,5 +1,6 @@
 package net.sourcebot.api.module
 
+import me.hwiggy.extensible.binding.jvm.contract.JarExtension
 import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.configuration.ConfigurationInfo
@@ -14,14 +15,8 @@ import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 
-abstract class SourceModule {
+abstract class SourceModule : JarExtension<ModuleDescriptor>() {
     val logger: Logger = LoggerFactory.getLogger(javaClass)
-
-    lateinit var classLoader: ModuleClassLoader
-        internal set
-
-    lateinit var descriptor: ModuleDescriptor
-        internal set
 
     val name by lazy { descriptor.name }
     val version by lazy { descriptor.version }
@@ -76,44 +71,28 @@ abstract class SourceModule {
     }
 
     fun load(postLoad: () -> Unit) = try {
-        onLoad()
+        load()
         postLoad()
         logger.info("Loaded $name v$version by $author.")
     } catch (err: Throwable) {
         throw ModuleLifecycleException(name, err)
     }
 
-    /**
-     * Fired when this Module is being loaded; before it is enabled.
-     * Methods in this scope should not utilize API from other Modules.
-     */
-    open fun onLoad() = Unit
-
     fun enable(postEnable: () -> Unit) = try {
-        onEnable()
+        enable()
         postEnable()
         logger.info("Enabled $name v${version}.")
     } catch (err: Throwable) {
         throw ModuleLifecycleException(name, err)
     }
 
-    /**
-     * Fired when this Module is being enabled, after it is loaded.
-     */
-    open fun onEnable() = Unit
-
     fun disable(postDisable: () -> Unit) = try {
-        onDisable()
+        disable()
         postDisable()
         logger.info("Disabled $name v${version}.")
     } catch (err: Throwable) {
         throw ModuleLifecycleException(name, err)
     }
-
-    /**
-     * Fired when this Module is being disabled, before it is unloaded.
-     */
-    open fun onDisable() = Unit
 
     fun registerCommands(vararg commands: RootCommand) {
         Source.COMMAND_HANDLER.registerCommands(this, *commands)

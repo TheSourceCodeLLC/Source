@@ -5,7 +5,6 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import net.dv8tion.jda.api.entities.Guild
-import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.guild.GenericGuildMessageEvent
@@ -78,12 +77,12 @@ class CountingListener : EventSubscriber<Counting> {
                 "No funny business, ${message.author.asMention}.", channel, counting, message.author.id
             )
         }
-        val nextNumber = input.toLongOrNull()
+        val nextNumber = input.split(Regex("\\D+"))[0].toLongOrNull()
         if (nextNumber == null) {
             recentDeletes += channel.id
             message.delete().queue()
             return restart(
-                "Sorry, ${message.author.asMention}, messages may only be numbers!",
+                "Sorry, ${message.author.asMention}, messages must begin with a number!",
                 channel,
                 counting,
                 message.author.id
@@ -92,7 +91,7 @@ class CountingListener : EventSubscriber<Counting> {
         if (nextNumber != lastNumber + 1) return restart(
             "${message.author.asMention} is bad at counting.", channel, counting, message.author.id
         )
-        CountingMessage(message).also {
+        CountingMessage(nextNumber, message.author.id).also {
             lastMessages[channel.id] = it
             counting["lastMessage"] = it
         }
@@ -202,17 +201,4 @@ class CountingListener : EventSubscriber<Counting> {
         configurationManager[guild].optional<String>("counting.mute-role")?.let(guild::getRoleById)
 }
 
-class CountingMessage {
-    val number: Long
-    val author: String
-
-    constructor(message: Message) {
-        this.number = message.contentRaw.toLong()
-        this.author = message.author.id
-    }
-
-    @JsonCreator constructor(number: Long, author: String) {
-        this.number = number
-        this.author = author
-    }
-}
+class CountingMessage @JsonCreator constructor(val number: Long, val author: String)

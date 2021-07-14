@@ -15,15 +15,16 @@ val validEmotes = arrayOf(
     "\uD83C\uDDE9"
 )
 
-class TriviaListener(trivia: Trivia) : EventSubscriber<Trivia> {
+class TriviaListener : EventSubscriber<Trivia> {
     private val gameMap = HashMap<String, HashMap<String, Int>>()
     private val messageCache = HashMap<String, Message>()
 
     fun link(
-        messageId: String,
+        message: Message,
         answerMap: HashMap<String, Int>
     ) {
-        gameMap[messageId] = answerMap
+        gameMap[message.id] = answerMap
+        messageCache[message.id] = message
     }
 
     fun unlink(messageId: String) {

@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 
 class Profiles : SourceModule() {
     private lateinit var cleanup: ScheduledFuture<*>
-    override fun onEnable() {
+    override fun enable() {
         profiles = CacheBuilder.newBuilder().weakKeys()
             .removalListener<Guild, ProfileHandler> { (_, v) -> v.saveAll() }
             .build(object : CacheLoader<Guild, ProfileHandler>() {
@@ -41,7 +41,7 @@ class Profiles : SourceModule() {
         }, 0L, 10L, TimeUnit.SECONDS)
     }
 
-    override fun onDisable() {
+    override fun disable() {
         cleanup.cancel(true)
         profiles.invalidateAll()
     }

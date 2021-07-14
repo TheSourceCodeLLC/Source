@@ -11,7 +11,7 @@ import net.sourcebot.module.music.youtube.YoutubeAPI
 
 class Music : SourceModule() {
 
-    override fun onEnable() {
+    override fun enable() {
         YOUTUBE_API = YoutubeAPI(config.required("api-key"))
         AudioSourceManagers.registerRemoteSources(PLAYER_MANAGER)
         registerCommands(
@@ -24,7 +24,7 @@ class Music : SourceModule() {
         )
     }
 
-    override fun onDisable() {
+    override fun disable() {
         PLAYER_MANAGER.shutdown()
     }
 

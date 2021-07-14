@@ -4,7 +4,7 @@ import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.cryptography.commands.*
 
 class Cryptography : SourceModule() {
-    override fun onEnable() {
+    override fun enable() {
         registerCommands(
             Base64Command(),
             OngCommand(),

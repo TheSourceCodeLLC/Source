@@ -37,7 +37,7 @@ class HelpCommand : RootCommand() {
     override fun execute(message: Message, args: Arguments): Response {
         val topic = args.next()
         if (topic == null) {
-            val modules = moduleHandler.getModules()
+            val modules = moduleHandler.loader.getExtensions()
             val enabled = modules.filter { it.enabled }
             if (enabled.isEmpty()) return StandardInfoResponse(
                 "Module Index",
@@ -98,7 +98,7 @@ class HelpCommand : RootCommand() {
                 }
             }
         }
-        val asModule: SourceModule? = moduleHandler.findModule(topic)
+        val asModule: SourceModule? = moduleHandler.loader.findExtension(topic)
         if (asModule != null) {
             val response = StandardInfoResponse("${asModule.name} Module Assistance")
             val config = when {

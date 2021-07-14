@@ -12,7 +12,7 @@ class Tags : SourceModule() {
         node("prefix", "The prefix used to execute tags")
     }
 
-    override fun onEnable() {
+    override fun enable() {
         MongoSerial.register(Tag.Serial())
 
         val tagHandler = TagHandler(config.required("prefix"))

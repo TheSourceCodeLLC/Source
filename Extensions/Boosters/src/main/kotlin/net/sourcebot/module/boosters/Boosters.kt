@@ -9,7 +9,7 @@ import net.sourcebot.module.profiles.Profiles
 import java.time.Instant
 
 class Boosters : SourceModule() {
-    override fun onEnable() {
+    override fun enable() {
         subscribeEvents(BoosterListener())
     }
 

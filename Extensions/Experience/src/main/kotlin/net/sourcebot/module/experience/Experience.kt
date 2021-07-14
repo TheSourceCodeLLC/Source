@@ -9,7 +9,7 @@ import net.sourcebot.module.profiles.Profiles
 import kotlin.math.pow
 
 class Experience : SourceModule() {
-    override fun onEnable() {
+    override fun enable() {
         subscribeEvents(ExperienceListener())
         registerCommands(ExperienceLeaderboardCommand())
     }

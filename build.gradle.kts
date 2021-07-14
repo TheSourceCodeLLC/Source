@@ -7,7 +7,7 @@ plugins {
 
 allprojects {
     group = "net.sourcebot"
-    version = "5.2.5"
+    version = "5.2.7"
     buildDir = File(rootProject.projectDir, "target/output/$name")
 
     apply(plugin = "org.jetbrains.kotlin.jvm")
@@ -19,6 +19,7 @@ allprojects {
         jcenter()
         mavenLocal()
         mavenCentral()
+        maven("https://nexus.mcdevs.us/repository/mcdevs/")
     }
 
     tasks {

@@ -1,21 +1,20 @@
 package net.sourcebot.impl
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import me.hwiggy.extensible.binding.jvm.classloader.JarClassLoader
+import me.hwiggy.extensible.exception.InvalidExtensionException
 import net.sourcebot.Source
 import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.configuration.JsonSerial
-import net.sourcebot.api.module.ModuleClassLoader
 import net.sourcebot.api.module.ModuleDescriptor
 import net.sourcebot.api.module.SourceModule
-import net.sourcebot.api.module.exception.InvalidModuleException
 import net.sourcebot.impl.command.*
 import net.sourcebot.impl.listener.ChannelDeleteListener
 import net.sourcebot.impl.listener.ConnectionListener
 import net.sourcebot.impl.listener.MentionListener
+import java.io.File
 
-class BaseModule(
-    private val extClassLoader: ClassLoader
-) : SourceModule() {
+class BaseModule : SourceModule() {
     override val configurationInfo = ConfigurationInfo("source") {
         section("connections") {
             node("channel", "The channel ID join / leave messages will be sent to.")
@@ -32,23 +31,15 @@ class BaseModule(
     }
 
     init {
-        classLoader = object : ModuleClassLoader(Source.MODULE_HANDLER) {
-            override fun findClass(name: String, searchParent: Boolean): Class<*> {
-                return try {
-                    if (searchParent) Source.MODULE_HANDLER.findClass(name)
-                    else extClassLoader.loadClass(name)
-                } catch (ex: Exception) {
-                    null
-                } ?: throw ClassNotFoundException(name)
-            }
-        }
+        val path = BaseModule::class.java.protectionDomain.codeSource.location.toURI()
+        classLoader = JarClassLoader(Source.MODULE_HANDLER, File(path))
         descriptor = this.javaClass.getResourceAsStream("/module.json").use {
-            if (it == null) throw InvalidModuleException("Could not find module.json!")
+            if (it == null) throw InvalidExtensionException("Could not find module.json!")
             else JsonSerial.mapper.readTree(it) as ObjectNode
         }.let(::ModuleDescriptor)
     }
 
-    override fun onEnable() {
+    override fun enable() {
         registerCommands(
             InfoCommand(),
             HelpCommand(),
