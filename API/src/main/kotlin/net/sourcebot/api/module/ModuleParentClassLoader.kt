@@ -26,7 +26,15 @@ class ModuleParentClassLoader(
     }
 
     private fun loadModules(folder: File) = loader.loadExtensions(folder) { it.extension.equals("jar", true) }
-    private fun loadModule(file: File) = loader.loadExtension(file)
+    fun loadModule(file: File) = loader.loadExtension(file)
+
+    /**
+     * Manually indexes a module.
+     * Should only be used by the base module.
+     */
+    fun index(module: SourceModule) {
+        loader.indexExtension(module.name, module)
+    }
 
     private fun loadModuleThrowing(
         module: SourceModule

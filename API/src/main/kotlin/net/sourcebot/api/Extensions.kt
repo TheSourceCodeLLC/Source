@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.response.EmbedResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.WrappedEmbedResponse
+import java.io.File
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.net.URLDecoder
@@ -83,3 +84,5 @@ fun <T : EmbedBuilder> T.sortFields() = this.also {
 }
 
 fun String.insert(position: Int, other: String) = substring(0, position) + other + substring(position, length)
+
+fun <T> Class<T>.getDeclaringArchive() = File(this.protectionDomain.codeSource.location.toURI())

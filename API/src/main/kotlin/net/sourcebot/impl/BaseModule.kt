@@ -6,13 +6,13 @@ import me.hwiggy.extensible.exception.InvalidExtensionException
 import net.sourcebot.Source
 import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.configuration.JsonSerial
+import net.sourcebot.api.getDeclaringArchive
 import net.sourcebot.api.module.ModuleDescriptor
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.impl.command.*
 import net.sourcebot.impl.listener.ChannelDeleteListener
 import net.sourcebot.impl.listener.ConnectionListener
 import net.sourcebot.impl.listener.MentionListener
-import java.io.File
 
 class BaseModule : SourceModule() {
     override val configurationInfo = ConfigurationInfo("source") {
@@ -31,12 +31,12 @@ class BaseModule : SourceModule() {
     }
 
     init {
-        val path = BaseModule::class.java.protectionDomain.codeSource.location.toURI()
-        classLoader = JarClassLoader(Source.MODULE_HANDLER, File(path))
+        classLoader = JarClassLoader(Source.MODULE_HANDLER, BaseModule::class.java.getDeclaringArchive())
         descriptor = this.javaClass.getResourceAsStream("/module.json").use {
             if (it == null) throw InvalidExtensionException("Could not find module.json!")
             else JsonSerial.mapper.readTree(it) as ObjectNode
         }.let(::ModuleDescriptor)
+        Source.MODULE_HANDLER.index(this)
     }
 
     override fun enable() {

@@ -2,8 +2,11 @@ package net.sourcebot.api.module
 
 import me.hwiggy.extensible.binding.AbstractLoader
 import me.hwiggy.extensible.exception.CompositeException
+import net.sourcebot.api.getDeclaringArchive
+import net.sourcebot.impl.BaseModule
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.File
 
 class ModuleLoader(parentClassLoader: ModuleParentClassLoader) : AbstractLoader<ModuleDescriptor, SourceModule>() {
     private val logger: Logger = LoggerFactory.getLogger(ModuleLoader::class.java)
@@ -25,7 +28,10 @@ class ModuleLoader(parentClassLoader: ModuleParentClassLoader) : AbstractLoader<
         }
     }
 
-    override fun permitExtension(name: String) = !name.equals("Source", true)
+    override fun permitExtension(
+        file: File,
+        descriptor: ModuleDescriptor
+    ) = !(descriptor.name == "Source" && file != BaseModule::class.java.getDeclaringArchive())
 
     /**
      * Override performLoad to call custom load method previously used to index the module.
