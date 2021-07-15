@@ -151,7 +151,7 @@ class MDNCommand : DocumentationCommand(
             builder.append("`${text.substringAfterLast(".").removeSuffix("()")}` ")
         }
 
-        return builder.toString().truncate(512).replace("\\s`[^`]*[.]{3}\$".toRegex(), "...")
+        return builder.toString().truncate(512).replace("`[^`]*[.]{3}\$".toRegex(), "...")
 
     }
 
