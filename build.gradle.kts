@@ -20,6 +20,7 @@ allprojects {
         mavenLocal()
         mavenCentral()
         maven("https://nexus.mcdevs.us/repository/mcdevs/")
+        maven("https://m2.dv8tion.net/releases")
     }
 
     tasks {
