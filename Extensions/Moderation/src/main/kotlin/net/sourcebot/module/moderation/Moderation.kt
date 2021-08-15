@@ -26,6 +26,7 @@ class Moderation : SourceModule() {
         node("report-log", "Channel ID for the reports channel.")
         node("blacklist-role", "Role ID for the blacklist role.")
         node("mute-role", "Role ID for the mute role.")
+        node("excluded-channels", "Channel IDs blacklisted from auto-moderation.")
     }
 
     private lateinit var task: ScheduledFuture<*>
