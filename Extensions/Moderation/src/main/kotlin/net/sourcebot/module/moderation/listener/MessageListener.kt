@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Invite
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.guild.GuildBanEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent
@@ -63,6 +64,7 @@ class MessageListener : EventSubscriber<Moderation> {
     }
 
     private fun onMessageDelete(event: MessageDeleteEvent) {
+        if (isIgnored(event.channel)) return
         val (guild, authorId, content, channelId, sent) = event
         if (recentBans.asMap().containsKey(authorId)) return
         val author = event.author
@@ -99,6 +101,7 @@ class MessageListener : EventSubscriber<Moderation> {
     }
 
     private fun onMessageEdit(event: MessageEditEvent) {
+        if (isIgnored(event.channel)) return
         val (guild, author, channel, newContent, oldContent) = event
         if (recentBans.asMap().containsKey(author.id)) return
         val parent = channel.parent
@@ -144,6 +147,7 @@ class MessageListener : EventSubscriber<Moderation> {
     }
 
     private fun onMessageReceive(event: GuildMessageReceivedEvent) {
+        if (isIgnored(event.channel)) return
         if (event.author.isBot) return
         val message = event.message
         if (Source.COMMAND_HANDLER.isValidCommand(message.contentRaw) == true) return
@@ -287,7 +291,7 @@ class MessageListener : EventSubscriber<Moderation> {
                 **$handledMessage By:** ${event.user.formatLong()} (${event.userId})
             """.trimIndent()
             ).setColor(SourceColor.SUCCESS.color).build()
-        return message.editMessage(render).override(true).queue {
+        return message.editMessageEmbeds(render).override(true).queue {
             it.clearReactions().queue()
         }
     }
@@ -345,5 +349,12 @@ class MessageListener : EventSubscriber<Moderation> {
             }),
             UpdateOptions().upsert(true)
         )
+    }
+
+    private fun isIgnored(channel: TextChannel?): Boolean {
+        if (channel == null) return false
+        return configManager[channel.guild].optional<List<String>>(
+            "moderation.excluded-channels"
+        )?.contains(channel.id) ?: false
     }
 }
