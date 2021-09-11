@@ -94,6 +94,8 @@ class StarboardListener(
         event: GenericGuildMessageReactionEvent,
         consumer: (Message) -> Unit
     ) {
+        val data = dataManager[event.guild]
+        if (data.optional<List<String>>("excluded-channels")?.contains(event.channel.id) == true) return
         if (event.reactionEmote.name != UNICODE_STAR) return
         event.retrieveMessage().queue { message ->
             if (message.author.isBot) return@queue

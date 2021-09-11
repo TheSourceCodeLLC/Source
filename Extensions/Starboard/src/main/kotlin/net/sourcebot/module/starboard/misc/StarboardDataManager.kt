@@ -13,7 +13,8 @@ class StarboardDataManager {
             JsonConfiguration(
                 mapOf(
                     "channel" to null,
-                    "threshold" to 5
+                    "threshold" to 5,
+                    "excluded-channels" to emptyList<String>()
                 )
             )
         }

@@ -9,6 +9,7 @@ class Starboard : SourceModule() {
     override val configurationInfo = ConfigurationInfo("starboard") {
         node("channel", "Channel ID for the starboard channel.")
         node("threshold", "Star threshold for starboard messages.")
+        node("excluded-channels", "Channel IDs blacklisted from starboard.")
     }
 
     override fun enable() {
