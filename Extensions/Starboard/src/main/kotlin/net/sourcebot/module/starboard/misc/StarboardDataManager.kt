@@ -13,6 +13,7 @@ class StarboardDataManager {
             JsonConfiguration(
                 mapOf(
                     "channel" to null,
+                    "nsfw-channel" to null,
                     "threshold" to 5,
                     "excluded-channels" to emptyList<String>()
                 )
