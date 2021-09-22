@@ -47,17 +47,15 @@ class MessageListener : EventSubscriber<Moderation> {
         jdaEvents: EventSystem<GenericEvent>,
         sourceEvents: EventSystem<SourceEvent>
     ) {
-        listOf(
-            this::onMemberBanned,
-            this::onMemberKicked,
-            this::onMemberUnbanned,
-            this::onMemberRoleAdded,
-            this::onMemberRoleRemoved,
-            this::onMessageReceive,
-            this::submitMessageEdit,
-            this::submitMessageDelete,
-            this::handleReportReaction
-        ).forEach { jdaEvents.listen(module, it) }
+        jdaEvents.listen(module, this::onMemberBanned)
+        jdaEvents.listen(module, this::onMemberKicked)
+        jdaEvents.listen(module, this::onMemberUnbanned)
+        jdaEvents.listen(module, this::onMemberRoleAdded)
+        jdaEvents.listen(module, this::onMemberRoleRemoved)
+        jdaEvents.listen(module, this::onMessageReceive)
+        jdaEvents.listen(module, this::submitMessageEdit)
+        jdaEvents.listen(module, this::submitMessageDelete)
+        jdaEvents.listen(module, this::handleReportReaction)
         sourceEvents.listen(module, this::onMessageDelete)
         sourceEvents.listen(module, this::onMessageEdit)
     }
@@ -98,10 +96,10 @@ class MessageListener : EventSubscriber<Moderation> {
     }
 
     private fun onMemberRoleAdded(event: GuildMemberRoleAddEvent) =
-        onMemberRoleChange(event.guild, event.user, event.roles.first(), RoleUpdateIncident.Action.REMOVE)
+        onMemberRoleChange(event.guild, event.user, event.roles.first(), RoleUpdateIncident.Action.ADD)
 
     private fun onMemberRoleRemoved(event: GuildMemberRoleRemoveEvent) =
-        onMemberRoleChange(event.guild, event.user, event.roles.first(), RoleUpdateIncident.Action.ADD)
+        onMemberRoleChange(event.guild, event.user, event.roles.first(), RoleUpdateIncident.Action.REMOVE)
 
     private fun onMemberRoleChange(guild: Guild, user: User, role: Role, action: RoleUpdateIncident.Action) {
         val (sender, target) = extractAuditInfo(guild, ActionType.MEMBER_ROLE_UPDATE, user) ?: return
