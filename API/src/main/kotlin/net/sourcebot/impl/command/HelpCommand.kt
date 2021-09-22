@@ -175,7 +175,7 @@ class HelpCommand : RootCommand() {
     private fun renderGroup(group: Group<*>) = StringBuilder().apply {
         append("**${group.name}**: ${group.description}")
         group.choices.forEach { (option, description) ->
-            append("\n\t**${option.synopsisName}**: $description")
+            append("\n↳ **${option.synopsisName}**: $description")
         }
         if (group.default != null) {
             append("\n(Default: _${group.default!!.synopsisName}_)")
