@@ -34,6 +34,7 @@ class HelpCommand : RootCommand() {
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
         val topic = arguments.optional<String>("topic")
+        val children = arguments.optional<String>("children...")
         if (topic == null) {
             val modules = moduleHandler.loader.getExtensions()
             val enabled = modules.filter { it.enabled }
@@ -61,7 +62,8 @@ class HelpCommand : RootCommand() {
         }
         val asCommand = commandHandler.getCommand(topic)
         if (asCommand != null) {
-            val permCheck = commandHandler.checkPermissions(sender, asCommand, arguments.parent.slice())
+            val childArgs = if (children != null) Arguments.parse(children) else Arguments(emptyArray())
+            val permCheck = commandHandler.checkPermissions(sender, asCommand, childArgs)
             val command = permCheck.command
             return when (permCheck.type) {
                 PermissionCheck.Type.GLOBAL_ONLY -> GlobalAdminOnlyResponse()

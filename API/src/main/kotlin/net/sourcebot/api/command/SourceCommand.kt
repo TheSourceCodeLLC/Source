@@ -13,28 +13,10 @@ import net.sourcebot.api.response.Response
 abstract class SourceCommand : Command<Message, Response, SourceCommand>() {
     open val cleanupResponse = true
     open val deleteSeconds: Long? = null
-    open var parent: SourceCommand? = null
 
     open val requiresGlobal = false
     open val permission: String? = null
     open val guildOnly = false
-
-    /*
-    fun getUsage(): String = getUsage(this.name)
-    fun getUsage(label: String): String {
-        var parent = this.parent
-        var parentStr = label
-        while (parent != null) {
-            parentStr = "${parent.name} $parentStr"
-            parent = parent.parent
-        }
-        val arguments = argumentInfo.asList()
-        return ("$parentStr " + if (arguments.isNullOrEmpty()) {
-            val subcommands = getChildren()
-            if (subcommands.isEmpty()) "" else subcommands.joinToString("|", "<", ">")
-        } else arguments).trimEnd()
-    }
-    */
 
     fun getChildren() = children.getIdentifiers()
 
