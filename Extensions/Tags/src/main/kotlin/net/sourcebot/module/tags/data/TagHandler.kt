@@ -2,13 +2,13 @@ package net.sourcebot.module.tags.data
 
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
+import me.hwiggy.kommander.arguments.Arguments
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.sourcebot.Source
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.event.EventSubscriber
@@ -33,7 +33,7 @@ class TagHandler(private val defaultPrefix: String) : AbstractMessageHandler(), 
         if (!message.isFromGuild) return
         val tagCache = get(message.guild)
         val tag = tagCache.getTag(label.toLowerCase()) ?: return
-        val content = tag.processArguments(arguments.rawCopy())
+        val content = tag.processArguments(arguments.slice().raw)
         when (tag.type) {
             Tag.Type.TEXT -> message.channel.sendMessage(content).queue()
             Tag.Type.EMBED -> {

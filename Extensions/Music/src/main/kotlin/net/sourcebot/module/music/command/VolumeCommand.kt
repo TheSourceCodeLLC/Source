@@ -1,10 +1,9 @@
 package net.sourcebot.module.music.command
 
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.command.argument.OptionalArgument
-import net.sourcebot.api.command.argument.SourceAdapter
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.module.music.Music
@@ -12,14 +11,14 @@ import net.sourcebot.module.music.Music
 class VolumeCommand : MusicCommand(
     "volume", "View or set the player volume."
 ) {
-    override val argumentInfo = ArgumentInfo(
-        OptionalArgument("volume", "The new volume to set.")
-    )
+    override val synopsis = Synopsis {
+        optParam("volume", "The new volume to set.", Adapter.int())
+    }
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val guild = message.guild
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val guild = sender.guild
         val subsystem = Music.getSubsystem(guild)
-        val volume = args.next(SourceAdapter.int())
+        val volume = arguments.optional<Int>("volume")
         return if (volume != null) {
             subsystem.player.volume = volume
             StandardSuccessResponse("Volume Set!", "The volume is now `$volume%`!")

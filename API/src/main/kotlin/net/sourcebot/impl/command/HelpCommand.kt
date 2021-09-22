@@ -93,7 +93,7 @@ class HelpCommand : RootCommand() {
                                 }
                             },
                             { it.joinToString("\n") }
-                        ), false)
+                        ) ?: "This command has no parameters.", false)
                         if (command.aliases.isNotEmpty())
                             addField("Aliases:", command.aliases.joinToString(), false)
                         if (command.permission != null)

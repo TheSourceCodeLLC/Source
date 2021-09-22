@@ -1,11 +1,11 @@
 package net.sourcebot.module.economy.command
 
+import me.hwiggy.kommander.InvalidSyntaxException
 import me.hwiggy.kommander.arguments.Adapter
 import me.hwiggy.kommander.arguments.Arguments
 import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.command.argument.SourceAdapter
 import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.Response

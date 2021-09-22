@@ -1,6 +1,7 @@
 package net.sourcebot.api.command
 
 import me.hwiggy.kommander.Command
+import me.hwiggy.kommander.InvalidSyntaxException
 import me.hwiggy.kommander.arguments.Arguments
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User

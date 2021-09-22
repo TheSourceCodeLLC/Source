@@ -1,11 +1,11 @@
 package net.sourcebot.module.experience.command
 
+import me.hwiggy.kommander.InvalidSyntaxException
 import me.hwiggy.kommander.arguments.Adapter
 import me.hwiggy.kommander.arguments.Arguments
 import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.Source
-import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.formatLong
 import net.sourcebot.api.formatPlural
 import net.sourcebot.api.response.Response
@@ -27,13 +27,13 @@ class ExperienceLeaderboardCommand : ExperienceRootCommand(
         )
     }
 
-    override fun execute(message: Message, args: Arguments.Processed): Response {
-        val guild = message.guild
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val guild = sender.guild
         val profiles = Source.MONGODB.getCollection(guild.id, "profiles")
         val pages = ceil(
             profiles.countDocuments(Profiles.VALID_PROFILE) / 10.0
         ).toInt()
-        val page = args.optional("page", 1) - 1
+        val page = arguments.optional("page", 1) - 1
         if (page > pages - 1) throw InvalidSyntaxException(
             "Page must be between 1 and $pages!"
         )
