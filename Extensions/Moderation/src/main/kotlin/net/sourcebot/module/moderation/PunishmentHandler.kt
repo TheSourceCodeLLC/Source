@@ -510,6 +510,13 @@ class PunishmentHandler(private val guild: Guild) {
         "There was a problem updating that member's roles!"
     )
 
+    fun logIncident(channel: TextChannel, incident: ExecutableIncident) {
+        val message = incident.sendLog(channel)
+        incidents.insertOne(incident.asDocument().also {
+            it["message"] = message.id
+        })
+    }
+
     private fun <T : ExecutableIncident> submitIncident(
         supplier: () -> T,
         onSuccess: (T) -> PunishmentSuccessResponse,

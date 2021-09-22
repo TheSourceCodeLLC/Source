@@ -76,7 +76,7 @@ class MessageListener : EventSubscriber<Moderation> {
                 }, {
                     manualBanIncident(sender, target, 0)
                 })
-                incidentChannel()?.let(incident::sendLog)
+                incidentChannel()?.let { logIncident(it, incident) }
             }
         }
     }
@@ -85,7 +85,7 @@ class MessageListener : EventSubscriber<Moderation> {
         val (sender, target) = extractAuditInfo(event.guild, ActionType.KICK, event.user) ?: return
         Moderation.getPunishmentHandler(event.guild) {
             val incident = manualKickIncident(sender, target)
-            incidentChannel()?.let(incident::sendLog)
+            incidentChannel()?.let { logIncident(it, incident) }
         }
     }
 
@@ -93,7 +93,7 @@ class MessageListener : EventSubscriber<Moderation> {
         val (sender, target) = extractAuditInfo(event.guild, ActionType.UNBAN, event.user) ?: return
         Moderation.getPunishmentHandler(event.guild) {
             val incident = manualUnbanIncident(sender, target)
-            incidentChannel()?.let(incident::sendLog)
+            incidentChannel()?.let { logIncident(it, incident) }
         }
     }
 
@@ -107,7 +107,7 @@ class MessageListener : EventSubscriber<Moderation> {
         val (sender, target) = extractAuditInfo(guild, ActionType.MEMBER_ROLE_UPDATE, user) ?: return
         Moderation.getPunishmentHandler(guild) {
             val incident = manualRoleUpdate(sender, guild.getMember(target)!!, role, action)
-            incidentChannel()?.let(incident::sendLog)
+            incidentChannel()?.let { logIncident(it, incident) }
         }
     }
 
