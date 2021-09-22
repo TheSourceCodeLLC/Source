@@ -27,8 +27,16 @@ class DiceCommand : RootCommand() {
     }
 
     override val synopsis = Synopsis {
-        optParam("times", "The number of dice to roll.", Adapter.int(min = 1), 1)
-        optParam("sides", "The number of sides on each dice.", Adapter.int(min = 3), 6)
+        optParam(
+            "times", "The number of dice to roll.", Adapter.int(
+                min = 1, error = "You must roll at least 1 dice!"
+            ), 1
+        )
+        optParam(
+            "sides", "The number of sides on each dice.", Adapter.int(
+                min = 3, error = "You must roll dice with at least 3 sides!"
+            ), 6
+        )
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
