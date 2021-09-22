@@ -46,7 +46,7 @@ class StarboardListener(
             val threshold = data.required<Long>("threshold")
             val count = message.reactions.find { it.reactionEmote.name == UNICODE_STAR }?.count ?: 0
             if (count < threshold) return@listenReaction
-            val channel = data.optional<String>("channel")?.let {
+            val channel = data.optional<String>(getChannelKey(event.channel))?.let {
                 event.guild.getTextChannelById(it)
             } ?: return@listenReaction
             val linkObject = getLinkObject(event.guild, message.id)
@@ -76,7 +76,7 @@ class StarboardListener(
             val linkObject = getLinkObject(event.guild, message.id)
             val starredId = linkObject?.get("starred") as String? ?: return@listenReaction
             val count = message.reactions.find { it.reactionEmote.name == UNICODE_STAR }?.count ?: 0
-            val channel = data.optional<String>("channel")?.let {
+            val channel = data.optional<String>(getChannelKey(event.channel))?.let {
                 event.guild.getTextChannelById(it)
             } ?: return@listenReaction
             if (count < data.required<Long>("threshold")) {
@@ -94,6 +94,8 @@ class StarboardListener(
         event: GenericGuildMessageReactionEvent,
         consumer: (Message) -> Unit
     ) {
+        val data = dataManager[event.guild]
+        if (data.optional<List<String>>("excluded-channels")?.contains(event.channel.id) == true) return
         if (event.reactionEmote.name != UNICODE_STAR) return
         event.retrieveMessage().queue { message ->
             if (message.author.isBot) return@queue
@@ -104,23 +106,23 @@ class StarboardListener(
     private fun onMessageDelete(event: GuildMessageDeleteEvent) {
         val collection = getCollection(event.guild)
         val data = dataManager[event.guild]
-        if (event.channel.id == data.optional<String>("channel")) {
+        if (event.channel.id == data.optional<String>(getChannelKey(event.channel))) {
             collection.findOneAndDelete(Document("starred", event.messageId))
-        } else deleteStarredMessage(event.guild, event.messageId)
+        } else deleteStarredMessage(event.guild, event.messageId, getChannelKey(event.channel))
     }
 
     private fun onMessageEdit(event: GuildMessageUpdateEvent) {
         getLinkObject(event.guild, event.messageId) ?: return
         event.message.clearReactions(UNICODE_STAR).queue()
-        deleteStarredMessage(event.guild, event.messageId)
+        deleteStarredMessage(event.guild, event.messageId, getChannelKey(event.channel))
     }
 
-    private fun deleteStarredMessage(guild: Guild, original: String) {
+    private fun deleteStarredMessage(guild: Guild, original: String, channelKey: String) {
         val collection = getCollection(guild)
         val deleted = collection.findOneAndDelete(Document("original", original))
         val starred = deleted?.get("starred") as String? ?: return
         val data = dataManager[guild]
-        val channel = data.optional<String>("channel")?.let {
+        val channel = data.optional<String>(channelKey)?.let {
             guild.getTextChannelById(it)
         } ?: return
         channel.deleteMessageById(starred).queue()
@@ -130,6 +132,13 @@ class StarboardListener(
         guild: Guild,
         original: String
     ) = getCollection(guild).find(Document("original", original)).first()
+
+    private fun getChannelKey(channel: TextChannel): String {
+        val data = dataManager[channel.guild]
+        return if (channel.isNSFW && !data.optional<String>("nsfw-channel")
+                .isNullOrBlank()
+        ) "nsfw-channel" else "channel"
+    }
 
     private fun getCollection(guild: Guild) = mongo.getCollection(guild.id, "starboard")
 
