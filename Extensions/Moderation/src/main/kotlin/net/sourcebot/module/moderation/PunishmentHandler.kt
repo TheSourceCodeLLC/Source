@@ -37,7 +37,7 @@ class PunishmentHandler(private val guild: Guild) {
         "moderation.blacklist-role"
     )?.let(guild::getRoleById)
 
-    private fun incidentChannel() = configManager[guild].optional<String>(
+    fun incidentChannel() = configManager[guild].optional<String>(
         "moderation.incident-log"
     )?.let(guild::getTextChannelById)
 
@@ -87,6 +87,10 @@ class PunishmentHandler(private val guild: Guild) {
         "Warn Failure!", description
     )
 
+    fun manualKickIncident(sender: Member, user: User): KickIncident {
+        return KickIncident(nextIncidentId(), sender, user, "Manually Kicked")
+    }
+
     fun kickIncident(sender: Member, member: Member, reason: String): PunishmentResponse {
         if (sender == member) return KickFailureResponse("You may not kick yourself!")
         if (member.user.isBot) return KickFailureResponse("You may not kick bots!")
@@ -100,12 +104,12 @@ class PunishmentHandler(private val guild: Guild) {
     }
 
     private fun submitKick(sender: Member, member: Member, reason: String) = submitIncident(
-        { KickIncident(nextIncidentId(), sender, member, reason) },
-        { KickSuccessResponse(it.id, it.member, it.reason) },
+        { KickIncident(nextIncidentId(), sender, member.user, reason) },
+        { KickSuccessResponse(it.id, it.user, it.reason) },
         { KickFailureResponse("Could not execute kick incident!") }
     )
 
-    private class KickSuccessResponse(id: Long, kicked: Member, reason: String) : PunishmentSuccessResponse(
+    private class KickSuccessResponse(id: Long, kicked: User, reason: String) : PunishmentSuccessResponse(
         "Kick Success (#$id)",
         "Kicked ${kicked.formatLong()} for '$reason' !"
     )
@@ -255,6 +259,10 @@ class PunishmentHandler(private val guild: Guild) {
         description: String
     ) : PunishmentFailureResponse("Tempban Failure!", description)
 
+    fun manualBanIncident(sender: Member, member: User, delDays: Int, reason: String = "N/A"): BanIncident {
+        return BanIncident(nextIncidentId(), sender, member, delDays, "Manually Banned For: $reason")
+    }
+
     fun banIncident(
         sender: Member, member: Member, delDays: Int, reason: String
     ): PunishmentResponse {
@@ -275,16 +283,16 @@ class PunishmentHandler(private val guild: Guild) {
         delDays: Int,
         reason: String
     ) = submitIncident(
-        { BanIncident(nextIncidentId(), sender, member, delDays, reason) },
-        { BanSuccessResponse(it.id, it.member, it.reason) },
+        { BanIncident(nextIncidentId(), sender, member.user, delDays, reason) },
+        { BanSuccessResponse(it.id, it.user, it.reason) },
         { BanFailureResponse("Could not execute ban incident!") }
     )
 
     private class BanSuccessResponse(
-        id: Long, member: Member, reason: String
+        id: Long, user: User, reason: String
     ) : PunishmentSuccessResponse(
         "Ban Success (#$id)",
-        "Banned ${member.formatLong()} for '$reason'!"
+        "Banned ${user.formatLong()} for '$reason'!"
     )
 
     private class BanFailureResponse(
@@ -367,12 +375,14 @@ class PunishmentHandler(private val guild: Guild) {
         description: String
     ) : PunishmentFailureResponse("Unmute Failure!", description)
 
+    fun manualUnbanIncident(sender: Member, user: User): UnbanIncident {
+        return UnbanIncident(nextIncidentId(), sender, user, "Manually Unbanned")
+    }
+
     fun unbanIncident(sender: Member, user: String, reason: String): PunishmentResponse {
-        val ban = try {
+        val ban = kotlin.runCatching {
             guild.retrieveBanById(user).complete()
-        } catch (err: Throwable) {
-            return PunishmentFailureResponse("Unknown Ban!", "The specified user is not banned!")
-        }
+        }.getOrNull() ?: return PunishmentFailureResponse("Unknown Ban!", "The specified user is not banned!")
         return submitIncident(
             { UnbanIncident(nextIncidentId(), sender, ban.user, reason) },
             {
@@ -468,6 +478,10 @@ class PunishmentHandler(private val guild: Guild) {
             "Removed Level `$level` offense: `$name`!"
         )
     }
+
+    fun manualRoleUpdate(
+        sender: Member, target: Member, role: Role, action: Action
+    ) = RoleUpdateIncident(nextIncidentId(), sender, target, role, "Manually Updated", action)
 
     private fun submitRoleUpdate(
         sender: Member, target: Member, role: Role, reason: String, action: Action, description: String

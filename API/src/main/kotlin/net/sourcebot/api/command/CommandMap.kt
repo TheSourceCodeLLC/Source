@@ -1,6 +1,6 @@
 package net.sourcebot.api.command
 
-class CommandMap<C : Command> {
+class CommandMap<C : SourceCommand> {
     private val labels = HashMap<String, C>()
     private val aliases = HashMap<String, C>()
 

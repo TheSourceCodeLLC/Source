@@ -2,12 +2,11 @@ package net.sourcebot.module.documentation.commands
 
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.utils.MarkdownUtil
-import net.sourcebot.api.command.argument.Argument
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.ifPresentOrElse
 import net.sourcebot.api.response.Response
@@ -19,14 +18,14 @@ class NPMCommand : DocumentationCommand(
     "npm", "Allows you to query npmjs.org"
 ) {
     private val registry = "https://registry.npmjs.org/"
-    override val argumentInfo = ArgumentInfo(
-        Argument("package", "The package to query for."),
-        OptionalArgument("version", "The version of the package to query for.", "latest")
-    )
+    override val synopsis = Synopsis {
+        reqParam("package", "The package to query for.", Adapter.single())
+        optParam("version", "The version of the package.", Adapter.single(), "latest")
+    }
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val packageName = args.next("You did not specify a package to query for!")
-        val version = args.next() ?: "latest"
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val packageName = arguments.required<String>("package", "You did not specify a package to query for!")
+        val version = arguments.optional("version", "latest")
         val query = runCatching {
             JsonSerial.fromUrl<ObjectNode>("$registry/$packageName")
         }.getOrNull() ?: return StandardErrorResponse(

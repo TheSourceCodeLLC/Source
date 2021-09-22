@@ -1,11 +1,10 @@
 package net.sourcebot.module.economy.command
 
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.GuildCooldown
-import net.sourcebot.api.command.argument.Adapter
-import net.sourcebot.api.command.argument.Argument
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.durationOf
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
@@ -16,23 +15,23 @@ import java.util.concurrent.ThreadLocalRandom
 class GambleCommand : EconomyRootCommand(
     "gamble", "Wager some of your coins for a chance to win more."
 ) {
-    override val aliases = arrayOf("bet", "g", "wager")
-    override val argumentInfo = ArgumentInfo(
-        Argument("wager", "The amount of coins you want to wager.")
-    )
+    override val aliases = listOf("bet", "g", "wager")
+    override val synopsis = Synopsis {
+        reqParam(
+            "wager", "The amount of coins you want to wager.",
+            Adapter.long(1, error = "You must wager at least 1 coin!")
+        )
+    }
 
     private val cooldown = GuildCooldown(durationOf("2m30s"))
-    override fun execute(message: Message, args: Arguments): Response {
-        val member = message.member!!
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val member = sender.member!!
         val economy = Economy[member]
         if (economy.balance < 1) return StandardErrorResponse(
             "Gamble Failure!",
             "You do not have enough money to wager!"
         )
-        val wager = args.next(
-            Adapter.long(1, error = "You must wager at least 1 coin!"),
-            "You did not specify a valid amount of coins to wager!"
-        )
+        val wager = arguments.required<Long>("wager", "You did not specify a valid amount of coins to wager!")
         if (wager > economy.balance) return StandardErrorResponse(
             "Gamble Failure!", "You may not wager more than your balance!"
         )

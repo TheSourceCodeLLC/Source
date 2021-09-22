@@ -1,12 +1,12 @@
 package net.sourcebot.module.counting.command
 
+import me.hwiggy.kommander.arguments.Arguments
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
-import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.command.SourceCommand
 import net.sourcebot.api.response.StandardInfoResponse
 
-class CountingCommand() : RootCommand() {
+class CountingCommand : RootCommand() {
     override val name = "counting"
     override val description = "Various commands for Counting."
     override val permission = "counting"
@@ -22,8 +22,8 @@ class CountingCommand() : RootCommand() {
         "rules", "Show the rules for counting."
     ) {
         override fun execute(
-            message: Message,
-            args: Arguments
+            sender: Message,
+            arguments: Arguments.Processed
         ) = StandardInfoResponse(
             "Counting Rules",
             "**1.** Players may not increment multiple times in a row.\n" +
@@ -35,7 +35,7 @@ class CountingCommand() : RootCommand() {
     private abstract class CommandBootstrap(
         final override val name: String,
         final override val description: String
-    ) : Command() {
+    ) : SourceCommand() {
         override val permission = "counting.$name"
         override val guildOnly = true
     }

@@ -1,26 +1,30 @@
 package net.sourcebot.module.moderation.command
 
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
+import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.argument.Adapter
-import net.sourcebot.api.command.argument.Argument
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.command.argument.SourceAdapter
 import net.sourcebot.api.response.Response
 import net.sourcebot.module.moderation.Moderation
 
 class UnblacklistCommand : ModerationRootCommand(
     "unblacklist", "Unblacklist a member for a specific reason."
 ) {
-    override val argumentInfo = ArgumentInfo(
-        Argument("target", "The member to unblacklist."),
-        Argument("reason", "The reason this member is being unblacklisted.")
-    )
+    override val synopsis = Synopsis {
+        reqParam("target", "The Member to unblacklist.", Adapter.single())
+        reqParam("reason", "The reason this Member is being unblacklisted.", Adapter.slurp(" "))
+    }
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val target = args.next(Adapter.member(message.guild), "You did not specify a valid member to unblacklist!")
-        val reason = args.slurp(" ", "You did not specify an unblacklist reason!")
-        return Moderation.getPunishmentHandler(message.guild) {
-            unblacklistIncident(message.member!!, target, reason)
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val target =
+            arguments.required<String, Member>("target", "You did not specify a valid member to unblacklist!") {
+                SourceAdapter.member(sender.guild, it)
+            }
+        val reason = arguments.required<String>("reason", "You did not specify an unblacklist reason!")
+        return Moderation.getPunishmentHandler(sender.guild) {
+            unblacklistIncident(sender.member!!, target, reason)
         }
     }
 }

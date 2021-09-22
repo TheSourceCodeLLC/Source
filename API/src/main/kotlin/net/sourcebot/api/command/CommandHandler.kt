@@ -1,12 +1,13 @@
 package net.sourcebot.api.command
 
+import me.hwiggy.kommander.InvalidSyntaxException
+import me.hwiggy.kommander.arguments.Arguments
 import net.dv8tion.jda.api.entities.ChannelType
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.sourcebot.Source
 import net.sourcebot.api.command.PermissionCheck.Type.*
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.response.EmptyResponse
@@ -34,7 +35,7 @@ class CommandHandler(
 
     internal fun runCommand(
         message: Message, label: String, arguments: Arguments
-    ): Pair<Command?, Response> {
+    ): Pair<SourceCommand?, Response> {
         var identifier = label
         var args = arguments
         val rootCommand = commandMap[identifier] ?: commandMap.find {
@@ -57,7 +58,8 @@ class CommandHandler(
             )
             VALID -> {
                 try {
-                    command.execute(message, args)
+                    val processed = command.synopsis.process(args)
+                    command.execute(message, processed)
                 } catch (exception: Exception) {
                     val error = if (exception is InvalidSyntaxException) {
                         StandardErrorResponse(
@@ -92,11 +94,11 @@ class CommandHandler(
     ): PermissionCheck {
         val hasGlobal = permissionHandler.hasGlobalAccess(message.author)
         val inGuild = message.channelType == ChannelType.TEXT
-        var command: Command = root
+        var command: SourceCommand = root
         do {
             val children = command.children
             val nextId = arguments.next() ?: break
-            val nextCommand = children[nextId]
+            val nextCommand = children.find(nextId)
             if (nextCommand == null) {
                 arguments.backtrack()
                 break
@@ -116,7 +118,7 @@ class CommandHandler(
         return PermissionCheck(command, VALID)
     }
 
-    fun respond(command: Command, message: Message, response: Response) {
+    fun respond(command: SourceCommand, message: Message, response: Response) {
         val cleanup = (if (message.isFromGuild) {
             configManager[message.guild].required("source.command.cleanup.enabled") { true }
         } else command.cleanupResponse) && command.cleanupResponse
@@ -147,9 +149,9 @@ class CommandHandler(
     fun getPrefix(guild: Guild) =
         configManager[guild].required("source.command.prefix") { defaultPrefix }
 
-    private fun getSyntax(prefix: String, command: Command) = "$prefix${command.getUsage()}".trim()
-    fun getSyntax(guild: Guild, command: Command) = getSyntax(getPrefix(guild), command)
-    fun getSyntax(command: Command) = getSyntax(defaultPrefix, command)
+    private fun getSyntax(prefix: String, command: SourceCommand) = "$prefix${command.usage}".trim()
+    fun getSyntax(guild: Guild, command: SourceCommand) = getSyntax(getPrefix(guild), command)
+    fun getSyntax(command: SourceCommand) = getSyntax(defaultPrefix, command)
 
     fun getCommands(
         module: SourceModule
@@ -172,7 +174,7 @@ class CommandHandler(
     }
 }
 
-class PermissionCheck(val command: Command, val type: Type) {
+class PermissionCheck(val command: SourceCommand, val type: Type) {
     enum class Type {
         GLOBAL_ONLY,
         GUILD_ONLY,

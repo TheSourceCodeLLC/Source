@@ -1,14 +1,12 @@
 package net.sourcebot.impl.command
 
+import me.hwiggy.kommander.arguments.*
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.Source
 import net.sourcebot.api.command.PermissionCheck
 import net.sourcebot.api.command.PermissionCheck.Type.GUILD_ONLY
 import net.sourcebot.api.command.PermissionCheck.Type.VALID
 import net.sourcebot.api.command.RootCommand
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
@@ -19,23 +17,23 @@ import net.sourcebot.api.response.error.GuildOnlyCommandResponse
 class HelpCommand : RootCommand() {
     override val name = "help"
     override val description = "Shows command / module information."
-    override val argumentInfo = ArgumentInfo(
-        OptionalArgument(
-            "topic",
-            "The command or module to show help for. Empty to show the module listing."
-        ),
-        OptionalArgument(
-            "children...",
-            "The sub-command(s) to get help for, in the case that `topic` is a command."
+    override val synopsis = Synopsis {
+        optParam(
+            "topic", "The command or module to show help for. Empty to show the module listing.",
+            Adapter.single()
         )
-    )
+        optParam(
+            "children...", "The sub-command(s) to get help for, in the case that `topic` is a command.",
+            Adapter.slurp(" ")
+        )
+    }
     override val deleteSeconds = 60L
     private val permissionHandler = Source.PERMISSION_HANDLER
     private val commandHandler = Source.COMMAND_HANDLER
     private val moduleHandler = Source.MODULE_HANDLER
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val topic = args.next()
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val topic = arguments.optional<String>("topic")
         if (topic == null) {
             val modules = moduleHandler.loader.getExtensions()
             val enabled = modules.filter { it.enabled }
@@ -54,8 +52,8 @@ class HelpCommand : RootCommand() {
                     Command names may be passed into this command for usage information.
                 """.trimIndent()
             ).also {
-                if (message.isFromGuild) {
-                    val prefix = commandHandler.getPrefix(message.guild)
+                if (sender.isFromGuild) {
+                    val prefix = commandHandler.getPrefix(sender.guild)
                     it.appendDescription("\nThis Guild's prefix is: `$prefix`")
                 }
                 it.addField("Modules", sorted, false) as Response
@@ -63,16 +61,16 @@ class HelpCommand : RootCommand() {
         }
         val asCommand = commandHandler.getCommand(topic)
         if (asCommand != null) {
-            val permCheck = commandHandler.checkPermissions(message, asCommand, args)
+            val permCheck = commandHandler.checkPermissions(sender, asCommand, arguments.parent.slice())
             val command = permCheck.command
             return when (permCheck.type) {
                 PermissionCheck.Type.GLOBAL_ONLY -> GlobalAdminOnlyResponse()
                 GUILD_ONLY -> GuildOnlyCommandResponse()
                 PermissionCheck.Type.NO_PERMISSION -> {
-                    val data = permissionHandler.getData(message.guild)
-                    val permissible = data.getUser(message.member!!)
+                    val data = permissionHandler.getData(sender.guild)
+                    val permissible = data.getUser(sender.member!!)
                     permissionHandler.getPermissionAlert(
-                        command.guildOnly, message.jda, permissible, command.permission!!
+                        command.guildOnly, sender.jda, permissible, command.permission!!
                     )
                 }
                 VALID -> {
@@ -83,11 +81,19 @@ class HelpCommand : RootCommand() {
                         addField("Description:", command.description, false)
                         addField(
                             "Usage:", when {
-                                message.isFromGuild -> commandHandler.getSyntax(message.guild, command)
+                                sender.isFromGuild -> commandHandler.getSyntax(sender.guild, command)
                                 else -> commandHandler.getSyntax(command)
                             }, false
                         )
-                        addField("Detail:", command.argumentInfo.getParameterDetail(), false)
+                        addField("Detail:", command.synopsis.buildParameterDetail(
+                            {
+                                when (it) {
+                                    is Group<*> -> renderGroup(it)
+                                    else -> renderParameter(it)
+                                }
+                            },
+                            { it.joinToString("\n") }
+                        ), false)
                         if (command.aliases.isNotEmpty())
                             addField("Aliases:", command.aliases.joinToString(), false)
                         if (command.permission != null)
@@ -115,7 +121,7 @@ class HelpCommand : RootCommand() {
                 addField("Commands", "This module does not have any commands.", false)
             }
             val grouped = commands.groupBy {
-                commandHandler.checkPermissions(message, it).type
+                commandHandler.checkPermissions(sender, it).type
             }
             val valid = grouped[VALID] ?: emptyList()
             val guildOnly = grouped[GUILD_ONLY] ?: emptyList()
@@ -123,7 +129,7 @@ class HelpCommand : RootCommand() {
                 addField("Commands", "You do not have access to any of this module's commands.", false)
             }
             val prefix =
-                if (message.isFromGuild) commandHandler.getPrefix(message.guild)
+                if (sender.isFromGuild) commandHandler.getPrefix(sender.guild)
                 else commandHandler.getPrefix()
             if (valid.isNotEmpty()) {
                 val listing = valid.sortedBy { it.name }.joinToString("\n") {
@@ -144,4 +150,35 @@ class HelpCommand : RootCommand() {
             "There is no command or module named `$topic`!"
         )
     }
+
+    private fun renderParameter(parameter: Parameter<*>) = StringBuilder().apply {
+        append("**${parameter.name}**: ${parameter.description}")
+        if (parameter.adapter is BoundAdapter<*>) {
+            append(" ")
+            val adapter = parameter.adapter as BoundAdapter<*>
+            if (adapter.min != null && adapter.max != null) {
+                append("Min: ${adapter.min}, Max: ${adapter.max}")
+            } else {
+                if (adapter.min != null) {
+                    append("Min: ${adapter.min}")
+                }
+                if (adapter.max != null) {
+                    append("Max: ${adapter.max}")
+                }
+            }
+        }
+        if (parameter.default != null) {
+            append(" (Default: _${parameter.default}_)")
+        }
+    }.toString()
+
+    private fun renderGroup(group: Group<*>) = StringBuilder().apply {
+        append("**${group.name}**: ${group.description}")
+        group.choices.forEach { (option, description) ->
+            append("\n\t**${option.synopsisName}**: $description")
+        }
+        if (group.default != null) {
+            append("\n(Default: _${group.default!!.synopsisName}_)")
+        }
+    }.toString()
 }

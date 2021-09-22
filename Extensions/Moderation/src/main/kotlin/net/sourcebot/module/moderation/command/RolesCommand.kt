@@ -1,13 +1,13 @@
 package net.sourcebot.module.moderation.command
 
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
 import net.sourcebot.Source
-import net.sourcebot.api.command.argument.Adapter
-import net.sourcebot.api.command.argument.Argument
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.command.argument.SourceAdapter
 import net.sourcebot.api.getHighestRole
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
@@ -17,23 +17,27 @@ import net.sourcebot.module.moderation.Moderation
 class RolesCommand : ModerationRootCommand(
     "roles", "Manage member roles."
 ) {
-    override val aliases = arrayOf("role")
+    override val aliases = listOf("role")
     private inner class RolesAddCommand : ModerationCommand(
         "add", "Add a role to a member."
     ) {
-        override val argumentInfo = ArgumentInfo(
-            Argument("target", "The member to update."),
-            Argument("role", "The role to add."),
-            Argument("reason", "Why you are adding this role.")
-        )
+        override val synopsis = Synopsis {
+            reqParam("target", "The Member to update.", Adapter.single())
+            reqParam("role", "The Role to add.", Adapter.single())
+            reqParam("reason", "Why you are adding this role.", Adapter.slurp(" "))
+        }
 
-        override fun execute(message: Message, args: Arguments): Response {
-            val guild = message.guild
-            val sender = message.member!!
-            val target = args.next(Adapter.member(guild), "You did not specify a valid member to update!")
-            val role = args.next(Adapter.role(guild), "You did not specify a valid role to add!")
-            val reason = args.slurp(" ", "You did not specify a reason for adding this role!")
-            if (!canModify(sender, role)) return StandardErrorResponse(
+        override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+            val guild = sender.guild
+            val source = sender.member!!
+            val target = arguments.required<String, Member>("target", "You did not specify a valid member to update!") {
+                SourceAdapter.member(source.guild, it)
+            }
+            val role = arguments.required<String, Role>("role", "You did not specify a valid role to add!") {
+                SourceAdapter.role(source.guild, it)
+            }
+            val reason = arguments.required<String>("reason", "You did not specify a reason for adding this role!")
+            if (!canModify(source, role)) return StandardErrorResponse(
                 "Role Add Failure!", "You do not have permission to modify that role!"
             )
             if (role.isPublicRole) return StandardErrorResponse(
@@ -42,7 +46,7 @@ class RolesCommand : ModerationRootCommand(
             if (role.isManaged) return StandardErrorResponse(
                 "Role Add Failure!", "You may not add members to managed roles!"
             )
-            val senderHighest = sender.getHighestRole()
+            val senderHighest = source.getHighestRole()
             if (senderHighest.position < role.position) return StandardErrorResponse(
                 "Role Add Failure!", "You do not have permission to add members to that role!"
             )
@@ -50,26 +54,30 @@ class RolesCommand : ModerationRootCommand(
             if (senderHighest.position < targetHighest.position) return StandardErrorResponse(
                 "Role Add Failure!", "You do not have permission to manage that person's roles!"
             )
-            return Moderation.getPunishmentHandler(guild) { submitRoleAdd(sender, target, role, reason) }
+            return Moderation.getPunishmentHandler(guild) { submitRoleAdd(source, target, role, reason) }
         }
     }
 
     private inner class RolesRemoveCommand : ModerationCommand(
         "remove", "Remove a a role from a member."
     ) {
-        override val argumentInfo = ArgumentInfo(
-            Argument("target", "The member to update."),
-            Argument("role", "The role to remove."),
-            Argument("reason", "Why you are removing this role.")
-        )
+        override val synopsis = Synopsis {
+            reqParam("target", "The Member to update.", Adapter.single())
+            reqParam("role", "The Role to remove.", Adapter.single())
+            reqParam("reason", "Why you are removing this role.", Adapter.slurp(" "))
+        }
 
-        override fun execute(message: Message, args: Arguments): Response {
-            val guild = message.guild
-            val sender = message.member!!
-            val target = args.next(Adapter.member(guild), "You did not specify a valid member to update!")
-            val role = args.next(Adapter.role(guild), "You did not specify a valid role to remove!")
-            val reason = args.slurp(" ", "You did not specify a reason for removing this role!")
-            if (!canModify(sender, role)) return StandardErrorResponse(
+        override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+            val guild = sender.guild
+            val source = sender.member!!
+            val target = arguments.required<String, Member>("target", "You did not specify a valid member to update!") {
+                SourceAdapter.member(source.guild, it)
+            }
+            val role = arguments.required<String, Role>("role", "You did not specify a valid role to remove!") {
+                SourceAdapter.role(source.guild, it)
+            }
+            val reason = arguments.required<String>("reason", "You did not specify a reason for removing this role!")
+            if (!canModify(source, role)) return StandardErrorResponse(
                 "Role Remove Failure!", "You do not have permission to modify that role!"
             )
             if (role.isPublicRole) return StandardErrorResponse(
@@ -78,7 +86,7 @@ class RolesCommand : ModerationRootCommand(
             if (role.isManaged) return StandardErrorResponse(
                 "Role Remove Failure!", "You may not remove members from managed roles!"
             )
-            val senderHighest = sender.getHighestRole()
+            val senderHighest = source.getHighestRole()
             if (senderHighest.position < role.position) return StandardErrorResponse(
                 "Role Remove Failure!", "You do not have permission to remove members from that role!"
             )
@@ -86,7 +94,7 @@ class RolesCommand : ModerationRootCommand(
             if (senderHighest.position < targetHighest.position) return StandardErrorResponse(
                 "Role Remove Failure!", "You do not have permission to manage that person's roles!"
             )
-            return Moderation.getPunishmentHandler(guild) { submitRoleRemove(sender, target, role, reason) }
+            return Moderation.getPunishmentHandler(guild) { submitRoleRemove(source, target, role, reason) }
         }
     }
 
@@ -94,9 +102,9 @@ class RolesCommand : ModerationRootCommand(
         "list", "Show the available roles."
     ) {
         override val cleanupResponse = false
-        override fun execute(message: Message, args: Arguments): Response {
-            val guild = message.guild
-            val member = message.member!!
+        override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+            val guild = sender.guild
+            val member = sender.member!!
             val roles = guild.roles
                 .filter { !it.isPublicRole && !it.isManaged }
                 .filter { member.getHighestRole().position > it.position }

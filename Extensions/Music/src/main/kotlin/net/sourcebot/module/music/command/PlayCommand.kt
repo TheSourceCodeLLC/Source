@@ -2,10 +2,10 @@ package net.sourcebot.module.music.command
 
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.argument.Argument
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.EmptyResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
@@ -14,13 +14,13 @@ import net.sourcebot.module.music.Music
 class PlayCommand : MusicCommand(
     "play", "Play audio from YouTube."
 ) {
-    override val argumentInfo = ArgumentInfo(
-        Argument("identifier", "Track identifier to play.")
-    )
+    override val synopsis = Synopsis {
+        reqParam("identifier", "Track identifier to play.", Adapter.single())
+    }
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val identifier = args.next("You did not specify a track identifier!")
-        val guild = message.guild
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val identifier = arguments.required<String>("identifier", "You did not specify a track identifier!")
+        val guild = sender.guild
         val subsystem = Music.getSubsystem(guild)
         val response = subsystem.load(identifier, {
             when (it) {
@@ -29,7 +29,7 @@ class PlayCommand : MusicCommand(
                 else -> EmptyResponse()
             }
         }, { StandardInfoResponse("No Match!") })
-        subsystem.connect(message.member?.voiceState?.channel!!)
+        subsystem.connect(sender.member?.voiceState?.channel!!)
         return response
     }
 }

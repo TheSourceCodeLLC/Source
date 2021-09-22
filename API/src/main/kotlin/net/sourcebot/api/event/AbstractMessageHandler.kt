@@ -1,9 +1,9 @@
 package net.sourcebot.api.event
 
+import me.hwiggy.kommander.arguments.Arguments
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
-import net.sourcebot.api.command.argument.Arguments
 
 /**
  * This class is responsible for processing command-like messages

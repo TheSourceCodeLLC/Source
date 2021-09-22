@@ -1,11 +1,11 @@
 package net.sourcebot.module.cryptography.commands
 
 import com.mongodb.internal.HexUtils
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.RootCommand
-import net.sourcebot.api.command.argument.Argument
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import java.security.MessageDigest
@@ -16,13 +16,14 @@ abstract class HashCommand(
 ) : RootCommand() {
     private val digest = MessageDigest.getInstance(algorithm)
     override val description = "Hash text using $algorithm."
-    override val argumentInfo = ArgumentInfo(
-        Argument("input", "The text to be hashed.")
-    )
+    override val synopsis = Synopsis {
+        reqParam("input", "The text to be hashed.", Adapter.slurp(" "))
+    }
+
     final override val permission = "cryptography.$name"
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val input = args.slurp(" ", "You did not provide text to hash!")
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val input = arguments.required<String>("input", "You did not provide text to hash!")
         val digested = digest.digest(input.toByteArray())
         val hexStr = HexUtils.toHex(digested)
         return StandardInfoResponse("$algorithm Hash Result", hexStr)

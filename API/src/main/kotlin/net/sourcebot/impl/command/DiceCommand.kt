@@ -1,11 +1,10 @@
 package net.sourcebot.impl.command
 
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.RootCommand
-import net.sourcebot.api.command.argument.Adapter
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.command.argument.OptionalArgument
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import java.util.concurrent.ThreadLocalRandom
@@ -17,7 +16,7 @@ import java.util.concurrent.ThreadLocalRandom
 class DiceCommand : RootCommand() {
     override val name = "dice"
     override val description = "Roll some dice."
-    override val aliases = arrayOf("roll")
+    override val aliases = listOf("roll")
     override val permission = name
 
     override val transformer = object : RegexTransformer(Regex("(\\d+)d(\\d+)")) {
@@ -27,18 +26,14 @@ class DiceCommand : RootCommand() {
         }
     }
 
-    override val argumentInfo = ArgumentInfo(
-        OptionalArgument("times", "The number of dice to roll.", 1),
-        OptionalArgument("sides", "The number of sides on each dice.", 6)
-    )
+    override val synopsis = Synopsis {
+        optParam("times", "The number of dice to roll.", Adapter.int(min = 1), 1)
+        optParam("sides", "The number of sides on each dice.", Adapter.int(min = 3), 6)
+    }
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val times = args.next(
-            Adapter.int(1, error = "You may not roll a dice less than one time!")
-        ) ?: 1
-        val sides = args.next(
-            Adapter.int(3, error = "You may not roll a dice with less than 3 sides!")
-        ) ?: 6
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val times = arguments.optional("times", 1)
+        val sides = arguments.optional("sides", 6)
         val rolls = IntArray(times)
         (1..times).forEach { rolls[it - 1] = ThreadLocalRandom.current().nextInt(1, sides) }
         return StandardInfoResponse(

@@ -1,29 +1,34 @@
 package net.sourcebot.module.economy.command
 
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
+import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.argument.Adapter
-import net.sourcebot.api.command.argument.Argument
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
+import net.sourcebot.api.command.InvalidSyntaxException
+import net.sourcebot.api.command.argument.SourceAdapter
 import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.module.economy.Economy
 
 class PayCommand : EconomyRootCommand("pay", "Pay members using your coin balance.") {
-    override val argumentInfo = ArgumentInfo(
-        Argument("target", "The member you want to pay"),
-        Argument("amount", "The amount you want to pay")
-    )
-
-    override fun execute(message: Message, args: Arguments): Response {
-        val senderEco = Economy[message.member!!]
-        val target = args.next(Adapter.member(message.guild), "You did not specify a member to pay!")
-        val targetEco = Economy[target]
-        val amount = args.next(
-            Adapter.long(1, senderEco.balance, "Amount to pay must be between 1 and ${senderEco.balance}!"),
-            "You did not specify an amount to pay!"
+    override val synopsis = Synopsis {
+        reqParam("target", "The Member you want to pay.", Adapter.single())
+        reqParam(
+            "amount", "The amount you want to pay.",
+            Adapter.long(1, error = "The amount to pay must be at least 1!")
         )
+    }
+
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val senderEco = Economy[sender.member!!]
+        val target = arguments.required<String, Member>("target", "You did not specify a member to pay!") {
+            SourceAdapter.member(sender.guild, it)
+        }
+        val targetEco = Economy[target]
+        val amount = arguments.required<Long>("amount", "You did not specify an amount to pay!")
+        if (amount > senderEco.balance) throw InvalidSyntaxException("You may not pay more than your balance!")
         senderEco.balance -= amount
         targetEco.balance += amount
         return StandardSuccessResponse(

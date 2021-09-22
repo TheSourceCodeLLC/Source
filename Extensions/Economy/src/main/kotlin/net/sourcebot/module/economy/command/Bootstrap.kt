@@ -1,7 +1,7 @@
 package net.sourcebot.module.economy.command
 
-import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
+import net.sourcebot.api.command.SourceCommand
 
 abstract class EconomyRootCommand(
     final override val name: String,
@@ -14,7 +14,7 @@ abstract class EconomyRootCommand(
 abstract class EconomyCommand(
     final override val name: String,
     final override val description: String
-) : Command() {
+) : SourceCommand() {
     final override val permission by lazy { "${parent!!.permission!!}.$name" }
     final override val guildOnly = true
 }

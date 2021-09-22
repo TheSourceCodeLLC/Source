@@ -2,11 +2,13 @@ package net.sourcebot.module.music.command
 
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.Source
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.menus.MenuResponse
 import net.sourcebot.api.response.EmptyResponse
 import net.sourcebot.api.response.Response
@@ -20,10 +22,14 @@ class SearchCommand : MusicCommand(
 ) {
     private val menuHandler = Source.MENU_HANDLER
     override val cleanupResponse = false
-    override fun execute(message: Message, args: Arguments): Response {
-        val query = args.slurp(" ", "You did not specify a query!")
+    override val synopsis = Synopsis {
+        reqParam("query", "The audio to query for.", Adapter.slurp(" "))
+    }
+
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val query = arguments.required<String>("query", "You did not specify a query!")
         val snippets = Music.YOUTUBE_API.search(query).items.map(SearchListItem::snippet)
-        val subsystem = Music.getSubsystem(message.guild)
+        val subsystem = Music.getSubsystem(sender.guild)
         return menuHandler.createSelectionMenu(
             snippets, 5, {
                 MarkdownUtil.maskedLink(
@@ -43,7 +49,7 @@ class SearchCommand : MusicCommand(
                         addField("Channel", it.channelTitle, false)
                         setThumbnail(it.thumbnails["default"]!!.url)
                     }.also {
-                        subsystem.connect(message.member?.voiceState?.channel!!)
+                        subsystem.connect(sender.member?.voiceState?.channel!!)
                     }
                 }, {
                     StandardErrorResponse("Unknown Video / Playlist!", "")

@@ -1,9 +1,9 @@
 package net.sourcebot.impl.command
 
+import me.hwiggy.kommander.arguments.Arguments
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.command.RootCommand
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import java.time.Instant
@@ -12,15 +12,15 @@ import kotlin.math.abs
 class TimingsCommand : RootCommand() {
     override val name = "timings"
     override val description = "Show bot timings."
-    override val aliases = arrayOf("ping", "latency")
+    override val aliases = listOf("ping", "latency")
     override val permission = name
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val sent = message.timeCreated.toInstant().toEpochMilli()
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val sent = sender.timeCreated.toInstant().toEpochMilli()
         val now = Instant.now().toEpochMilli()
         val difference = abs(sent - now)
-        val gateway = message.jda.gatewayPing
-        val rest = message.jda.restPing.complete()
+        val gateway = sender.jda.gatewayPing
+        val rest = sender.jda.restPing.complete()
         return TimingsResponse(difference, gateway, rest)
     }
 
@@ -46,7 +46,7 @@ class TimingsResponse(
         val sent = message.timeCreated.toInstant().toEpochMilli()
         val now = Instant.now().toEpochMilli()
         val response = abs(sent - now)
-        message.editMessage(
+        message.editMessageEmbeds(
             StandardInfoResponse(
                 "Source Timings",
                 """

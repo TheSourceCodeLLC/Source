@@ -1,9 +1,9 @@
 package net.sourcebot.impl.listener
 
+import me.hwiggy.kommander.arguments.Arguments
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.sourcebot.Source
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent

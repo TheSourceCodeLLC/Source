@@ -1,5 +1,6 @@
 package net.sourcebot.module.tags.data
 
+import me.hwiggy.kommander.arguments.Group
 import net.sourcebot.api.database.MongoSerial
 import org.bson.Document
 import java.time.Instant
@@ -43,5 +44,7 @@ data class Tag(
         }
     }
 
-    enum class Type { EMBED, TEXT }
+    enum class Type(
+        override val synopsisName: String
+    ) : Group.Option { EMBED("embed"), TEXT("text") }
 }

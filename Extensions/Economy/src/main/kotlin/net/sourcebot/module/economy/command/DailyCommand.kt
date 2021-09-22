@@ -1,8 +1,8 @@
 package net.sourcebot.module.economy.command
 
+import me.hwiggy.kommander.arguments.Arguments
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.Source
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.differenceBetween
 import net.sourcebot.api.formatPlural
 import net.sourcebot.api.response.Response
@@ -18,17 +18,22 @@ class DailyCommand : EconomyRootCommand(
     "daily", "Progress your daily streak."
 ) {
     private val configManager = Source.CONFIG_MANAGER
-    override fun execute(message: Message, args: Arguments): Response {
-        val economy = Economy[message.member!!]
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val economy = Economy[sender.member!!]
         val now = Instant.now()
-        val baseWin = configManager[message.guild].required("economy.daily.base") { 25L }
-        val perDiem = configManager[message.guild].required("economy.daily.bonus") { 5L }
+        val baseWin = configManager[sender.guild].required("economy.daily.base") { 25L }
+        val perDiem = configManager[sender.guild].required("economy.daily.bonus") { 5L }
         val daily = if (economy.daily != null) {
             val (count, expiry) = economy.daily!!
             if (now.isAfter(expiry)) {
                 updateDaily(economy, 1)
                 return StandardErrorResponse(
-                    description = "You claimed your daily reward of ${formatPlural(baseWin, "coin")}, but lost your daily streak of $count!"
+                    description = "You claimed your daily reward of ${
+                        formatPlural(
+                            baseWin,
+                            "coin"
+                        )
+                    }, but lost your daily streak of $count!"
                 ).also {
                     economy.balance += baseWin
                 }

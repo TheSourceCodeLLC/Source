@@ -1,27 +1,35 @@
 package net.sourcebot.module.moderation.command
 
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.InvalidSyntaxException
-import net.sourcebot.api.command.argument.*
+import net.dv8tion.jda.api.entities.TextChannel
+import net.sourcebot.api.command.argument.SourceAdapter
 import net.sourcebot.api.response.Response
 import net.sourcebot.module.moderation.Moderation
 
 class ClearCommand : ModerationRootCommand(
     "clear", "Clear a number of messages from a channel."
 ) {
-    override val argumentInfo = ArgumentInfo(
-        OptionalArgument("channel", "The channel to clear messages from.", "Current"),
-        Argument("amount", "The number of messages to clear. Must be at least 2."),
-        Argument("reason", "Why the messages are being cleared.")
-    )
+    override val synopsis = Synopsis {
+        optParam("channel", "The channel to clear messages from.", Adapter.single())
+        reqParam(
+            "amount", "The number of messages to clear; 2 or more.", Adapter.int(
+                2, error = "Amount to clear may not be less than 2!"
+            )
+        )
+        reqParam("reason", "Why the messages are being cleared.", Adapter.slurp(" "))
+    }
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val channel = args.next(Adapter.textChannel(message.guild)) ?: message.textChannel
-        val amount = args.next(Adapter.int(), "You did not specify a number of messages to clear!")
-        if (amount < 2) throw InvalidSyntaxException("Amount to clear may not be less than 2!")
-        val reason = args.slurp(" ", "You did not specify a reason for clearing the messages!")
-        return Moderation.getPunishmentHandler(message.guild) {
-            clearIncident(message.member!!, channel, amount, reason)
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val channel = arguments.optional<String, TextChannel>("channel", sender.textChannel) {
+            SourceAdapter.textChannel(sender.guild, it)
+        }
+        val amount = arguments.required<Int>("amount", "You did not specify a number of messages to clear!")
+        val reason = arguments.required<String>("reason", "You did not specify a reason for clearing the messages!")
+        return Moderation.getPunishmentHandler(sender.guild) {
+            clearIncident(sender.member!!, channel, amount, reason)
         }
     }
 }

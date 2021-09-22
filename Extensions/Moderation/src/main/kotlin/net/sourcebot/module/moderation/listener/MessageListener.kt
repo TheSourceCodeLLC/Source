@@ -1,16 +1,16 @@
 package net.sourcebot.module.moderation.listener
 
 import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
-import com.google.common.cache.LoadingCache
 import com.mongodb.client.model.UpdateOptions
 import net.dv8tion.jda.api.EmbedBuilder
-import net.dv8tion.jda.api.entities.Guild
-import net.dv8tion.jda.api.entities.Invite
-import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.audit.ActionType
+import net.dv8tion.jda.api.entities.*
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.guild.GuildBanEvent
+import net.dv8tion.jda.api.events.guild.GuildUnbanEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleRemoveEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageDeleteEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
@@ -26,13 +26,12 @@ import net.sourcebot.api.response.SourceColor
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardWarningResponse
 import net.sourcebot.module.moderation.Moderation
-import net.sourcebot.module.moderation.PunishmentResponse
+import net.sourcebot.module.moderation.data.RoleUpdateIncident
 import net.sourcebot.module.moderation.event.MessageDeleteEvent
 import net.sourcebot.module.moderation.event.MessageEditEvent
 import org.bson.Document
 import java.time.Instant
 import java.util.concurrent.TimeUnit
-import kotlin.math.ceil
 
 class MessageListener : EventSubscriber<Moderation> {
     private val permissionHandler = Source.PERMISSION_HANDLER
@@ -48,12 +47,17 @@ class MessageListener : EventSubscriber<Moderation> {
         jdaEvents: EventSystem<GenericEvent>,
         sourceEvents: EventSystem<SourceEvent>
     ) {
-        jdaEvents.listen(module, this::onMemberBanned)
-        jdaEvents.listen(module, this::onMessageReceive)
-        jdaEvents.listen(module, this::submitMessageEdit)
-        jdaEvents.listen(module, this::submitMessageDelete)
-        jdaEvents.listen(module, this::handleReportReaction)
-
+        listOf(
+            this::onMemberBanned,
+            this::onMemberKicked,
+            this::onMemberUnbanned,
+            this::onMemberRoleAdded,
+            this::onMemberRoleRemoved,
+            this::onMessageReceive,
+            this::submitMessageEdit,
+            this::submitMessageDelete,
+            this::handleReportReaction
+        ).forEach { jdaEvents.listen(module, it) }
         sourceEvents.listen(module, this::onMessageDelete)
         sourceEvents.listen(module, this::onMessageEdit)
     }
@@ -61,6 +65,58 @@ class MessageListener : EventSubscriber<Moderation> {
     private fun onMemberBanned(event: GuildBanEvent) {
         val id = event.user.id
         recentBans.put(id, id)
+        event.guild.retrieveAuditLogs().type(ActionType.BAN).queue {
+            val entry = it.find { entry -> entry.targetId == id } ?: return@queue
+            val sender = event.guild.getMember(event.user)!!
+            val target = event.user
+            val reason = entry.reason
+            Moderation.getPunishmentHandler(event.guild) {
+                val incident = reason.ifPresentOrElse({ reason ->
+                    manualBanIncident(sender, target, 0, reason)
+                }, {
+                    manualBanIncident(sender, target, 0)
+                })
+                incidentChannel()?.let(incident::sendLog)
+            }
+        }
+    }
+
+    private fun onMemberKicked(event: GuildMemberRemoveEvent) {
+        val (sender, target) = extractAuditInfo(event.guild, ActionType.KICK, event.user) ?: return
+        Moderation.getPunishmentHandler(event.guild) {
+            val incident = manualKickIncident(sender, target)
+            incidentChannel()?.let(incident::sendLog)
+        }
+    }
+
+    private fun onMemberUnbanned(event: GuildUnbanEvent) {
+        val (sender, target) = extractAuditInfo(event.guild, ActionType.UNBAN, event.user) ?: return
+        Moderation.getPunishmentHandler(event.guild) {
+            val incident = manualUnbanIncident(sender, target)
+            incidentChannel()?.let(incident::sendLog)
+        }
+    }
+
+    private fun onMemberRoleAdded(event: GuildMemberRoleAddEvent) =
+        onMemberRoleChange(event.guild, event.user, event.roles.first(), RoleUpdateIncident.Action.REMOVE)
+
+    private fun onMemberRoleRemoved(event: GuildMemberRoleRemoveEvent) =
+        onMemberRoleChange(event.guild, event.user, event.roles.first(), RoleUpdateIncident.Action.ADD)
+
+    private fun onMemberRoleChange(guild: Guild, user: User, role: Role, action: RoleUpdateIncident.Action) {
+        val (sender, target) = extractAuditInfo(guild, ActionType.MEMBER_ROLE_UPDATE, user) ?: return
+        Moderation.getPunishmentHandler(guild) {
+            val incident = manualRoleUpdate(sender, guild.getMember(target)!!, role, action)
+            incidentChannel()?.let(incident::sendLog)
+        }
+    }
+
+    private fun extractAuditInfo(guild: Guild, type: ActionType, user: User): Pair<Member, User>? {
+        val logs = guild.retrieveAuditLogs().type(type).complete()
+        val entry = logs.find { entry -> entry.targetId == user.id } ?: return null
+        if (entry.timeCreated.isBefore(entry.timeCreated.minusSeconds(30))) return null
+        val sender = guild.getMember(user)!!
+        return sender to user
     }
 
     private fun onMessageDelete(event: MessageDeleteEvent) {
@@ -156,7 +212,6 @@ class MessageListener : EventSubscriber<Moderation> {
         val delete = when {
             message.mentionedMembers.size >= mentionThreshold -> handleMentionLimit(event, mentionThreshold)
             message.invites.isNotEmpty() -> handleChatAdvertising(event)
-            handleCapsCheck(event) -> true
             else -> false
         }
         val channel = event.channel
@@ -166,40 +221,6 @@ class MessageListener : EventSubscriber<Moderation> {
             if (channel in blacklist || (parent != null && parent in blacklist)) return
             saveMessage(message)
         }
-    }
-
-    private val capsViolations = HashMap<String, LoadingCache<String, Int>>()
-    private fun handleCapsCheck(event: GuildMessageReceivedEvent): Boolean {
-        val violations = capsViolations.computeIfAbsent(event.guild.id) {
-            CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES)
-                .build(object : CacheLoader<String, Int>() {
-                    override fun load(key: String) = 0
-                })
-        }
-        val content = event.message.contentRaw.trim()
-        if (content.length < 7) return false
-        val threshold = ceil(content.length * .8).toInt()
-        if (content.count(Char::isUpperCase) < threshold) return false
-        val violationCount = violations[event.author.id] + 1
-        Moderation.getPunishmentHandler(event.guild) {
-            val incident = when (violationCount) {
-                3 -> muteIncident(
-                    event.guild.selfMember,
-                    event.member!!,
-                    durationOf("10m"),
-                    "Caps Violation! (3 offenses within 5 minutes!)"
-                )
-                else -> StandardWarningResponse(
-                    "Caps Violation!", "Please do not use as many capital letters!"
-                )
-            }
-            violations.put(event.author.id, violationCount)
-            if (incident is PunishmentResponse && !incident.success) return@getPunishmentHandler
-            event.channel.sendMessage(incident.asMessage(event.member!!)).queue {
-                it.delete().queueAfter(10, TimeUnit.SECONDS)
-            }
-        }
-        return true
     }
 
     private fun handleMentionLimit(event: GuildMessageReceivedEvent, threshold: Int): Boolean {

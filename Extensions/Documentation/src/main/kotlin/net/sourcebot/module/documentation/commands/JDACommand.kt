@@ -1,9 +1,11 @@
 package net.sourcebot.module.documentation.commands
 
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.argument.Argument
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
+import net.dv8tion.jda.api.utils.MarkdownUtil
+import net.sourcebot.api.ifPresentOrElse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.module.documentation.commands.bootstrap.JavadocCommand
@@ -13,25 +15,23 @@ class JDACommand : JavadocCommand(
     "jda",
     "Allows the user to query the JDA Documentation."
 ) {
-    override val argumentInfo: ArgumentInfo = ArgumentInfo(
-        Argument("query", "The item you are searching for in the JDA documentation.")
-    )
+    override val synopsis = Synopsis {
+        optParam("query", "The JDA element you are seeking help for.", Adapter.single())
+    }
     private val jenkinsHandler = JenkinsHandler(
         "https://ci.dv8tion.net/job/JDA/javadoc/allclasses.html",
         "JDA Javadocs"
     )
 
-    override fun execute(message: Message, args: Arguments): Response {
-        return if (args.hasNext()) {
-            val query = args.next("Unable to find query w/o version!")
-
-            jenkinsHandler.retrieveResponse(message.author, query)
-        } else {
-            val authorName = message.author.name
-            val description =
-                "You can find the JDA Documentation at [ci.dv8tion.net](https://ci.dv8tion.net/job/JDA/javadoc/index.html)"
-            StandardInfoResponse(authorName, description)
-        }
-
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        return arguments.optional<String>("query").ifPresentOrElse(
+            { jenkinsHandler.retrieveResponse(sender.author, it) },
+            {
+                val link = MarkdownUtil.maskedLink(
+                    "ci.dv8tion.net", "https://ci.dv8tion.net/job/JDA/javadoc/index.html"
+                )
+                StandardInfoResponse(sender.author.name, "You can find the JDA Documentation at $link")
+            }
+        )
     }
 }

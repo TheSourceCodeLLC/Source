@@ -2,9 +2,11 @@ package net.sourcebot.module.documentation.commands
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ArrayNode
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.utils.MarkdownUtil
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
@@ -19,21 +21,24 @@ import java.net.URL
 class MDNCommand : DocumentationCommand(
     "mdn", "Allows the user to query the MDN Documentation."
 ) {
-    override val aliases: Array<String> = arrayOf("javascript", "js")
+    override val aliases = listOf("javascript", "js")
     private val baseUrl = "https://developer.mozilla.org"
     private val cache = MDNDocCache()
+    override val synopsis = Synopsis {
+        optParam("query", "The MDN element you are seeking help for.", Adapter.single())
+    }
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val user = message.author
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val user = sender.author
         val iconUrl = "https://developer.mozilla.org/static/img/opengraph-logo.72382e605ce3.png"
-
-        if (!args.hasNext()) {
+        val query = arguments.optional<String>("query")
+            ?.replace("#", ".")
+            ?.removeSuffix("()")
+        if (query == null) {
             val description =
                 "You can find the MDN Documentation at [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/)"
             return StandardInfoResponse(user.name, description)
         }
-
-        val query = args.next("Unable to find query!").replace("#", ".").removeSuffix("()")
 
         if (cache.hasResponse(query)) {
             return cache.getResponse(query)!!

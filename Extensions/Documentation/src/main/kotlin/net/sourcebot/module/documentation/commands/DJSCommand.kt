@@ -1,7 +1,10 @@
 package net.sourcebot.module.documentation.commands
 
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Group
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
@@ -14,44 +17,34 @@ import org.jsoup.Jsoup
 class DJSCommand : DocumentationCommand(
     "djs", "Allows the user to query the Discord.JS Documentation."
 ) {
-    private val defaultSources: MutableList<String> = mutableListOf(
-        "stable", "master", "rpc", "commando", "akairo", "akairo-master", "collection"
-    )
+    enum class Version(override val synopsisName: String) : Group.Option {
+        STABLE("stable"),
+        MASTER("master");
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val user = message.author
+        companion object {
+            @JvmStatic fun find(name: String): Version =
+                values().first { name.equals(it.synopsisName, true) }
+        }
+    }
 
-        if (!args.hasNext()) {
+    override val synopsis = Synopsis {
+        optGroup("version", "The version of D.JS you are seeking help for.", Version::find, Version.STABLE) {
+            choice(Version.STABLE, "D.JS Stable")
+            choice(Version.MASTER, "D.JS Master")
+        }
+        optParam("query", "The D.JS element you are seeking help for.", Adapter.single())
+    }
+
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val user = sender.author
+        val version = arguments.optional("version", Version.STABLE)
+        val query = arguments.optional<String>("query")
+            ?.replace("#", ".")
+        if (query == null) {
             val description = "You can find the Discord.JS Documentation at [discord.js.org](https://discord.js.org/)"
             return StandardInfoResponse(user.name, description)
         }
-
-        var query = args.next("Unable to find query w/o version!")
-        var version = "stable"
-
-        if (args.hasNext()) {
-            version = query.toLowerCase()
-
-            if (!defaultSources.contains(version)) {
-                val githubStr = "https://raw.githubusercontent.com/discordjs/discord.js/docs/$version.json"
-
-                version = try {
-                    Jsoup.connect(githubStr)
-                        .ignoreContentType(true)
-                        .execute()
-
-                    query = args.next("Unable to find query w/ github version!")
-                    githubStr
-                } catch (ex: Exception) {
-                    "stable"
-                }
-            } else {
-                query = args.next("Unable to find query w/ source version!")
-            }
-        }
-
-        query = query.replace("#", ".")
-        val apiUrl = "https://djsdocs.sorta.moe/v2/embed?src=$version&q=$query"
+        val apiUrl = "https://djsdocs.sorta.moe/v2/embed?src=${version.synopsisName}&q=$query"
 
         return try {
             val response: Connection.Response = Jsoup.connect(apiUrl)

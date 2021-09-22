@@ -1,8 +1,8 @@
 package net.sourcebot.impl.command
 
+import me.hwiggy.kommander.arguments.Arguments
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.RootCommand
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.response.*
 
@@ -16,9 +16,9 @@ abstract class LifecycleCommand(
     protected abstract val onScheduled: StandardEmbedResponse
     protected abstract val onFailure: StandardEmbedResponse
 
-    final override fun execute(message: Message, args: Arguments): Response {
-        message.channel.sendMessage(
-            onScheduled.asMessage(message.author)
+    final override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        sender.channel.sendMessage(
+            onScheduled.asMessage(sender.author)
         ).complete()
         return try {
             Runtime.getRuntime().exec(script)

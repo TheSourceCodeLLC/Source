@@ -1,10 +1,10 @@
 package net.sourcebot.impl.command
 
+import me.hwiggy.kommander.arguments.Arguments
 import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
-import net.sourcebot.api.command.argument.Arguments
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 
@@ -12,11 +12,11 @@ class GuildInfoCommand : RootCommand() {
     override val name = "guildinfo"
     override val description = "Show information about the current guild."
     override val guildOnly = true
-    override val aliases = arrayOf("online", "boosts")
+    override val aliases = listOf("online", "boosts")
     override val permission = name
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val guild = message.guild
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val guild = sender.guild
         val name = guild.name
         val icon = guild.iconUrl
         val owner = guild.retrieveOwner().complete()
@@ -26,7 +26,7 @@ class GuildInfoCommand : RootCommand() {
         val membersUnfiltered = guild.members
         val members = membersUnfiltered.filterNot { it.user.isBot }
         val totalMembers = members.count()
-        val bots = membersUnfiltered.filter { it.user.isBot }.count()
+        val bots = membersUnfiltered.count { it.user.isBot }
         val online = members.count { it.onlineStatus != OnlineStatus.OFFLINE }
 
         val boosts = guild.boostCount

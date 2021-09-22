@@ -1,13 +1,12 @@
 package net.sourcebot.module.trivia.command
 
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
-import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
-import net.sourcebot.api.command.argument.Adapter
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.command.argument.OptionalArgument
+import net.sourcebot.api.command.SourceCommand
 import net.sourcebot.api.response.*
 import net.sourcebot.api.urlDecoded
 import net.sourcebot.module.trivia.data.Game
@@ -17,7 +16,7 @@ class TriviaCommand : RootCommand() {
     override val name: String = "trivia"
     override val description: String = "Manage active trivia game, or start a new one."
     override val guildOnly: Boolean = true
-    override val aliases: Array<String> = arrayOf("triv")
+    override val aliases = listOf("triv")
     override val permission = name
 
     private val activeGames = HashMap<String, Game>()
@@ -34,30 +33,32 @@ class TriviaCommand : RootCommand() {
         "start", "Starts a game of trivia"
     ) {
         override var cleanupResponse = false
-        override val argumentInfo: ArgumentInfo = ArgumentInfo(
-            OptionalArgument("amount", "Amount of questions to ask. 1-50", 5),
-            OptionalArgument("category", "The category to pull questions from.")
-        )
+        override val synopsis = Synopsis {
+            optParam(
+                "amount", "Amount of questions to ask. 1-50", Adapter.int(
+                    1, 50, "Amount of questions must be between 1 and 50!"
+                ), 5
+            )
+            optParam("category", "The category number to pull questions from.", Adapter.int())
+        }
 
-        override fun execute(message: Message, args: Arguments): Response {
-            val amount = args.next(
-                Adapter.int(1, 50, "Amount of questions must be between 1 and 50!")
-            ) ?: 5
-            val category = args.next(Adapter.int())
+        override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+            val amount = arguments.optional("amount", 5)
+            val category = arguments.optional<Int>("category")
             if (category != null && !OpenTDB.isValidCategory(category)) {
                 return StandardErrorResponse(
                     "Unknown Trivia Category ID '$category'",
                     "Available Categories:\n" + OpenTDB.categories.joinToString("\n") { "**${it.id}**: ${it.name.urlDecoded()}" }
                 )
             }
-            val activeGame = activeGames[message.guild.id]
+            val activeGame = activeGames[sender.guild.id]
             if (activeGame != null) return StandardWarningResponse(
                 "Trivia In Progress!",
                 "There is already an active game in ${activeGame.getChannel()}!"
             )
             val game = Game(amount, category)
-            activeGames[message.guild.id] = game
-            return game.start { activeGames.remove(message.guild.id) }
+            activeGames[sender.guild.id] = game
+            return game.start { activeGames.remove(sender.guild.id) }
         }
 
         override fun postResponse(response: Response, forWhom: User, message: Message) {
@@ -69,8 +70,8 @@ class TriviaCommand : RootCommand() {
     private inner class TriviaStopCommand : Bootstrap(
         "stop", "Stop the active Trivia game."
     ) {
-        override fun execute(message: Message, args: Arguments): Response {
-            val activeGame = activeGames.remove(message.guild.id) ?: return StandardErrorResponse(
+        override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+            val activeGame = activeGames.remove(sender.guild.id) ?: return StandardErrorResponse(
                 "Trivia Stop", "There is no active Trivia game!"
             )
             activeGame.stop(Game.StopCause.ABORTED)
@@ -84,8 +85,8 @@ class TriviaCommand : RootCommand() {
     ) {
         override var cleanupResponse: Boolean = false
         override fun execute(
-            message: Message,
-            args: Arguments
+            sender: Message,
+            arguments: Arguments.Processed
         ) = StandardInfoResponse(
             "Trivia Categories",
             OpenTDB.categories.joinToString("\n") { "**${it.id}**: ${it.name.urlDecoded()}" }
@@ -96,7 +97,7 @@ class TriviaCommand : RootCommand() {
 abstract class Bootstrap(
     final override val name: String,
     final override val description: String
-) : Command() {
+) : SourceCommand() {
     final override val guildOnly = true
     final override val permission = "trivia.$name"
 }

@@ -1,9 +1,9 @@
 package net.sourcebot.api.command
 
-import net.sourcebot.api.command.argument.Arguments
+import me.hwiggy.kommander.arguments.Arguments
 import net.sourcebot.api.module.SourceModule
 
-abstract class RootCommand : Command() {
+abstract class RootCommand : SourceCommand() {
     internal lateinit var module: SourceModule
     open val transformer: InputTransformer? = null
 

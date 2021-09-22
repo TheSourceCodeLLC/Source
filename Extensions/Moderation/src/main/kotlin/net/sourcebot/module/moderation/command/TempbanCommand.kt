@@ -1,29 +1,40 @@
 package net.sourcebot.module.moderation.command
 
+import me.hwiggy.kommander.InvalidSyntaxException
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
+import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
-import net.sourcebot.api.command.InvalidSyntaxException
-import net.sourcebot.api.command.argument.*
+import net.sourcebot.api.command.argument.SourceAdapter
 import net.sourcebot.api.response.Response
 import net.sourcebot.module.moderation.Moderation
+import java.time.Duration
 
 class TempbanCommand : ModerationRootCommand(
     "tempban", "Temporarily ban a member for a specific reason."
 ) {
-    override val argumentInfo = ArgumentInfo(
-        Argument("target", "The member to tempban."),
-        OptionalArgument("delDays", "The number of days (0-7) of messages to delete.", 7),
-        Argument("duration", "How long this member should be tempbanned."),
-        Argument("reason", "The reason this member is being tempbanned.")
-    )
+    override val synopsis = Synopsis {
+        reqParam("target", "The Member to tempban.", Adapter.single())
+        optParam(
+            "delDays", "The number of days (0-7) of messages to delete.", Adapter.int(
+                0, 7, "Deletion days must be between 0 and 7 days!"
+            ), 7
+        )
+        reqParam("duration", "How long this Member should be tempbanned.", SourceAdapter.duration())
+        reqParam("reason", "The reason this Member is being tempbanned.", Adapter.slurp(" "))
+    }
 
-    override fun execute(message: Message, args: Arguments): Response {
-        val target = args.next(Adapter.member(message.guild), "You did not specify a valid member to tempban!")
-        val delDays = args.next(Adapter.int()) ?: 7
-        val duration = args.next(Adapter.duration(), "You did not specify a valid duration to tempban for!")
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val target = arguments.required<String, Member>("target", "You did not specify a valid member to tempban!") {
+            SourceAdapter.member(sender.guild, it)
+        }
+        val delDays = arguments.optional("delDays", 7)
+        val duration = arguments.required<Duration>("duration", "You did not specify a valid duration to tempban for!")
         if (duration.isZero) throw InvalidSyntaxException("The duration may not be zero seconds!")
-        val reason = args.slurp(" ", "You did not specify a tempban reason!")
-        return Moderation.getPunishmentHandler(message.guild) {
-            tempbanIncident(message.member!!, target, delDays, duration, reason)
+        val reason = arguments.required<String>("reason", "You did not specify a tempban reason!")
+        return Moderation.getPunishmentHandler(sender.guild) {
+            tempbanIncident(sender.member!!, target, delDays, duration, reason)
         }
     }
 }

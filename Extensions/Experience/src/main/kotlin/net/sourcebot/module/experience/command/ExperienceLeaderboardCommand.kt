@@ -1,11 +1,11 @@
 package net.sourcebot.module.experience.command
 
+import me.hwiggy.kommander.arguments.Adapter
+import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.Source
-import net.sourcebot.api.command.argument.Adapter
-import net.sourcebot.api.command.argument.ArgumentInfo
-import net.sourcebot.api.command.argument.Arguments
-import net.sourcebot.api.command.argument.OptionalArgument
+import net.sourcebot.api.command.InvalidSyntaxException
 import net.sourcebot.api.formatLong
 import net.sourcebot.api.formatPlural
 import net.sourcebot.api.response.Response
@@ -18,20 +18,25 @@ import kotlin.math.ceil
 class ExperienceLeaderboardCommand : ExperienceRootCommand(
     "xpleaderboard", "See the Guild's XP Leaderboard."
 ) {
-    override val aliases = arrayOf("xplb")
-    override val argumentInfo = ArgumentInfo(
-        OptionalArgument("page", "The page of the leaderboard to view", 1)
-    )
+    override val aliases = listOf("xplb")
+    override val synopsis = Synopsis {
+        optParam(
+            "page", "The page of the leaderboard to view.", Adapter.int(
+                1, error = "Page must be at least 1!"
+            )
+        )
+    }
 
-    override fun execute(message: Message, args: Arguments): Response {
+    override fun execute(message: Message, args: Arguments.Processed): Response {
         val guild = message.guild
         val profiles = Source.MONGODB.getCollection(guild.id, "profiles")
         val pages = ceil(
             profiles.countDocuments(Profiles.VALID_PROFILE) / 10.0
         ).toInt()
-        val page = (args.next(
-            Adapter.int(1, pages, "Page must be between 1 and $pages!")
-        ) ?: 1) - 1
+        val page = args.optional("page", 1) - 1
+        if (page > pages - 1) throw InvalidSyntaxException(
+            "Page must be between 1 and $pages!"
+        )
         val leaderboard = profiles.find(Profiles.VALID_PROFILE).skip(10 * page).limit(10).sort(
             Document("data.experience.amount", -1)
         ).map {

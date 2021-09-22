@@ -1,7 +1,7 @@
 package net.sourcebot.module.profiles.command
 
-import net.sourcebot.api.command.Command
 import net.sourcebot.api.command.RootCommand
+import net.sourcebot.api.command.SourceCommand
 
 abstract class RootCommand(
     final override val name: String,
@@ -14,7 +14,7 @@ abstract class RootCommand(
 abstract class Command(
     final override val name: String,
     final override val description: String
-) : Command() {
+) : SourceCommand() {
     override val permission by lazy { "${parent!!.permission!!}.$name" }
     override val guildOnly = true
 }
