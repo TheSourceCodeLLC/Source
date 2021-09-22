@@ -1,11 +1,15 @@
 package net.sourcebot.impl.command
 
+import me.hwiggy.kommander.InvalidSyntaxException
 import me.hwiggy.kommander.arguments.Adapter
 import me.hwiggy.kommander.arguments.Arguments
 import me.hwiggy.kommander.arguments.Arguments.Processed
 import me.hwiggy.kommander.arguments.Group
 import me.hwiggy.kommander.arguments.Synopsis
-import net.dv8tion.jda.api.entities.*
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.GuildChannel
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.SourceAdapter
@@ -28,20 +32,8 @@ class PermissionsCommand : RootCommand() {
         val permissionData = permissionHandler.getData(sender.guild)
         val user = permissionData.getUser(sender.member!!)
         val type = arguments.required<PermissibleType>("type", "You did not specify a type to modify!")
-        val permissible = when (type) {
-            PermissibleType.ROLE -> {
-                val role = arguments.required<String, Role>("role", "You did not specify a valid role!") {
-                    SourceAdapter.role(sender.guild, it)
-                }
-                permissionData.getRole(role)
-            }
-            PermissibleType.USER -> {
-                val member = arguments.required<String, Member>("member", "You did not specify a valid member!") {
-                    SourceAdapter.member(sender.guild, it)
-                }
-                permissionData.getUser(member)
-            }
-        }
+        val target = arguments.required<String>("target", "You did not specify a target to modify!")
+        val permissible = type.converter(sender.guild, target)
         val operation = arguments.required<Operation>("operation", "You did not specify an operation!")
         val processed = operation.synopsis.process(arguments.parent.slice())
         return operation.executor(type, user, permissible, sender.textChannel, processed).also {
@@ -190,8 +182,24 @@ private enum class Operation(
     })
 }
 
-enum class PermissibleType(override val synopsisName: String) : Group.Option {
-    ROLE("role"), USER("user")
+enum class PermissibleType(
+    override val synopsisName: String,
+    val converter: (Guild, String) -> Permissible
+) : Group.Option {
+    ROLE("role", { guild, arg ->
+        val permissionData = Source.PERMISSION_HANDLER.getData(guild)
+        val role = SourceAdapter.role(guild, arg) ?: throw InvalidSyntaxException(
+            "You did not specify a valid role!"
+        )
+        permissionData.getRole(role)
+    }),
+    USER("user", { guild, arg ->
+        val permissionData = Source.PERMISSION_HANDLER.getData(guild)
+        val member = SourceAdapter.member(guild, arg) ?: throw InvalidSyntaxException(
+            "You did not specify a valid member!"
+        )
+        permissionData.getUser(member)
+    })
 }
 
 typealias PermissionsSubcommand = (PermissibleType, Permissible, Permissible, TextChannel, Processed) -> Response
