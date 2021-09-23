@@ -16,6 +16,7 @@ import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.error.ExceptionResponse
 import net.sourcebot.api.response.error.GlobalAdminOnlyResponse
 import net.sourcebot.api.response.error.GuildOnlyCommandResponse
+import java.lang.Long.max
 import java.util.concurrent.TimeUnit
 
 class CommandHandler(
@@ -123,9 +124,10 @@ class CommandHandler(
         val cleanup = (if (message.isFromGuild) {
             configManager[message.guild].required("source.command.cleanup.enabled") { true }
         } else command.cleanupResponse) && command.cleanupResponse
-        val deleteAfter = if (message.isFromGuild) {
+        val guildDeleteSeconds = if (message.isFromGuild) {
             configManager[message.guild].required("source.command.cleanup.seconds") { deleteSeconds }
-        } else command.deleteSeconds ?: deleteSeconds
+        } else deleteSeconds
+        val deleteAfter = max(command.deleteSeconds ?: deleteSeconds, guildDeleteSeconds)
         var responseMessage: Message? = null
         if (response !is EmptyResponse) {
             message.channel.sendMessage(response.asMessage(message.author)).queue {
