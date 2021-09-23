@@ -13,15 +13,12 @@ class UnblacklistCommand : ModerationRootCommand(
     "unblacklist", "Unblacklist a member for a specific reason."
 ) {
     override val synopsis = Synopsis {
-        reqParam("target", "The Member to unblacklist.", Adapter.single())
+        reqParam("target", "The Member to unblacklist.", SourceAdapter.member())
         reqParam("reason", "The reason this Member is being unblacklisted.", Adapter.slurp(" "))
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
-        val target =
-            arguments.required<String, Member>("target", "You did not specify a valid member to unblacklist!") {
-                SourceAdapter.member(sender.guild, it)
-            }
+        val target = arguments.required<Member>("target", "You did not specify a valid member to unblacklist!")
         val reason = arguments.required<String>("reason", "You did not specify an unblacklist reason!")
         return Moderation.getPunishmentHandler(sender.guild) {
             unblacklistIncident(sender.member!!, target, reason)

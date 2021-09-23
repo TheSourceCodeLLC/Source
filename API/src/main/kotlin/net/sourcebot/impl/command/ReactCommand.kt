@@ -17,14 +17,12 @@ class ReactCommand : RootCommand() {
     override val guildOnly = true
 
     override val synopsis = Synopsis {
-        optParam("channel", "The channel the message is in.", Adapter.single())
+        optParam("channel", "The channel the message is in.", SourceAdapter.textChannel())
         reqParam("message", "The message ID of the message.", Adapter.single())
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
-        val channel = arguments.optional<String, TextChannel>("channel", sender.textChannel) {
-            SourceAdapter.textChannel(sender.guild, it)
-        }
+        val channel = arguments.optional<TextChannel>("channel", sender.textChannel)
         val messageId = arguments.required<String>("message", "You did not specify a message ID to react to!")
         val retrieved = channel.retrieveMessageById(messageId).complete()
         retrieved.reactions.forEach {

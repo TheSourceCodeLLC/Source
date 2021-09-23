@@ -17,14 +17,12 @@ class BlacklistCommand : ModerationRootCommand(
 ) {
     override val aliases = listOf("bl", "devmute")
     override val synopsis = Synopsis {
-        reqParam("target", "The Member to blacklist.", Adapter.single())
+        reqParam("target", "The Member to blacklist.", SourceAdapter.member())
         reqParam("id", "The ID of the blacklist to apply.", Adapter.int(1, error = "Blacklist ID must be at least 1!"))
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
-        val target = arguments.required<String, Member>("target", "You did not specify a valid member to blacklist!") {
-            SourceAdapter.member(sender.guild, it)
-        }
+        val target = arguments.required<Member>("target", "You did not specify a valid member to blacklist!")
         val id = arguments.required<Int>("id", "You did not specify a valid blacklist ID to apply!")
         return Moderation.getPunishmentHandler(sender.guild) {
             blacklistIncident(sender.member!!, target, id)

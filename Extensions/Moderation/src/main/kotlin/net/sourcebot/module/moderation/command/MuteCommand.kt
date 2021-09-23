@@ -15,20 +15,18 @@ class MuteCommand : ModerationRootCommand(
     "mute", "Temporarily mute a member for a specific reason."
 ) {
     override val synopsis = Synopsis {
-        reqParam("target", "The Member to mute.", Adapter.single())
+        reqParam("target", "The Member to mute.", SourceAdapter.member())
         reqParam("duration", "How long this Member should be muted for.", SourceAdapter.duration())
         reqParam("reason", "The reason this Member is being muted.", Adapter.slurp(" "))
     }
 
-    override fun execute(message: Message, args: Arguments.Processed): Response {
-        val target = args.required<String, Member>("target", "You did not specify a valid member to mute!") {
-            SourceAdapter.member(message.guild, it)
-        }
-        val duration = args.required<Duration>("duration", "You did not specify a valid duration to mute for!")
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val target = arguments.required<Member>("target", "You did not specify a valid member to mute!")
+        val duration = arguments.required<Duration>("duration", "You did not specify a valid duration to mute for!")
         if (duration.isZero) throw InvalidSyntaxException("The duration may not be zero seconds!")
-        val reason = args.required<String>("reason", "You did not specify a mute reason!")
-        return Moderation.getPunishmentHandler(message.guild) {
-            muteIncident(message.member!!, target, duration, reason)
+        val reason = arguments.required<String>("reason", "You did not specify a mute reason!")
+        return Moderation.getPunishmentHandler(sender.guild) {
+            muteIncident(sender.member!!, target, duration, reason)
         }
     }
 }

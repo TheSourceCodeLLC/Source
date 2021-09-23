@@ -14,14 +14,12 @@ class ReportCommand : ModerationRootCommand(
     "report", "Manage Guild reports."
 ) {
     override val synopsis = Synopsis {
-        reqParam("target", "The Member to report.", Adapter.single())
+        reqParam("target", "The Member to report.", SourceAdapter.member())
         reqParam("reason", "Why you are reporting this member.", Adapter.slurp(" "))
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
-        val target = arguments.required<String, Member>("target", "You did not specify a valid member to report!") {
-            SourceAdapter.member(sender.guild, it)
-        }
+        val target = arguments.required<Member>("target", "You did not specify a valid member to report!")
         if (target.user.isBot) return StandardErrorResponse(
             "Report Failure!", "You may not report bots!"
         )

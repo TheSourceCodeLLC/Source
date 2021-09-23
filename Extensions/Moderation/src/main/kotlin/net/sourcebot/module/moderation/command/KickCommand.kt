@@ -13,14 +13,12 @@ class KickCommand : ModerationRootCommand(
     "kick", "Kick a member for a specific reason."
 ) {
     override val synopsis = Synopsis {
-        reqParam("target", "The Member to kick.", Adapter.single())
+        reqParam("target", "The Member to kick.", SourceAdapter.member())
         reqParam("reason", "The reason this member is being kicked.", Adapter.slurp(" "))
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
-        val target = arguments.required<String, Member>("target", "You did not specify a valid member to kick!") {
-            SourceAdapter.member(sender.guild, it)
-        }
+        val target = arguments.required<Member>("target", "You did not specify a valid member to kick!")
         val reason = arguments.required<String>("reason", "You did not specify a kick reason!")
         return Moderation.getPunishmentHandler(sender.guild) {
             kickIncident(sender.member!!, target, reason)

@@ -13,7 +13,7 @@ class BanCommand : ModerationRootCommand(
     "ban", "Ban a member for a specific reason."
 ) {
     override val synopsis = Synopsis {
-        reqParam("target", "The Member to ban.", Adapter.single())
+        reqParam("target", "The Member to ban.", SourceAdapter.member())
         optParam(
             "delDays", "The number of days (0-7) of messages to delete.", Adapter.int(
                 0, 7, "Deletion days must be between 0 and 7!"
@@ -23,9 +23,7 @@ class BanCommand : ModerationRootCommand(
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
-        val target = arguments.required<String, Member>("target", "You did not specify a valid member to ban!") {
-            SourceAdapter.member(sender.guild, it)
-        }
+        val target = arguments.required<Member>("target", "You did not specify a valid member to ban!")
         val delDays = arguments.optional("delDays", 0)
         val reason = arguments.required<String>("reason", "You did not specify a ban reason!")
         return Moderation.getPunishmentHandler(sender.guild) {

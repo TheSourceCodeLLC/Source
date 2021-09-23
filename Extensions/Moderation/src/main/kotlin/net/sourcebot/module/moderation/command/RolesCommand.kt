@@ -22,20 +22,16 @@ class RolesCommand : ModerationRootCommand(
         "add", "Add a role to a member."
     ) {
         override val synopsis = Synopsis {
-            reqParam("target", "The Member to update.", Adapter.single())
-            reqParam("role", "The Role to add.", Adapter.single())
+            reqParam("target", "The Member to update.", SourceAdapter.member())
+            reqParam("role", "The Role to add.", SourceAdapter.role())
             reqParam("reason", "Why you are adding this role.", Adapter.slurp(" "))
         }
 
         override fun execute(sender: Message, arguments: Arguments.Processed): Response {
             val guild = sender.guild
             val source = sender.member!!
-            val target = arguments.required<String, Member>("target", "You did not specify a valid member to update!") {
-                SourceAdapter.member(source.guild, it)
-            }
-            val role = arguments.required<String, Role>("role", "You did not specify a valid role to add!") {
-                SourceAdapter.role(source.guild, it)
-            }
+            val target = arguments.required<Member>("target", "You did not specify a valid member to update!")
+            val role = arguments.required<Role>("role", "You did not specify a valid role to add!")
             val reason = arguments.required<String>("reason", "You did not specify a reason for adding this role!")
             if (!canModify(source, role)) return StandardErrorResponse(
                 "Role Add Failure!", "You do not have permission to modify that role!"
@@ -62,20 +58,16 @@ class RolesCommand : ModerationRootCommand(
         "remove", "Remove a a role from a member."
     ) {
         override val synopsis = Synopsis {
-            reqParam("target", "The Member to update.", Adapter.single())
-            reqParam("role", "The Role to remove.", Adapter.single())
+            reqParam("target", "The Member to update.", SourceAdapter.member())
+            reqParam("role", "The Role to remove.", SourceAdapter.role())
             reqParam("reason", "Why you are removing this role.", Adapter.slurp(" "))
         }
 
         override fun execute(sender: Message, arguments: Arguments.Processed): Response {
             val guild = sender.guild
             val source = sender.member!!
-            val target = arguments.required<String, Member>("target", "You did not specify a valid member to update!") {
-                SourceAdapter.member(source.guild, it)
-            }
-            val role = arguments.required<String, Role>("role", "You did not specify a valid role to remove!") {
-                SourceAdapter.role(source.guild, it)
-            }
+            val target = arguments.required<Member>("target", "You did not specify a valid member to update!")
+            val role = arguments.required<Role>("role", "You did not specify a valid role to remove!")
             val reason = arguments.required<String>("reason", "You did not specify a reason for removing this role!")
             if (!canModify(source, role)) return StandardErrorResponse(
                 "Role Remove Failure!", "You do not have permission to modify that role!"

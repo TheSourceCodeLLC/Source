@@ -6,7 +6,6 @@ import me.hwiggy.kommander.arguments.Adapter
 import me.hwiggy.kommander.arguments.Arguments
 import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.command.argument.SourceAdapter
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
@@ -20,7 +19,7 @@ class HistoryCommand : ModerationRootCommand(
     "history", "Show punishment histories."
 ) {
     override val synopsis = Synopsis {
-        optParam("target", "The user to view history of.", Adapter.single())
+        optParam("target", "The user to view history of.", SourceAdapter.user())
         optParam(
             "page", "The page of history to view.", Adapter.int(
                 1, error = "The page to view must be at least 1!"
@@ -29,9 +28,7 @@ class HistoryCommand : ModerationRootCommand(
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
-        val target = arguments.optional<String, User>("target", sender.author) {
-            SourceAdapter.user(sender.jda, it)
-        }
+        val target = arguments.optional("target", sender.author)
         if (target.isBot) return StandardErrorResponse(
             "History Failure!", "Bots do not have history!"
         )

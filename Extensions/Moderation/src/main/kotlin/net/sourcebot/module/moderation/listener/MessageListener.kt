@@ -63,6 +63,7 @@ class MessageListener : EventSubscriber<Moderation> {
     private fun onMemberBanned(event: GuildBanEvent) {
         val id = event.user.id
         recentBans.put(id, id)
+        if (event.user.isBot) return
         event.guild.retrieveAuditLogs().type(ActionType.BAN).queue {
             val entry = it.find { entry -> entry.targetId == id } ?: return@queue
             val sender = event.guild.getMember(event.user)!!
@@ -113,7 +114,9 @@ class MessageListener : EventSubscriber<Moderation> {
         val logs = guild.retrieveAuditLogs().type(type).complete()
         val entry = logs.find { entry -> entry.targetId == user.id } ?: return null
         if (entry.timeCreated.isBefore(entry.timeCreated.minusSeconds(30))) return null
-        val sender = guild.getMember(user)!!
+        val fromWho = entry.user!!
+        if (fromWho.isBot) return null
+        val sender = guild.getMember(fromWho)!!
         return sender to user
     }
 

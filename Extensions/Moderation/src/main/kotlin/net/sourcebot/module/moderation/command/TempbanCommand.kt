@@ -15,7 +15,7 @@ class TempbanCommand : ModerationRootCommand(
     "tempban", "Temporarily ban a member for a specific reason."
 ) {
     override val synopsis = Synopsis {
-        reqParam("target", "The Member to tempban.", Adapter.single())
+        reqParam("target", "The Member to tempban.", SourceAdapter.member())
         optParam(
             "delDays", "The number of days (0-7) of messages to delete.", Adapter.int(
                 0, 7, "Deletion days must be between 0 and 7 days!"
@@ -26,9 +26,7 @@ class TempbanCommand : ModerationRootCommand(
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
-        val target = arguments.required<String, Member>("target", "You did not specify a valid member to tempban!") {
-            SourceAdapter.member(sender.guild, it)
-        }
+        val target = arguments.required<Member>("target", "You did not specify a valid member to tempban!")
         val delDays = arguments.optional("delDays", 7)
         val duration = arguments.required<Duration>("duration", "You did not specify a valid duration to tempban for!")
         if (duration.isZero) throw InvalidSyntaxException("The duration may not be zero seconds!")

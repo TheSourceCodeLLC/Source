@@ -13,7 +13,7 @@ class PunishCommand : ModerationRootCommand(
     "punish", "Punish a member using a defined offense."
 ) {
     override val synopsis = Synopsis {
-        reqParam("target", "The Member to punish.", Adapter.single())
+        reqParam("target", "The Member to punish.", SourceAdapter.member())
         reqParam(
             "id", "The ID of the offense to apply.", Adapter.int(
                 1, error = "Offense ID must be at least 1!"
@@ -21,11 +21,9 @@ class PunishCommand : ModerationRootCommand(
         )
     }
 
-    override fun execute(message: Message, args: Arguments.Processed): Response {
-        val target = args.required<String, Member>("target", "You did not specify a member to punish!") {
-            SourceAdapter.member(message.guild, it)
-        }
-        val id = args.required<Int>("id", "You did not specify an offense ID!")
-        return Moderation.getPunishmentHandler(message.guild) { punishMember(message.member!!, target, id) }
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val target = arguments.required<Member>("target", "You did not specify a member to punish!")
+        val id = arguments.required<Int>("id", "You did not specify an offense ID!")
+        return Moderation.getPunishmentHandler(sender.guild) { punishMember(sender.member!!, target, id) }
     }
 }

@@ -4,7 +4,6 @@ import me.hwiggy.kommander.arguments.Adapter
 import me.hwiggy.kommander.arguments.Arguments
 import me.hwiggy.kommander.arguments.Group
 import me.hwiggy.kommander.arguments.Synopsis
-import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.Source
@@ -24,13 +23,11 @@ class ProfileCommand : RootCommand(
     "profile", "Manage member profiles."
 ) {
     override val synopsis = Synopsis {
-        optParam("target", "The member who's profile you wish to view.", Adapter.single())
+        optParam("target", "The member who's profile you wish to view.", SourceAdapter.member())
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
-        val target = arguments.optional<String, Member>("target", sender.member!!) {
-            SourceAdapter.member(sender.guild, it)
-        }
+        val target = arguments.optional("target", sender.member!!)
         val profile = Profiles[target]
         val embed = StandardInfoResponse(
             "${target.formatLong()}'s Profile"

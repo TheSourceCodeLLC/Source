@@ -13,17 +13,15 @@ class UnmuteCommand : ModerationRootCommand(
     "unmute", "Unmute a member for a specific reason."
 ) {
     override val synopsis = Synopsis {
-        reqParam("target", "The Member to unmute.", Adapter.single())
+        reqParam("target", "The Member to unmute.", SourceAdapter.member())
         reqParam("reason", "The reason this Member is being unmuted.", Adapter.slurp(" "))
     }
 
-    override fun execute(message: Message, args: Arguments.Processed): Response {
-        val target = args.required<String, Member>("target", "You did not specify a valid member to unmute!") {
-            SourceAdapter.member(message.guild, it)
-        }
-        val reason = args.required<String>("reason", "You did not specify an unmute reason!")
-        return Moderation.getPunishmentHandler(message.guild) {
-            unmuteIncident(message.member!!, target, reason)
+    override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+        val target = arguments.required<Member>("target", "You did not specify a valid member to unmute!")
+        val reason = arguments.required<String>("reason", "You did not specify an unmute reason!")
+        return Moderation.getPunishmentHandler(sender.guild) {
+            unmuteIncident(sender.member!!, target, reason)
         }
     }
 }

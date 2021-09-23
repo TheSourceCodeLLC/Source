@@ -3,6 +3,7 @@ package net.sourcebot.api.command
 import me.hwiggy.kommander.Command
 import me.hwiggy.kommander.InvalidSyntaxException
 import me.hwiggy.kommander.arguments.Arguments
+import me.hwiggy.kommander.arguments.ExtraParameters
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.response.Response
@@ -28,4 +29,9 @@ abstract class SourceCommand : Command<Message, Response, SourceCommand>() {
     open fun postResponse(response: Response, forWhom: User, message: Message) = Unit
 
     protected fun addChildren(vararg command: SourceCommand) = command.forEach(::addChild)
+
+    override fun getExtraParameters(sender: Message) = HashMap<String, Any>().also {
+        if (sender.isFromGuild) it["guild"] = sender.guild
+        it["jda"] = sender.jda
+    }.let(ExtraParameters::fromMap)
 }

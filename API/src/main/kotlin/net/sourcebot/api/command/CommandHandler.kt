@@ -58,7 +58,8 @@ class CommandHandler(
             )
             VALID -> {
                 try {
-                    val processed = command.synopsis.process(args)
+                    val withExtra = Arguments(args.slice().raw, command.getExtraParameters(message))
+                    val processed = command.synopsis.process(withExtra)
                     command.execute(message, processed)
                 } catch (exception: Exception) {
                     val error = if (exception is InvalidSyntaxException) {

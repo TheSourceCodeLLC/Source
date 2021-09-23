@@ -14,7 +14,7 @@ import net.sourcebot.module.economy.Economy
 
 class PayCommand : EconomyRootCommand("pay", "Pay members using your coin balance.") {
     override val synopsis = Synopsis {
-        reqParam("target", "The Member you want to pay.", Adapter.single())
+        reqParam("target", "The Member you want to pay.", SourceAdapter.member())
         reqParam(
             "amount", "The amount you want to pay.",
             Adapter.long(1, error = "The amount to pay must be at least 1!")
@@ -23,9 +23,7 @@ class PayCommand : EconomyRootCommand("pay", "Pay members using your coin balanc
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
         val senderEco = Economy[sender.member!!]
-        val target = arguments.required<String, Member>("target", "You did not specify a member to pay!") {
-            SourceAdapter.member(sender.guild, it)
-        }
+        val target = arguments.required<Member>("target", "You did not specify a member to pay!")
         val targetEco = Economy[target]
         val amount = arguments.required<Long>("amount", "You did not specify an amount to pay!")
         if (amount > senderEco.balance) throw InvalidSyntaxException("You may not pay more than your balance!")

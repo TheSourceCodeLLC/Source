@@ -21,14 +21,12 @@ class SudoCommand : RootCommand() {
     override val requiresGlobal = true
 
     override val synopsis = Synopsis {
-        reqParam("target", "The Member you would like to run the command as.", Adapter.single())
+        reqParam("target", "The Member you would like to run the command as.", SourceAdapter.member())
         reqParam("command", "The command you would like the Member to run.", Adapter.slurp(" "))
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
-        val target = arguments.required<String, Member>("target", "You did not specify a valid target member!") {
-            SourceAdapter.member(sender.guild, it)
-        }
+        val target = arguments.required<Member>("target", "You did not specify a valid target member!")
         if (target.user.isBot) return StandardErrorResponse(
             "Sudo Failure!", "You may not run commands as bots!"
         )
