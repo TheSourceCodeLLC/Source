@@ -10,13 +10,13 @@ class EventSystem<E : Any> {
         IdentityHashMap(), ::HashSet
     )
 
-    fun fireEvent(event: E) = bus[event.javaClass]?.forEach {
+    fun fireEvent(event: E) = bus[event.javaClass].forEach {
         try {
             it(event)
         } catch (ex: Exception) {
             ex.printStackTrace()
         }
-    } ?: Unit
+    }
 
     fun <T : E> listen(
         module: SourceModule,
@@ -42,5 +42,5 @@ class EventSystem<E : Any> {
     fun <T : E> unregister(
         type: Class<T>,
         module: SourceModule
-    ) = bus[type]?.removeIf { it.module == module } ?: false
+    ) = bus[type].removeIf { it.module == module }
 }

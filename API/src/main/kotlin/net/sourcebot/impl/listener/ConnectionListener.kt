@@ -36,7 +36,7 @@ class ConnectionListener : EventSubscriber<BaseModule> {
         val message = InfoResponse().setDescription(
             toSend.format("**${joiner.formatLong()}**")
         )
-        channel.sendMessage(message.build()).queue()
+        channel.sendMessageEmbeds(message.build()).queue()
     }
 
     private fun onMemberLeave(event: GuildMemberRemoveEvent) {
@@ -50,7 +50,7 @@ class ConnectionListener : EventSubscriber<BaseModule> {
         val message = ErrorResponse().setDescription(
             toSend.format("**${leaver.formatLong()}**")
         )
-        channel.sendMessage(message.build()).queue()
+        channel.sendMessageEmbeds(message.build()).queue()
     }
 
     private fun getConnectionConfig(

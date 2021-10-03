@@ -41,7 +41,7 @@ class TagHandler(private val defaultPrefix: String) : AbstractMessageHandler(), 
                     .setDescription(content)
                     .setColor(SourceColor.INFO.color)
                     .build()
-                message.channel.sendMessage(embed).queue()
+                message.channel.sendMessageEmbeds(embed).queue()
             }
         }
         tag.uses++

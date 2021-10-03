@@ -27,16 +27,17 @@ class CaseDeleteIncident(
         """.trimIndent()
     )
 
-    var deleted: Document? = null
+    val document = collection.find(
+        Document().also {
+            it["_id"] = id
+            it["type"] = Document("\$ne", "CASE_DELETE")
+        }
+    ).first() ?: throw NoSuchElementException(
+        "Case ID '$id' does not exist or has already been deleted!"
+    )
+
     override fun execute() {
-        deleted = collection.findOneAndDelete(
-            Document().also {
-                it["_id"] = id
-                it["type"] = Document("\$ne", "CASE_DELETE")
-            }
-        ) ?: throw NoSuchElementException(
-            "Case ID '$id' does not exist or has already been deleted!"
-        )
+        collection.deleteOne(document)
     }
 
     override fun sendLog(logChannel: TextChannel): Message = logChannel.sendMessage(delete.asMessage(sender)).complete()

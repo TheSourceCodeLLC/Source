@@ -81,7 +81,7 @@ class RoleUpdateIncident(
     }
 
     override fun sendLog(logChannel: TextChannel): Message =
-        logChannel.sendMessage(update.asEmbed(sender.user)).complete()
+        logChannel.sendMessageEmbeds(update.asEmbed(sender.user)).complete()
 
     enum class Action { ADD, REMOVE }
 

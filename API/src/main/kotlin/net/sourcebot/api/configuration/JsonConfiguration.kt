@@ -137,7 +137,7 @@ open class JsonConfiguration @JsonCreator constructor(
     }
 
     private val proxyCache = HashMap<String, Any>()
-    fun <T : Any> proxyObj(path: String, constructor: (JsonConfiguration) -> T): T {
+    @Suppress("UNCHECKED_CAST") fun <T : Any> proxyObj(path: String, constructor: (JsonConfiguration) -> T): T {
         val exterior = this
         val json = required(path, ::JsonConfiguration)
         return (proxyCache[path] ?: object : JsonConfiguration(json) {

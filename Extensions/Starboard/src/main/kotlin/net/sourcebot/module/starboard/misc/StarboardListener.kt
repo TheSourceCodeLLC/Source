@@ -156,7 +156,7 @@ class StarboardListener(
             fun fromMessage(original: Message, count: Int): Message {
                 val builder = MessageBuilder()
                 builder.append("$UNICODE_STAR $count: ${(original.channel as TextChannel).asMention}")
-                builder.setEmbed(StarboardResponse(original).asEmbed(original.author))
+                builder.setEmbeds(StarboardResponse(original).asEmbed(original.author))
                 return builder.build()
             }
         }

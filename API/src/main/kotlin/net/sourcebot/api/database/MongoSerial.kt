@@ -4,7 +4,6 @@ import org.bson.Document
 import java.util.*
 
 interface MongoSerial<T> {
-    @JvmDefault
     fun queryDocument(obj: T) = Document()
     fun deserialize(document: Document): T
     fun serialize(obj: T): Document
@@ -51,6 +50,7 @@ interface MongoSerial<T> {
         inline fun <reified T> getQueryDocument(obj: T) =
             getQueryDocument(obj, T::class.java)
 
+        @Suppress("UNCHECKED_CAST")
         private fun <T> getSerializer(type: Class<T>) = serializers[type] as? MongoSerial<T>
         private fun <T> getSerializerThrowing(type: Class<T>) =
             getSerializer(type) ?: throw IllegalArgumentException("No MongoSerial available for $type !")

@@ -16,6 +16,7 @@ class ModuleLoader(parentClassLoader: ModuleParentClassLoader) : AbstractLoader<
         it.name.startsWith(name, true)
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun <T : SourceModule> getExtension(type: Class<T>) =
         extensionIndex.values.find { it.javaClass == type } as? T?
 

@@ -48,7 +48,7 @@ class Report(
             A report has been made against **${targetMember.formatLong()}** by **${senderMember.formatLong()}**
         """.trimIndent()
         val embed = render(guild)
-        logChannel.sendMessage(header).embed(embed.asEmbed(targetMember.user)).queue {
+        logChannel.sendMessage(header).setEmbeds(embed.asEmbed(targetMember.user)).queue {
             it.addReaction("✅").queue()
             it.addReaction("❌").queue()
         }

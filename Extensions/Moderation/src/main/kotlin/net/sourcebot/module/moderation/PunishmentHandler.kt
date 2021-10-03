@@ -48,7 +48,7 @@ class PunishmentHandler(private val guild: Guild) {
     fun clearIncident(sender: Member, channel: TextChannel, amount: Int, reason: String) = submitIncident(
         { ClearIncident(nextIncidentId(), sender, channel, amount, reason) },
         { ClearSuccessResponse(it.id, amount, channel.name) },
-        ::ClearFailureResponse
+        { ClearFailureResponse() }
     )
 
     private class ClearSuccessResponse(id: Long, amount: Int, channel: String) : PunishmentSuccessResponse(
@@ -488,7 +488,7 @@ class PunishmentHandler(private val guild: Guild) {
     ) = submitIncident(
         { RoleUpdateIncident(nextIncidentId(), sender, target, role, reason, action) },
         { RoleUpdateSuccess(it.id, description) },
-        ::RoleUpdateFailure
+        { RoleUpdateFailure() }
     )
 
     fun submitRoleAdd(sender: Member, target: Member, role: Role, reason: String) = submitRoleUpdate(
@@ -520,7 +520,8 @@ class PunishmentHandler(private val guild: Guild) {
     private fun <T : ExecutableIncident> submitIncident(
         supplier: () -> T,
         onSuccess: (T) -> PunishmentSuccessResponse,
-        onFailure: () -> PunishmentFailureResponse
+        onFailure: (Throwable) -> PunishmentFailureResponse,
+        appendException: Boolean = true
     ): PunishmentResponse {
         val logChannel = incidentChannel() ?: return PunishmentFailureResponse(
             "No Log Channel!", "The incident log has not been configured!"
@@ -534,13 +535,14 @@ class PunishmentHandler(private val guild: Guild) {
             })
             onSuccess(incident)
         } catch (err: Throwable) {
-            err.printStackTrace()
-            onFailure().apply {
-                addField(
-                    "Exception:",
-                    "${err.javaClass.simpleName}: ${err.message}",
-                    false
-                )
+            onFailure(err).apply {
+                if (appendException) {
+                    addField(
+                        "Exception:",
+                        "${err.javaClass.simpleName}: ${err.message}",
+                        false
+                    )
+                }
             }
         }
     }
@@ -574,29 +576,44 @@ class PunishmentHandler(private val guild: Guild) {
 
     fun getHistory(id: String): List<Case> = incidents.find(Document("target", id)).map(::Case).toList()
     fun getCase(id: Long) = incidents.find(Document("_id", id)).first()?.let(::Case)
-    fun deleteCase(member: Member, id: Long, reason: String) = submitIncident(
-        { CaseDeleteIncident(incidents, id, member, selfMember, reason) },
-        {
-            val deleted = it.deleted!!
-            (deleted["message"] as String?)?.let { incidentChannel()?.deleteMessageById(it)?.queue({}, {}) }
-            val response = if (deleted["resolved"] as Boolean? != true) {
-                val target = deleted["target"] as String
-                when (deleted["type"] as String) {
-                    "MUTE" -> runCatching {
-                        unmuteIncident(member, guild.getMemberById(target)!!, "Case $id deleted: $reason")
-                    }.getOrNull()
-                    "BLACKLIST" -> runCatching {
-                        unblacklistIncident(member, guild.getMemberById(target)!!, "Case $id deleted: $reason")
-                    }.getOrNull()
-                    "BAN" -> unbanIncident(member, target, "Case $id deleted: $reason")
-                    else -> null
-                }
-            } else null
-            if (response is PunishmentSuccessResponse) response
-            else PunishmentSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
-        },
-        { PunishmentFailureResponse("Case Delete Failure!", "Case #$id could not be deleted!") }
-    )
+
+    private class CaseDeleteFailure(message: String) : PunishmentFailureResponse("Case Delete Failure", message)
+
+    fun deleteCase(member: Member, id: Long, reason: String): PunishmentResponse {
+        val incident = kotlin.runCatching {
+            CaseDeleteIncident(incidents, id, member, selfMember, reason)
+        }.fold({ it }, { return@deleteCase CaseDeleteFailure(it.message!!) })
+        val deleted = incident.document
+        val target = deleted["target"] as String
+        val targetMember = guild.getMemberById(target)
+        if (targetMember != null) {
+            when {
+                targetMember.id == member.id -> return CaseDeleteFailure("You may not delete cases against yourself!")
+                !member.canInteract(targetMember) -> return CaseDeleteFailure("You may not delete cases against that member!")
+            }
+        }
+        return submitIncident(
+            { incident },
+            {
+                (deleted["message"] as String?)?.let { incidentChannel()?.deleteMessageById(it)?.queue({}, {}) }
+                val response = if (deleted["resolved"] as Boolean? != true) {
+                    when (deleted["type"] as String) {
+                        "MUTE" -> runCatching {
+                            unmuteIncident(member, guild.getMemberById(target)!!, "Case $id deleted: $reason")
+                        }.getOrNull()
+                        "BLACKLIST" -> runCatching {
+                            unblacklistIncident(member, guild.getMemberById(target)!!, "Case $id deleted: $reason")
+                        }.getOrNull()
+                        "BAN" -> unbanIncident(member, target, "Case $id deleted: $reason")
+                        else -> null
+                    }
+                } else null
+                if (response is PunishmentSuccessResponse) response
+                else PunishmentSuccessResponse("Case Deleted!", "Case #$id has been deleted!")
+            },
+            { PunishmentFailureResponse("Case Delete Failure!", "Case #$id could not be deleted!") }
+        )
+    }
 
     fun getReport(id: Long) = reports.find(Document("_id", id)).first()?.let(::Report)
     fun deleteReport(id: Long, member: Member, reason: String): Response {

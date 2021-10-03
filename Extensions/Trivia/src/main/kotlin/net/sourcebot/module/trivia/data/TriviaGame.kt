@@ -139,11 +139,11 @@ class Game(private val amount: Int, private val category: Int?) {
     private fun updateMessage(newContent: MessageEmbed, post: ((Message) -> Unit)? = null) {
         if (post != null) {
             message.delete().queue { triviaListener.unlink(message.id) }
-            message.channel.sendMessage(newContent).queue(post)
+            message.channel.sendMessageEmbeds(newContent).queue(post)
         } else {
             message.delete().complete()
             triviaListener.unlink(message.id)
-            setMessage(message.channel.sendMessage(newContent).complete())
+            setMessage(message.channel.sendMessageEmbeds(newContent).complete())
         }
     }
 
