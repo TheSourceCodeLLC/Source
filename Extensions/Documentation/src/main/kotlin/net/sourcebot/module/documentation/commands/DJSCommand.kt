@@ -22,8 +22,8 @@ class DJSCommand : DocumentationCommand(
         MASTER("master");
 
         companion object {
-            @JvmStatic fun find(name: String): Version =
-                values().first { name.equals(it.synopsisName, true) }
+            @JvmStatic fun find(name: String): Version? =
+                values().firstOrNull { name.equals(it.synopsisName, true) }
         }
     }
 
