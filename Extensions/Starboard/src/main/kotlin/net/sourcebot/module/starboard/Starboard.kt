@@ -10,7 +10,7 @@ class Starboard : SourceModule() {
         node("channel", "Channel ID for the starboard channel.")
         node(
             "nsfw-channel",
-            "Channel ID for nsfw-starboard channel. If defined all starred posts in NSFW channels will be posted here, assuming they are not excluded."
+            "Channel ID for nsfw-starboard channel. If defined, all starred posts in NSFW channels will be posted here, assuming they are not excluded."
         )
         node("threshold", "Star threshold for starboard messages.")
         node("excluded-channels", "Channel IDs blacklisted from starboard.")
