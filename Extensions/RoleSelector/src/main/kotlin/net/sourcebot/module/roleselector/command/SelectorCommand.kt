@@ -149,8 +149,9 @@ class SelectorCommand(
                     "Uh Oh!",
                     "There is no role selector with that name!"
                 )
-            val newMessage = MessageBuilder("Select a role here!")
-                .setActionRows(selector.toActionRow(guild)).build()
+            val newMessage =
+                MessageBuilder("Select a role here! To remove a role you must unselect and select the option again.")
+                    .setActionRows(selector.toActionRow(guild)).build()
 
             selector.messageIds.forEach { (channelId, messageIdList) ->
                 val channel = guild.getTextChannelById(channelId)

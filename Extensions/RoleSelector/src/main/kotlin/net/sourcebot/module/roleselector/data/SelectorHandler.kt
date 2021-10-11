@@ -3,6 +3,8 @@ package net.sourcebot.module.roleselector.data
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.interaction.SelectionMenuEvent
 import net.sourcebot.Source
@@ -21,6 +23,8 @@ class SelectorHandler : EventSubscriber<RoleSelector> {
             override fun load(guild: Guild) = SelectorCache(mongodb.getCollection(guild.id, "role-selectors"))
         })
 
+    private val selectionCache = UserSelectionCache()
+
     operator fun get(guild: Guild): SelectorCache = menus[guild]
 
     override fun subscribe(
@@ -37,15 +41,88 @@ class SelectorHandler : EventSubscriber<RoleSelector> {
         val name = menu.id ?: return
 
         if (!name.contains("roleselector")) return
-        val values = event.values
-        if (values.isEmpty()) return
+
 
         val cache = this[guild]
         val selectorName = name.substringAfter(":")
         val selector = cache.getSelector(selectorName) ?: return
 
+        var values = event.values
+        val user = event.user
 
-        event.reply("It worked oh my god").setEphemeral(true).queue()
+        if (values.isEmpty()) {
+            val selectorData = selectionCache[selector] ?: mutableListOf()
+            val userSelectionData = selectorData.find { it.id == user.id }
+
+            if (userSelectionData == null) {
+                event.reply("Please try again!").setEphemeral(true).queue()
+                return
+            }
+
+            values = userSelectionData.selections
+            selectionCache.removeSelectionData(selector, userSelectionData)
+        } else {
+            selectionCache.addSelectionData(selector, SelectionData(user.id, event.values))
+        }
+
+        val roles = optionIdsToRole(guild, values)
+        handleRoles(guild, user, roles)
+
+        event.reply("Roles Updated!").setEphemeral(true).queue()
     }
+
+    private fun optionIdsToRole(guild: Guild, roles: MutableList<String>) =
+        roles.map { it.substringAfter(":") }.mapNotNull { guild.getRoleById(it) }
+
+    private fun handleRoles(guild: Guild, user: User, roles: List<Role>) {
+        val member = guild.getMember(user) ?: return
+        roles.forEach {
+            val hasRole = member.roles.contains(it)
+            if (hasRole) guild.removeRoleFromMember(member, it).queue()
+            else guild.addRoleToMember(member, it).queue()
+        }
+    }
+
+    private class UserSelectionCache {
+
+        private val cache = CacheBuilder.newBuilder().softValues()
+            .build(object : CacheLoader<String, MutableList<SelectionData>>() {
+                override fun load(key: String): MutableList<SelectionData> = mutableListOf()
+            })
+
+        operator fun get(selector: Selector): MutableList<SelectionData>? = try {
+            cache[selector.name]
+        } catch (ex: Exception) {
+            null
+        }
+
+        fun addSelectionData(selector: Selector, selectionData: SelectionData) {
+            val currentData = get(selector) ?: mutableListOf()
+
+            currentData.removeIf { it.id == selectionData.id }
+            currentData.add(selectionData)
+
+            updateSelectionData(selector, currentData)
+        }
+
+        fun removeSelectionData(selector: Selector, selectionData: SelectionData) {
+            val currentData = get(selector) ?: mutableListOf()
+            currentData.removeIf { it.id == selectionData.id }
+
+            updateSelectionData(selector, currentData)
+        }
+
+        private fun updateSelectionData(selector: Selector, selectionData: MutableList<SelectionData>) {
+            cache.invalidate(selector.name)
+            cache.put(selector.name, selectionData)
+        }
+
+
+    }
+
+    private class SelectionData(
+        val id: String,
+        var selections: MutableList<String>
+    )
 
 }
