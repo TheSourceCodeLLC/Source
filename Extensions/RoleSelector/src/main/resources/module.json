@@ -1,7 +1,7 @@
 {
-  "main": "net.sourcebot.module.reactionroles.ReactionRoles",
+  "main": "net.sourcebot.module.roleselector.RoleSelector",
   "name": "${project.name}",
   "version": "${project.version}",
   "description": "${project.description}",
-  "author": "Hwiggy#0001"
+  "author": "TheForbiddenAi#3797"
 }
