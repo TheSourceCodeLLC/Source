@@ -1,13 +1,12 @@
 package net.sourcebot.impl.command
 
+import me.hwiggy.kommander.InvalidSyntaxException
 import me.hwiggy.kommander.arguments.Adapter
 import me.hwiggy.kommander.arguments.Arguments
 import me.hwiggy.kommander.arguments.Arguments.Processed
 import me.hwiggy.kommander.arguments.Group
 import me.hwiggy.kommander.arguments.Synopsis
-import net.dv8tion.jda.api.entities.GuildChannel
-import net.dv8tion.jda.api.entities.Message
-import net.dv8tion.jda.api.entities.TextChannel
+import net.dv8tion.jda.api.entities.*
 import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.argument.SourceAdapter
@@ -31,7 +30,7 @@ class PermissionsCommand : RootCommand() {
         val permissionData = permissionHandler.getData(sender.guild)
         val user = permissionData.getUser(sender.member!!)
         val type = arguments.required<PermissibleType>("type", "You did not specify a type to modify!")
-        val permissible = type.process(arguments, permissionData)
+        val permissible = type.process(sender.guild, arguments, permissionData)
         val operation = arguments.required<Operation>("operation", "You did not specify an operation!")
         val processed = operation.synopsis.process(arguments.parent.slice())
         return operation.executor(type, user, permissible, sender.textChannel, processed).also {
@@ -188,25 +187,22 @@ private enum class Operation(
 
 enum class PermissibleType(
     override val synopsisName: String,
-    private val synopsis: Synopsis,
-    private val converter: (PermissionData, Arguments.Processed) -> Permissible
+    private val transformer: (Guild, String) -> Any,
+    private val converter: (PermissionData, Any) -> Permissible
 ) : Group.Option {
-    ROLE("role", Synopsis {
-        reqParam("role", "The role to modify.", SourceAdapter.role())
+    ROLE("role", { guild, arg ->
+        SourceAdapter.role(guild, arg) ?: throw InvalidSyntaxException("You did not specify a valid role!")
+    }, { data, arg -> data.getRole(arg as Role) }),
+    USER("user", { guild, arg ->
+        SourceAdapter.member(guild, arg) ?: throw InvalidSyntaxException("You did not specify a valid member!")
     }, { data, arg ->
-        val role = arg.required<net.dv8tion.jda.api.entities.Role>("role", "You did not specify a valid role!")
-        data.getRole(role)
-    }),
-    USER("user", Synopsis {
-        reqParam("user", "The user to modify.", SourceAdapter.user())
-    }, { data, arg ->
-        val user = arg.required<net.dv8tion.jda.api.entities.Member>("user", "You did not specify a valid member!")
-        data.getUser(user)
+        data.getUser(arg as Member)
     });
 
-    fun process(external: Processed, data: PermissionData): Permissible {
-        val processed = synopsis.process(external.parent.slice())
-        return converter(data, processed)
+    fun process(guild: Guild, external: Processed, data: PermissionData): Permissible {
+        val target = external.required<String>("target", "You did not specify a target!")
+        val transformed = transformer(guild, target)
+        return converter(data, transformed)
     }
 }
 
