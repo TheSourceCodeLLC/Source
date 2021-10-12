@@ -131,6 +131,10 @@ fun Element.anchorsToHyperlinks(baseUrl: String): String {
         val createdUrl = with(href) {
             when {
                 contains("https") -> href
+                contains(".html") -> {
+                    val pkgUrl = baseUrl.substringBeforeLast("/")
+                    "$pkgUrl/$this"
+                }
                 contains("#") && !contains("/") -> baseClassUrl + href
                 contains("../") -> {
                     var modifiedDocUrl = if (isDocUrlBlank) {
@@ -146,10 +150,6 @@ fun Element.anchorsToHyperlinks(baseUrl: String): String {
                     }
 
                     "$modifiedDocUrl/$modifiedHref"
-                }
-                contains(".html") -> {
-                    val pkgUrl = baseUrl.substringBeforeLast("/")
-                    "$pkgUrl/$this"
                 }
                 else -> "$baseUrl/${href.removePrefix("/")}"
             }

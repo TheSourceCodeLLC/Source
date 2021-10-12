@@ -11,10 +11,12 @@ class Selector(
     var roleIds: MutableList<String>,
     var isDisabled: Boolean = false,
     var messageIds: MutableMap<String, MutableList<String>> = hashMapOf(),
-    var hasPermission: Boolean = false,
-    var requiredPermission: String = "",
-    var placeholder: String = name
+    var permission: String = "",
+    var placeholder: String = name,
+    var message: String = "Select a role here!"
 ) {
+
+    fun hasPermission(): Boolean = permission.isNotEmpty() || permission.isNotBlank()
 
     fun toActionRow(guild: Guild): ActionRow {
         val selectionMenu = SelectionMenu.create("roleselector:${name.toLowerCase()}")
@@ -43,10 +45,10 @@ class Selector(
             val isDisabled = it["isDisabled"] as Boolean
             val roleIds = it["roleIds"] as MutableList<String>
             val messageIds = it["messageIds"] as MutableMap<String, MutableList<String>>
-            val hasPermission = it["hasPermission"] as Boolean
             val requiredPermission = it["requiredPermission"] as String
             val placeholder = it["placeholder"] as String
-            Selector(name, roleIds, isDisabled, messageIds, hasPermission, requiredPermission, placeholder)
+            val message = it["message"] as String
+            Selector(name, roleIds, isDisabled, messageIds, requiredPermission, placeholder, message)
         }
 
         override fun serialize(obj: Selector) = queryDocument(obj).apply {
@@ -54,9 +56,9 @@ class Selector(
             append("isDisabled", obj.isDisabled)
             append("roleIds", obj.roleIds)
             append("messageIds", obj.messageIds)
-            append("hasPermission", obj.hasPermission)
-            append("requiredPermission", obj.requiredPermission)
+            append("requiredPermission", obj.permission)
             append("placeholder", obj.placeholder)
+            append("message", obj.message)
         }
     }
 

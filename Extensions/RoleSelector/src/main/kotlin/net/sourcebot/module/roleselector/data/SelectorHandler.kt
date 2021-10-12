@@ -42,13 +42,20 @@ class SelectorHandler : EventSubscriber<RoleSelector> {
 
         if (!name.contains("roleselector")) return
 
-
         val cache = this[guild]
         val selectorName = name.substringAfter(":")
         val selector = cache.getSelector(selectorName) ?: return
-
-        var values = event.values
         val user = event.user
+        var values = event.values
+
+        if (selector.hasPermission()) {
+            val member = guild.getMember(user) ?: return
+            val hasPermission = Source.PERMISSION_HANDLER.memberHasPermission(member, selector.permission, null)
+            if (!hasPermission) {
+                event.reply("You do not have permission to use this selector menu!").queue()
+                return
+            }
+        }
 
         if (values.isEmpty()) {
             val selectorData = selectionCache[selector] ?: mutableListOf()
@@ -68,7 +75,7 @@ class SelectorHandler : EventSubscriber<RoleSelector> {
         val roles = optionIdsToRole(guild, values)
         handleRoles(guild, user, roles)
 
-        event.reply("Roles Updated!").setEphemeral(true).queue()
+        event.reply("Your roles have successfully been updated!").setEphemeral(true).queue()
     }
 
     private fun optionIdsToRole(guild: Guild, roles: MutableList<String>) =
@@ -116,7 +123,6 @@ class SelectorHandler : EventSubscriber<RoleSelector> {
             cache.invalidate(selector.name)
             cache.put(selector.name, selectionData)
         }
-
 
     }
 
