@@ -46,7 +46,7 @@ class SelectorHandler : EventSubscriber<RoleSelector> {
         val selectorName = name.substringAfter(":")
         val selector = cache[selectorName] ?: return
         val user = event.user
-        var values = event.values
+        val roleIdsToAdd = event.values
 
         if (selector.hasPermission()) {
             val member = guild.getMember(user) ?: return
@@ -58,40 +58,40 @@ class SelectorHandler : EventSubscriber<RoleSelector> {
         }
 
         cache.verifyRoles(guild, selector)
-        val shouldAdd = values.isNotEmpty()
+        val addIsEmpty = roleIdsToAdd.isEmpty()
 
-        val message = "Successfully ${if (shouldAdd) "added" else "removed"} the selected roles!"
+        val selectorData = selectionCache[selector] ?: mutableListOf()
+        val userSelectionData = selectorData.find { it.id == user.id }
 
-        if (values.isEmpty()) {
-            val selectorData = selectionCache[selector] ?: mutableListOf()
-            val userSelectionData = selectorData.find { it.id == user.id }
-
-            if (userSelectionData == null) {
-                event.reply("Please try again!").setEphemeral(true).queue()
-                return
-            }
-
-            values = userSelectionData.selections
-            selectionCache.removeSelectionData(selector, userSelectionData)
-        } else {
-            selectionCache.addSelectionData(selector, SelectionData(user.id, event.values))
+        if (userSelectionData == null && addIsEmpty) {
+            event.reply("Please try again!").setEphemeral(true).queue()
+            return
         }
 
-        val roles = optionIdsToRole(guild, values)
-        handleRoles(guild, user, roles, shouldAdd)
+        val rolesIdsToRemove = userSelectionData?.selections?.toMutableList() ?: mutableListOf()
+        rolesIdsToRemove.removeIf { roleIdsToAdd.contains(it) }
 
-        event.reply(message).setEphemeral(true).queue()
+        if (addIsEmpty) selectionCache.removeSelectionData(selector, userSelectionData!!)
+        else selectionCache.addSelectionData(selector, SelectionData(user.id, roleIdsToAdd))
+
+        val removeRoles = optionIdsToRole(guild, rolesIdsToRemove)
+        val addRoles = optionIdsToRole(guild, roleIdsToAdd)
+
+        handleRoles(guild, user, addRoles, removeRoles)
+
+        event.reply("Successfully updated your roles!").setEphemeral(true).queue()
     }
 
     private fun optionIdsToRole(guild: Guild, roles: MutableList<String>) =
         roles.map { it.substringAfter(":") }.mapNotNull { guild.getRoleById(it) }
 
-    private fun handleRoles(guild: Guild, user: User, roles: List<Role>, shouldAdd: Boolean) {
+    private fun handleRoles(guild: Guild, user: User, rolesToAdd: List<Role>, rolesToRemove: List<Role>) {
         val member = guild.getMember(user) ?: return
-        roles.forEach {
-            if (!shouldAdd) guild.removeRoleFromMember(member, it).queue()
-            else guild.addRoleToMember(member, it).queue()
-        }
+        val memberRoles = member.roles.toMutableList()
+        memberRoles.removeIf { rolesToRemove.contains(it) }
+        memberRoles.addAll(rolesToAdd)
+
+        guild.modifyMemberRoles(member, memberRoles.distinct()).queue()
     }
 
     private class UserSelectionCache {
