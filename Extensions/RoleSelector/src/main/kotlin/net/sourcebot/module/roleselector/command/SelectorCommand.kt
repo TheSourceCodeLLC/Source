@@ -28,7 +28,9 @@ class SelectorCommand(
             SetSelectorCommand(),
             SendSelectorCommand(),
             RefreshSelectorCommand(),
-            InfoSelectorCommand()
+            InfoSelectorCommand(),
+            ListSelectorCommand(),
+            DeleteSelectorCommand()
         )
     }
 
@@ -70,7 +72,7 @@ class SelectorCommand(
                 )
             }
             val cache = selectorHandler[guild]
-            if (cache.getSelector(name) != null) return StandardErrorResponse(
+            if (cache[name] != null) return StandardErrorResponse(
                 "Uh Oh!",
                 "A role selector already exists with that name!"
             )
@@ -87,6 +89,24 @@ class SelectorCommand(
             return StandardSuccessResponse("Success!", "Successfully create a role selector named $name!")
         }
 
+    }
+
+    private inner class ListSelectorCommand : Bootstrap(
+        "list",
+        "Sends a list of all of the role selectors."
+    ) {
+        override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+            val guild = sender.guild
+            val cache = selectorHandler[guild]
+            val selectorList = cache.getSelectors()
+
+            var selectorNames = selectorList.joinToString { it.name }
+
+            // Future proofing errors, but adding pagination to this seems extremely useless as hitting this limit is very unlikely
+            selectorNames = if (selectorNames.length >= 4096) "${selectorNames.take(4093)}..." else selectorNames
+
+            return StandardInfoResponse("Selector List", selectorNames)
+        }
     }
 
     private inner class SendSelectorCommand : Bootstrap(
@@ -107,9 +127,8 @@ class SelectorCommand(
             )
 
             val cache = selectorHandler[guild]
-            val selector = cache.getSelector(name)
+            val selector = cache[name]
                 ?: return NoSuchSelectorResponse(name)
-
 
             val providedId: String = arguments.optional("channelId") ?: sender.channel.id
             val currentChannelId = sender.channel.id
@@ -138,6 +157,41 @@ class SelectorCommand(
 
     }
 
+    private inner class DeleteSelectorCommand : Bootstrap(
+        "delete",
+        "Deletes a role selector."
+    ) {
+        override val synopsis: Synopsis = Synopsis {
+            reqParam("name", "The name of the role selector menu.", Adapter.single())
+        }
+
+        override fun execute(sender: Message, arguments: Arguments.Processed): Response {
+            val name: String = arguments.required(
+                "name",
+                "You must specify a name for the role selector menu!",
+                String::toLowerCase
+            )
+
+            val guild = sender.guild
+            val cache = selectorHandler[guild]
+            val selector = cache[name]
+                ?: return NoSuchSelectorResponse(name)
+
+            selector.messageIds.forEach { (channelId, messageIdList) ->
+                val channel = guild.getTextChannelById(channelId) ?: return@forEach
+                messageIdList.forEach {
+                    try {
+                        val msg = channel.retrieveMessageById(it).complete()
+                        msg.delete().queue()
+                    } catch (ex: Exception) {
+                    }
+                }
+            }
+            cache.deleteSelector(selector.name)
+            return StandardSuccessResponse("Success!", "Successfully delete the $name selector!")
+        }
+    }
+
     private inner class RefreshSelectorCommand : Bootstrap(
         "refresh",
         "Refreshes a role selector."
@@ -155,7 +209,7 @@ class SelectorCommand(
 
             val guild = sender.guild
             val cache = selectorHandler[guild]
-            val selector = cache.getSelector(name)
+            val selector = cache[name]
                 ?: return NoSuchSelectorResponse(name)
             val newMessage = MessageBuilder(selector.message)
                 .setActionRows(selector.toActionRow(guild)).build()
@@ -213,7 +267,7 @@ class SelectorCommand(
 
             val property = arguments.required<SelectorProperty>("property", "You did not specify a property to edit!")
             val cache = selectorHandler[sender.guild]
-            val selector = cache.getSelector(name) ?: return NoSuchSelectorResponse(name)
+            val selector = cache[name] ?: return NoSuchSelectorResponse(name)
             val processed = property.synopsis.process(arguments.parent.slice())
             val alert = property.applicator(selector, sender.member!!, processed)
             cache.saveSelector(selector)
@@ -240,7 +294,7 @@ class SelectorCommand(
 
             val guild = sender.guild
             val cache = selectorHandler[guild]
-            val selector = cache.getSelector(name) ?: return NoSuchSelectorResponse(name)
+            val selector = cache[name] ?: return NoSuchSelectorResponse(name)
 
             val selectorName = selector.name
             val roles = selector.roleIds.mapNotNull { guild.getRoleById(it)?.name }.joinToString()
@@ -357,7 +411,7 @@ class SelectorCommand(
     ) : Group.Option {
         ADD("add", Synopsis {
             reqParam("roleIds", "The role ids to add to the role selector menu.", Adapter.slurp(" "))
-        }, { selector, member, args ->
+        }, logic@{ selector, member, args ->
             val guild = member.guild
             val idString: String =
                 args.required("roleIds", "You must specify at least one role id to add to the role selector!")
@@ -397,22 +451,22 @@ class SelectorCommand(
             }
 
             if (idList.isEmpty()) {
-                StandardErrorResponse("Failed To Add Roles", failReasons)
+                return@logic StandardErrorResponse("Failed To Add Roles", failReasons)
 
-            } else {
-                val currentIds = selector.roleIds
-                currentIds.addAll(idList)
-                selector.roleIds = currentIds.distinct().toMutableList()
-
-                val failIds = " except for the following ids: ${invalidList.joinToString()}".take(300)
-                val failStr = if (invalidList.isNotEmpty()) " $failIds!\n\n$failReasons" else "!"
-
-                StandardSuccessResponse("Success!", "Successfully added the requested roles${failStr}")
             }
+            val currentIds = selector.roleIds
+            currentIds.addAll(idList)
+            selector.roleIds = currentIds.distinct().toMutableList()
+
+            val failIds = " except for the following ids: ${invalidList.joinToString()}".take(300)
+            val failStr = if (invalidList.isNotEmpty()) " $failIds!\n\n$failReasons" else "!"
+
+            return@logic StandardSuccessResponse("Success!", "Successfully added the requested roles${failStr}")
+
         }),
         REMOVE("remove", Synopsis {
             reqParam("roleIds", "The role ids to remove from the role selector menu.", Adapter.slurp(" "))
-        }, { selector, _, args ->
+        }, logic@{ selector, _, args ->
             val idString: String =
                 args.required("roleIds", "You must specify at least one role id to add to the role selector!")
             val idList: MutableList<String> = idString.split(" ").toMutableList()
@@ -420,35 +474,44 @@ class SelectorCommand(
 
             val currentIds = selector.roleIds
             idList.removeIf {
-                val bool = !currentIds.contains(it)
-                if (bool) invalidList.add(it)
-                bool
+                return@removeIf if (!currentIds.contains(it)) {
+                    invalidList.add(it)
+                    true
+                } else false
             }
 
             if (idList.isEmpty()) {
-                StandardErrorResponse(
+                return@logic StandardErrorResponse(
                     "Invalid Roles",
                     "The are no roles in the selector that have the given role ids!"
                 )
-            } else {
-                currentIds.removeAll(idList)
-                selector.roleIds = currentIds.distinct().toMutableList()
+            }
 
-                var str =
-                    if (invalidList.isNotEmpty()) " except for the following ids: ${invalidList.joinToString()}" else ""
-
-                val builder = StringBuilder(str)
-                if (builder.length > 300) {
-                    builder.setLength(300)
-                    builder.append("...")
-                    str = builder.toString()
-                }
-
-                StandardSuccessResponse(
-                    "Success!",
-                    "Successfully removed the requested roles${str}!"
+            if (idList.size == selector.roleIds.size) {
+                return@logic StandardErrorResponse(
+                    "Cannot Remove Roles!",
+                    "A role selector must have at least one role!"
                 )
             }
+
+            currentIds.removeAll(idList)
+            selector.roleIds = currentIds.distinct().toMutableList()
+
+            var str =
+                if (invalidList.isNotEmpty()) " except for the following ids: ${invalidList.joinToString()}" else ""
+
+            val builder = StringBuilder(str)
+            if (builder.length > 300) {
+                builder.setLength(300)
+                builder.append("...")
+                str = builder.toString()
+            }
+
+            return@logic StandardSuccessResponse(
+                "Success!",
+                "Successfully removed the requested roles${str}!"
+            )
+
         })
     }
 

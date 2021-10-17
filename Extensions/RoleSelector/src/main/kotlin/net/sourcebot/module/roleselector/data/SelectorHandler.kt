@@ -44,7 +44,7 @@ class SelectorHandler : EventSubscriber<RoleSelector> {
 
         val cache = this[guild]
         val selectorName = name.substringAfter(":")
-        val selector = cache.getSelector(selectorName) ?: return
+        val selector = cache[selectorName] ?: return
         val user = event.user
         var values = event.values
 
@@ -52,10 +52,12 @@ class SelectorHandler : EventSubscriber<RoleSelector> {
             val member = guild.getMember(user) ?: return
             val hasPermission = Source.PERMISSION_HANDLER.memberHasPermission(member, selector.permission, null)
             if (!hasPermission) {
-                event.reply("You do not have permission to use this selector menu!").queue()
+                event.reply("You do not have permission to use this selector menu!").setEphemeral(true).queue()
                 return
             }
         }
+
+        cache.verifyRoles(guild, selector)
 
         if (values.isEmpty()) {
             val selectorData = selectionCache[selector] ?: mutableListOf()
@@ -126,7 +128,7 @@ class SelectorHandler : EventSubscriber<RoleSelector> {
 
     }
 
-    private class SelectionData(
+    private data class SelectionData(
         val id: String,
         var selections: MutableList<String>
     )

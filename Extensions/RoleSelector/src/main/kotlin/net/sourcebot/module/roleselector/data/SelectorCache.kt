@@ -20,7 +20,7 @@ class SelectorCache(
             ): Selector = selectors.find(Document("name", name)).first()!!.let { MongoSerial.fromDocument(it) }
         })
 
-    fun getSelector(name: String): Selector? = try {
+    operator fun get(name: String): Selector? = try {
         selectorCache[name]
     } catch (ex: Exception) {
         null
