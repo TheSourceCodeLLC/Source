@@ -177,16 +177,9 @@ class SelectorCommand(
             val selector = cache[name]
                 ?: return NoSuchSelectorResponse(name)
 
-            selector.messageIds.forEach { (channelId, messageIdList) ->
-                val channel = guild.getTextChannelById(channelId) ?: return@forEach
-                messageIdList.forEach {
-                    try {
-                        val msg = channel.retrieveMessageById(it).complete()
-                        msg.delete().queue()
-                    } catch (ex: Exception) {
-                    }
-                }
-            }
+            val messages = cache.retrieveMessages(guild, selector)
+            messages.forEach { it.delete().queue() }
+
             cache.deleteSelector(selector.name)
             return StandardSuccessResponse("Success!", "Successfully delete the $name selector!")
         }
@@ -214,24 +207,8 @@ class SelectorCommand(
             val newMessage = MessageBuilder(selector.message)
                 .setActionRows(selector.toActionRow(guild)).build()
 
-            selector.messageIds.forEach { (channelId, messageIdList) ->
-                val channel = guild.getTextChannelById(channelId)
-                if (channel == null) {
-                    selector.messageIds.remove(channelId)
-                    return@forEach
-                }
-
-                messageIdList.forEach {
-                    try {
-                        val message = channel.retrieveMessageById(it).complete()
-                        message.editMessage(newMessage).queue()
-                    } catch (ex: Exception) {
-                        messageIdList.remove(it)
-                    }
-
-                }
-
-            }
+            val messages = cache.retrieveMessages(guild, selector)
+            messages.forEach { it.editMessage(newMessage).queue() }
 
             cache.saveSelector(selector)
             return StandardSuccessResponse("Success!", "Successfully refreshed the specified selector menu!")
