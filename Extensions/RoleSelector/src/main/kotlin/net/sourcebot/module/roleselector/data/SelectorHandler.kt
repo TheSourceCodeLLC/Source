@@ -58,6 +58,9 @@ class SelectorHandler : EventSubscriber<RoleSelector> {
         }
 
         cache.verifyRoles(guild, selector)
+        val shouldAdd = values.isNotEmpty()
+
+        val message = "Successfully ${if (shouldAdd) "added" else "removed"} the selected roles!"
 
         if (values.isEmpty()) {
             val selectorData = selectionCache[selector] ?: mutableListOf()
@@ -75,19 +78,18 @@ class SelectorHandler : EventSubscriber<RoleSelector> {
         }
 
         val roles = optionIdsToRole(guild, values)
-        handleRoles(guild, user, roles)
+        handleRoles(guild, user, roles, shouldAdd)
 
-        event.reply("Your roles have successfully been updated!").setEphemeral(true).queue()
+        event.reply(message).setEphemeral(true).queue()
     }
 
     private fun optionIdsToRole(guild: Guild, roles: MutableList<String>) =
         roles.map { it.substringAfter(":") }.mapNotNull { guild.getRoleById(it) }
 
-    private fun handleRoles(guild: Guild, user: User, roles: List<Role>) {
+    private fun handleRoles(guild: Guild, user: User, roles: List<Role>, shouldAdd: Boolean) {
         val member = guild.getMember(user) ?: return
         roles.forEach {
-            val hasRole = member.roles.contains(it)
-            if (hasRole) guild.removeRoleFromMember(member, it).queue()
+            if (!shouldAdd) guild.removeRoleFromMember(member, it).queue()
             else guild.addRoleToMember(member, it).queue()
         }
     }
