@@ -4,6 +4,7 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.mongodb.client.MongoCollection
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.database.MongoSerial
 import org.bson.Document
 import java.util.concurrent.TimeUnit
@@ -20,7 +21,7 @@ class SelectorCache(
             ): Selector = selectors.find(Document("name", name)).first()!!.let { MongoSerial.fromDocument(it) }
         })
 
-    fun getSelector(name: String): Selector? = try {
+    operator fun get(name: String): Selector? = try {
         selectorCache[name]
     } catch (ex: Exception) {
         null
@@ -35,6 +36,27 @@ class SelectorCache(
             }
         }
         saveSelector(selector)
+    }
+
+    fun retrieveMessages(guild: Guild, selector: Selector): MutableList<Message> {
+        val msgList: MutableList<Message> = mutableListOf()
+        selector.messageIds.entries.removeIf { (channelId, messageIdList) ->
+            val channel = guild.getTextChannelById(channelId) ?: return@removeIf true
+
+            messageIdList.removeIf {
+                try {
+                    msgList.add(channel.retrieveMessageById(it).complete())
+                    false
+                } catch (ex: Exception) {
+                    true
+                }
+            }
+
+            return@removeIf false
+        }
+
+        saveSelector(selector)
+        return msgList
     }
 
     fun getSelectors(): Collection<Selector> = selectors.find().map {

@@ -16,7 +16,7 @@ class Selector(
     var message: String = "Select a role here!"
 ) {
 
-    fun hasPermission(): Boolean = permission.isNotEmpty() || permission.isNotBlank()
+    fun hasPermission(): Boolean = permission.isNotEmpty() && permission.isNotBlank()
 
     fun toActionRow(guild: Guild): ActionRow {
         val selectionMenu = SelectionMenu.create("roleselector:${name.toLowerCase()}")
