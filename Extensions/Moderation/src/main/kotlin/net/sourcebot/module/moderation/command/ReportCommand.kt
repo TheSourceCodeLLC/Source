@@ -72,7 +72,7 @@ class ReportCommand : ModerationRootCommand(
     }
 
     init {
-        addChildren(
+        register(
             ReportGetCommand(),
             ReportDeleteCommand()
         )

@@ -39,8 +39,8 @@ class Counting : SourceModule() {
         ).complete()
     }
 
-    private fun clearCountingOverride(guild: Guild) = setCountingOverride(guild, PermissionOverrideAction::clear)
-    private fun denyCountingOverride(guild: Guild) = setCountingOverride(guild, PermissionOverrideAction::deny)
+    private fun clearCountingOverride(guild: Guild) = setCountingOverride(guild) { a, b -> a.clear(b) }
+    private fun denyCountingOverride(guild: Guild) = setCountingOverride(guild) { a, b -> a.deny(b) }
 
     companion object {
         @JvmStatic fun getCountingChannel(guild: Guild) = Source.CONFIG_MANAGER[guild].optional<String>(

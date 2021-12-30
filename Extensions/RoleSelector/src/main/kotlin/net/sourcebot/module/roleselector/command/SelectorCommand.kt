@@ -23,7 +23,7 @@ class SelectorCommand(
     override val description: String = "Manages role selectors."
 
     init {
-        addChildren(
+        register(
             CreateSelectorCommand(),
             SetSelectorCommand(),
             SendSelectorCommand(),

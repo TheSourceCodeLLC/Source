@@ -22,7 +22,7 @@ class TriviaCommand : RootCommand() {
     private val activeGames = HashMap<String, Game>()
 
     init {
-        addChildren(
+        register(
             TriviaStartCommand(),
             TriviaStopCommand(),
             TriviaCategoriesCommand()

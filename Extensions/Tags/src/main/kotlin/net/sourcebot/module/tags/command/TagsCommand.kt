@@ -28,7 +28,7 @@ class TagsCommand(
     override val permission = name
 
     init {
-        addChildren(
+        register(
             TagsCreateCommand(),
             TagsDeleteCommand(),
             TagsEditCommand(),

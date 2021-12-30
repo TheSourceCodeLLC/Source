@@ -1,5 +1,5 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm").version("1.4.10")
+    id("org.jetbrains.kotlin.jvm").version("1.6.0")
     id("com.github.johnrengelman.shadow").version("6.1.0")
     id("maven-publish")
     id("java-library")
@@ -7,7 +7,7 @@ plugins {
 
 allprojects {
     group = "net.sourcebot"
-    version = "5.4.1"
+    version = "5.5.1"
     buildDir = File(rootProject.projectDir, "target/output/$name")
 
     apply(plugin = "org.jetbrains.kotlin.jvm")

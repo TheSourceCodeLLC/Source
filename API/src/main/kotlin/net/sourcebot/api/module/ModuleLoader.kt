@@ -1,6 +1,6 @@
 package net.sourcebot.api.module
 
-import me.hwiggy.extensible.binding.AbstractLoader
+import me.hwiggy.extensible.binding.HashMapLoader
 import me.hwiggy.extensible.exception.CompositeException
 import net.sourcebot.api.getDeclaringArchive
 import net.sourcebot.impl.BaseModule
@@ -8,7 +8,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 
-class ModuleLoader(parentClassLoader: ModuleParentClassLoader) : AbstractLoader<ModuleDescriptor, SourceModule>() {
+class ModuleLoader(parentClassLoader: ModuleParentClassLoader) : HashMapLoader<ModuleDescriptor, SourceModule>() {
     private val logger: Logger = LoggerFactory.getLogger(ModuleLoader::class.java)
     override val strategy = ModuleLoadStrategy(parentClassLoader)
 

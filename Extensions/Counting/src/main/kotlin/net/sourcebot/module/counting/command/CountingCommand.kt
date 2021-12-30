@@ -13,7 +13,7 @@ class CountingCommand : RootCommand() {
     override val guildOnly = true
 
     init {
-        addChildren(
+        register(
             CountingRulesCommand()
         )
     }

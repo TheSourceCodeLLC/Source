@@ -113,7 +113,7 @@ class RolesCommand : ModerationRootCommand(
     }
 
     init {
-        addChildren(
+        register(
             RolesAddCommand(),
             RolesRemoveCommand(),
             RolesListCommand()

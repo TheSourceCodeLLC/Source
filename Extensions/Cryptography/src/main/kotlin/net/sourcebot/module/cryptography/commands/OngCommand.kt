@@ -15,7 +15,7 @@ class OngCommand : RootCommand() {
     override val permission = "cryptography.$name"
 
     init {
-        addChildren(
+        register(
             OngEncodeCommand(),
             OngDecodeCommand()
         )

@@ -59,7 +59,7 @@ class CommandHandler(
             )
             VALID -> {
                 try {
-                    val withExtra = Arguments(args.slice().raw, command.getExtraParameters(message))
+                    val withExtra = Arguments(args.slice().raw, command.getExtra(message))
                     val processed = command.synopsis.process(withExtra)
                     command.execute(message, processed)
                 } catch (exception: Exception) {
@@ -98,9 +98,8 @@ class CommandHandler(
         val inGuild = message.channelType == ChannelType.TEXT
         var command: SourceCommand = root
         do {
-            val children = command.children
             val nextId = arguments.next() ?: break
-            val nextCommand = children.find(nextId)
+            val nextCommand = command.findSingle(nextId)
             if (nextCommand == null) {
                 arguments.backtrack()
                 break

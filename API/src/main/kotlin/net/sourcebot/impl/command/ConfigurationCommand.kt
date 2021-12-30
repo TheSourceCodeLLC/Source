@@ -131,7 +131,7 @@ class ConfigurationCommand : RootCommand() {
     }
 
     init {
-        addChildren(
+        register(
             ConfigurationSetCommand(),
             ConfigurationUnsetCommand(),
             ConfigurationGetCommand(),

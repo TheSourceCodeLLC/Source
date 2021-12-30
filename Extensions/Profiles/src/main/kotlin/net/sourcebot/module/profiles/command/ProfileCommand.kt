@@ -76,7 +76,7 @@ class ProfileCommand : RootCommand(
     }
 
     init {
-        addChildren(
+        register(
             ProfileSetCommand()
         )
     }

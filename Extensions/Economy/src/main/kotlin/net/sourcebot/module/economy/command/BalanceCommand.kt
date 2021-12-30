@@ -106,7 +106,7 @@ class BalanceCommand : EconomyRootCommand(
     }
 
     init {
-        addChildren(
+        register(
             BalanceSetCommand(),
             BalanceAddCommand(),
             BalanceSubtractCommand()

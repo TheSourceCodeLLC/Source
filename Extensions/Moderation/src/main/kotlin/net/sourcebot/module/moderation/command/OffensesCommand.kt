@@ -79,7 +79,7 @@ class OffensesCommand : ModerationRootCommand(
     }
 
     init {
-        addChildren(
+        register(
             OffensesListCommand(),
             OffensesAddCommand(),
             OffensesRemoveCommand()

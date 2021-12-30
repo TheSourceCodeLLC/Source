@@ -7,7 +7,7 @@ import net.sourcebot.api.configuration.JsonConfiguration
 class ModuleDescriptor(json: ObjectNode) : JsonConfiguration(json), JarDescriptor {
     override val mainClass by delegateRequired<String>("main")
     override val name by delegateRequired<String>()
-    val version by delegateRequired<String>()
+    override val version by delegateRequired<String>()
     val description by delegateRequired<String>()
     val author by delegateRequired<String>()
 

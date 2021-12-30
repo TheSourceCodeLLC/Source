@@ -16,7 +16,7 @@ class Base64Command : RootCommand() {
     override val permission = "cryptography.$name"
 
     init {
-        addChildren(
+        register(
             Base64EncodeCommand(),
             Base64DecodeCommand()
         )

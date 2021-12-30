@@ -11,7 +11,7 @@ import net.sourcebot.api.response.Response
 /**
  * Represents a command to be executed via tha [CommandHandler]
  */
-abstract class SourceCommand : Command<Message, Response, SourceCommand>() {
+abstract class SourceCommand : Command<Message, Message, Response, SourceCommand>() {
     open val cleanupResponse = true
     open val deleteSeconds: Long? = null
 
@@ -19,7 +19,7 @@ abstract class SourceCommand : Command<Message, Response, SourceCommand>() {
     open val permission: String? = null
     open val guildOnly = false
 
-    fun getChildren() = children.getIdentifiers()
+    fun getChildren() = children()
 
     override fun execute(
         sender: Message,
@@ -28,10 +28,8 @@ abstract class SourceCommand : Command<Message, Response, SourceCommand>() {
 
     open fun postResponse(response: Response, forWhom: User, message: Message) = Unit
 
-    protected fun addChildren(vararg command: SourceCommand) = command.forEach(::addChild)
-
-    override fun getExtraParameters(sender: Message) = HashMap<String, Any>().also {
-        if (sender.isFromGuild) it["guild"] = sender.guild
-        it["jda"] = sender.jda
-    }.let(ExtraParameters::fromMap)
+    override fun getExtra(sender: Message) = ExtraParameters.of(
+        "jda" to sender.jda,
+        "guild" to if (sender.isFromGuild) sender.guild else null
+    )
 }

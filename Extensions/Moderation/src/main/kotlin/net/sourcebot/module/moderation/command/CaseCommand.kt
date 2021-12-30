@@ -55,7 +55,7 @@ class CaseCommand : ModerationRootCommand(
     }
 
     init {
-        addChildren(
+        register(
             CaseGetCommand(),
             CaseDeleteCommand()
         )

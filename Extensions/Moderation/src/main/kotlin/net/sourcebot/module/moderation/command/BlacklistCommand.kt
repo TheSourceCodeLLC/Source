@@ -80,7 +80,7 @@ class BlacklistCommand : ModerationRootCommand(
     }
 
     init {
-        addChildren(
+        register(
             BlacklistsAddCommand(),
             BlacklistsRemoveCommand(),
             BlacklistsListCommand()
