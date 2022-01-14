@@ -1,6 +1,7 @@
 package net.sourcebot.impl.command
 
 import me.hwiggy.kommander.arguments.Arguments
+import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.configuration.JsonConfiguration
@@ -24,7 +25,8 @@ abstract class LifecycleCommand(
             Runtime.getRuntime().exec(script)
             EmptyResponse()
         } catch (ex: Throwable) {
-            onFailure.addField("Exception:", ex.message, false) as Response
+            val builder = EmbedBuilder(onFailure).addField("Exception:", ex.message, false)
+            return WrappedEmbedResponse(builder.build())
         }
     }
 }

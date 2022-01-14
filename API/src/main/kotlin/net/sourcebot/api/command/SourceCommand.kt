@@ -32,4 +32,8 @@ abstract class SourceCommand : Command<Message, Message, Response, SourceCommand
         "jda" to sender.jda,
         "guild" to if (sender.isFromGuild) sender.guild else null
     )
+
+    override fun postRegister(child: SourceCommand) {
+        child.parent = this
+    }
 }
