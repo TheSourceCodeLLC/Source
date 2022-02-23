@@ -1,1 +1,0 @@
-description = "Music-related commands and activities."

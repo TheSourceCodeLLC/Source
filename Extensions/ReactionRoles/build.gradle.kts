@@ -1,1 +1,0 @@
-description = "Module responsible for reaction roles."
