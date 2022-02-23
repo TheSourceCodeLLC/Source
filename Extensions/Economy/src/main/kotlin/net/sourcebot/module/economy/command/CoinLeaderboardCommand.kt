@@ -31,7 +31,7 @@ class CoinLeaderboardCommand : EconomyRootCommand(
         val pages = ceil(
             profiles.countDocuments(Profiles.VALID_PROFILE) / 10.0
         ).toInt()
-        val page = arguments.optional("page", 1)
+        val page = arguments.optional("page", 1) - 1
         if (page > pages) throw InvalidSyntaxException("Page must be between 1 and $pages!")
         val leaderboard = profiles.find(Profiles.VALID_PROFILE).skip(10 * page).limit(10).sort(
             Document("data.economy.balance", -1)
