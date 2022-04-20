@@ -11,7 +11,7 @@ dependencies {
     api("org.mongodb:mongo-java-driver:3.12.10")
     api("org.fusesource.jansi:jansi:2.4.0")
     api("com.sedmelluq:lavaplayer:1.3.69")
-    api("me.hwiggy:Kommander:1.7.2")
+    api("me.hwiggy.kommander:API:1.7.2")
     api("me.hwiggy:Extensible:1.4.5")
 }
 
