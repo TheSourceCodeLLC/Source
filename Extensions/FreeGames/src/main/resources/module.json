@@ -1,0 +1,7 @@
+{
+  "main": "net.sourcebot.module.freegames.FreeGames",
+  "name": "${project.name}",
+  "version": "${project.version}",
+  "description": "${project.description}",
+  "author": "TheForbiddenAi#3797"
+}
