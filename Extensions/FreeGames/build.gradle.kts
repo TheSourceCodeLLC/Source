@@ -3,4 +3,5 @@ description = "Module responsible for posting games that are 100% off to a desig
 dependencies {
     implementation("com.github.kittinunf.fuel:fuel:2.3.1")
     implementation("com.google.code.gson:gson:2.9.0")
+    implementation("org.jsoup:jsoup:1.14.3")
 }

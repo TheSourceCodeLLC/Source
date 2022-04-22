@@ -15,7 +15,7 @@ data class Game(
         .setTitle(name)
         .setAuthor(null, null, platformLogoUrl)
         .setThumbnail(platformLogoUrl)
-        .setDescription("Free until <t:$expirationEpoch:f>\n\n**[Claim it here!]($url)**")
+        .setDescription("Offer ends on <t:$expirationEpoch:f>\n\n**[Claim it here!]($url)**")
         .setImage(imageUrl)
         .build()
 
