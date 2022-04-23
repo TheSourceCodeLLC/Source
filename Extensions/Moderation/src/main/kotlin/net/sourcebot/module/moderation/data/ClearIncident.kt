@@ -37,7 +37,7 @@ class ClearIncident(
                 **Cleared By:** ${sender.formatLong()} ($source)
                 **Cleared Channel:** ${channel.name} ($target)
                 **Clear Amount:** $amount
-                **Reason:**: $reason
+                **Reason:** $reason
             """.trimIndent()
         ).asMessage(sender.user)
     ).complete()

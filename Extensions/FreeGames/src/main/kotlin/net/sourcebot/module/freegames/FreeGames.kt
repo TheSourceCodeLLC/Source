@@ -1,12 +1,10 @@
 package net.sourcebot.module.freegames
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
-import net.dv8tion.jda.api.entities.Guild
 import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.freegames.command.RefreshGamesCommand
-import java.util.concurrent.TimeUnit
+import net.sourcebot.module.freegames.event.FreeGameEmitter
+import net.sourcebot.module.freegames.listener.FreeGameListener
 
 class FreeGames : SourceModule() {
     // TODO: ADD AUTO PUBLISH OPTION (This can not be done until the upgrade to JDA 5 is complete)
@@ -26,15 +24,11 @@ class FreeGames : SourceModule() {
         registerCommands(
             RefreshGamesCommand()
         )
+        subscribeEvents(FreeGameListener())
+        gameEmitter.startEmitting()
     }
 
     companion object {
-        private val freeGameHandlers = CacheBuilder.newBuilder()
-            .weakKeys().expireAfterWrite(10, TimeUnit.MINUTES)
-            .build(object : CacheLoader<Guild, FreeGameHandler>() {
-                override fun load(guild: Guild) = FreeGameHandler(guild)
-            })
-
-        fun getFreeGameHandler(guild: Guild): FreeGameHandler = freeGameHandlers[guild]
+        val gameEmitter = FreeGameEmitter()
     }
 }
