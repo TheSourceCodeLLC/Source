@@ -1,4 +1,4 @@
-package net.sourcebot.module.freegames.event
+package net.sourcebot.module.freegames.emitter
 
 import com.github.kittinunf.fuel.core.requests.CancellableRequest
 import com.github.kittinunf.fuel.httpGet
@@ -13,6 +13,7 @@ import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.api.response.StandardWarningResponse
 import net.sourcebot.module.freegames.FreeGames
 import net.sourcebot.module.freegames.data.Game
+import net.sourcebot.module.freegames.event.FreeGameEvent
 import org.bson.Document
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -22,7 +23,8 @@ class FreeGameEmitter {
     private val mongo = Source.MONGODB
 
     /**
-     * Starts the executor service which emits any newly found free games to all guilds that have this feature activated
+     * Starts the executor service that emits any newly found free games to all guilds that have this feature activated
+     * This executor service also monitors for expired games
      */
     fun startEmitting() {
         Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate({
@@ -32,15 +34,17 @@ class FreeGameEmitter {
             val epicGames = retrieveFreeEpicGamesGames() ?: emptyList()
             if (steamGames.isEmpty() && epicGames.isEmpty()) return@scheduleAtFixedRate
 
-            guilds.parallelStream()
-                .filter { getFreeGamesChannel(it) != null }
-                .forEach { emitToGuild(it, steamGames, epicGames) }
+            guilds.filter { getFreeGamesChannel(it) != null }
+                .forEach {
+                    emitToGuild(it, steamGames, epicGames)
+                    removeExpiredListings(it)
+                }
         }, 0, 2, TimeUnit.HOURS)
     }
 
     /**
      * Calls the free EpicGames and Steam game retrieval functions and then emits the NewGameEvent.
-     * This function will only emit games that have not already been posted
+     * This function will only emit games that have not already been posted and will delete ones that are expired.
      *
      * @param guild The guild to emit the NewGameEvent to
      * @param callback Sends a Response object back to the initiator
@@ -55,8 +59,8 @@ class FreeGameEmitter {
         }
 
         Source.EXECUTOR_SERVICE.submit {
-            val status = emitToGuild(guild, steamGames, epicGames)
-            if (status == 1) {
+            val status = emitToGuild(guild, steamGames, epicGames) + removeExpiredListings(guild)
+            if (status > 0) {
                 callback.invoke(StandardSuccessResponse("Success!", "Successfully refreshed the free game listings"))
             } else {
                 callback.invoke(
@@ -71,7 +75,7 @@ class FreeGameEmitter {
 
     /**
      * Emits free EpicGames and Steam Games through the NewGameEvent. This function does NOT call the retrieval free game functions!
-     * This function will only emit games that have not already been posted
+     * This function will only emit games that have not already been posted.
      *
      * @param guild The guild to emit the NewGameEvent to
      * @param steamGames The Steam games to emit
@@ -88,10 +92,38 @@ class FreeGameEmitter {
         gameList.removeIf {
             freeGamesCollection.find(Document("url", it.url.lowercase())).first() != null
         }
+
         if (gameList.size == 0) return 0
         Source.SOURCE_EVENTS.fireEvent(FreeGameEvent(guild, gameList))
 
         return 1
+    }
+
+    /**
+     * Removes all expired game listings.
+     *
+     * @param guild The guild being checked for expired listings
+     * @return 0 if no expired listings are found, 1 if expired games are removed
+     */
+    private fun removeExpiredListings(guild: Guild): Int {
+        val freeGameLog = mongo.getCollection(guild.id, "free-game-log")
+        val channel = getFreeGamesChannel(guild) ?: return 0
+        var status = 0
+        freeGameLog.find()
+            .filter { document -> (document["expirationEpoch"] as Long) <= Instant.now().epochSecond }
+            .groupBy { document -> document["messageId"] }
+            .forEach { (_, documents) ->
+                val msgId = documents[0]["messageId"] as String
+                val names = documents.map { it["name"] as String }
+                channel.retrieveMessageById(msgId).queue { message ->
+                    val embeds = message.embeds.filter { embed -> !names.contains(embed?.title?.lowercase() ?: "") }
+                    if (embeds.isEmpty()) message.delete().queue()
+                    else message.editMessageEmbeds(embeds).queue()
+                }
+                documents.forEach { freeGameLog.deleteOne(it) }
+                status = 1
+            }
+        return status
     }
 
     private fun retrieveFreeSteamGames(): List<Game>? {

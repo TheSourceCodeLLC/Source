@@ -3,7 +3,7 @@ package net.sourcebot.module.freegames
 import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.freegames.command.RefreshGamesCommand
-import net.sourcebot.module.freegames.event.FreeGameEmitter
+import net.sourcebot.module.freegames.emitter.FreeGameEmitter
 import net.sourcebot.module.freegames.listener.FreeGameListener
 
 class FreeGames : SourceModule() {
