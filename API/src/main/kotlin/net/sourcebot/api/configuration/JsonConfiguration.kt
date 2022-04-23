@@ -148,4 +148,6 @@ open class JsonConfiguration @JsonCreator constructor(
             proxyCache[path] = it
         }) as T
     }
+
+    fun proxyObj(path: String): JsonConfiguration = proxyObj(path) { it }
 }

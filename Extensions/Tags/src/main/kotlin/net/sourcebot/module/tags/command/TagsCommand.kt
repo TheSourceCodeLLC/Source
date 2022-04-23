@@ -49,7 +49,7 @@ class TagsCommand(
 
         override fun execute(sender: Message, arguments: Arguments.Processed): Response {
             val tagCache = tagHandler[sender.guild]
-            val name = arguments.required("name", "You did not specify a name for the new tag!", String::toLowerCase)
+            val name = arguments.required("name", "You did not specify a name for the new tag!", String::lowercase)
             val existing = tagCache.getTag(name)
             if (existing != null) return StandardErrorResponse("Duplicate Tag!", "A tag named `$name` already exists!")
             val content = arguments.required<String>("content", "You did not specify content for the new tag!")
@@ -68,7 +68,7 @@ class TagsCommand(
 
         override fun execute(sender: Message, arguments: Arguments.Processed): Response {
             val tagCache = tagHandler[sender.guild]
-            val name = arguments.required("name", "You did not specify a tag to delete!", String::toLowerCase)
+            val name = arguments.required("name", "You did not specify a tag to delete!", String::lowercase)
             tagCache.getTag(name) ?: return NoSuchTagResponse(name)
             tagCache.deleteTag(name)
             return StandardSuccessResponse("Tag Deleted!", "The tag named `$name` has been deleted!")
@@ -90,7 +90,7 @@ class TagsCommand(
 
         override fun execute(sender: Message, arguments: Arguments.Processed): Response {
             val tagCache = tagHandler[sender.guild]
-            val name = arguments.required<String>("name", "You did not specify a tag to edit!").toLowerCase()
+            val name = arguments.required<String>("name", "You did not specify a tag to edit!").lowercase()
             val tag = tagCache.getTag(name) ?: return NoSuchTagResponse(name)
             val property = arguments.required<TagProperty>("property", "You did not specify a property to edit!")
             val processed = property.synopsis.process(arguments.parent.slice())
@@ -110,7 +110,7 @@ class TagsCommand(
 
         override fun execute(sender: Message, arguments: Arguments.Processed): Response {
             val tagCache = tagHandler[sender.guild]
-            val name = arguments.required("name", "You did not specify a tag to show info for!", String::toLowerCase)
+            val name = arguments.required("name", "You did not specify a tag to show info for!", String::lowercase)
             val tag = tagCache.getTag(name) ?: return NoSuchTagResponse(name)
             return TagInfoResponse(tag, sender.jda)
         }
@@ -138,7 +138,7 @@ class TagsCommand(
 
         override fun execute(sender: Message, arguments: Arguments.Processed): Response {
             val tagName =
-                arguments.required("tag", "You did not specify a tag to view content of!", String::toLowerCase)
+                arguments.required("tag", "You did not specify a tag to view content of!", String::lowercase)
             val tagCache = tagHandler[sender.guild]
             val tag = tagCache.getTag(tagName) ?: return NoSuchTagResponse(tagName)
             val content = tag.content.replace("```", "`\u200b``")
@@ -214,7 +214,7 @@ enum class TagProperty(
         tag.type = args.required<Tag.Type>("type", "You did not specify a new tag type!")
         StandardSuccessResponse(
             "Type Updated!",
-            "The type of tag `${tag.name}` is now: ${tag.type.name.toLowerCase()}!"
+            "The type of tag `${tag.name}` is now: ${tag.type.name.lowercase()}!"
         )
     })
 }

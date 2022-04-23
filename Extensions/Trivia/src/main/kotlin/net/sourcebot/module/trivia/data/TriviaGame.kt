@@ -125,7 +125,7 @@ class Game(private val amount: Int, private val category: Int?) {
     fun stop(cause: StopCause) {
         updateMessage(ScoreResponse(getTopFive()).asEmbed(message.author))
         lastTick.cancel(true)
-        log.add("Trivia ${cause.name.toLowerCase().capitalize()}")
+        log.add("Trivia ${cause.name.lowercase().capitalize()}")
         if (scores.isNotEmpty()) {
             log.add("Final Scores:")
             scores.entries.sortedByDescending { (_, v) -> v }.forEach {

@@ -89,7 +89,7 @@ interface FormatStrategy {
                 unit: ChronoUnit
             ) = unit.name.let { plural ->
                 " " + if (amount == 1L) plural.substring(0, plural.length - 1) else plural
-            }.toLowerCase()
+            }.lowercase()
         }
 
         @JvmStatic val SHORT = object : FormatStrategy {

@@ -22,7 +22,6 @@ abstract class SourceModule : JarExtension<ModuleDescriptor>() {
     val version by lazy { descriptor.version }
     val description by lazy { descriptor.description }
     val author by lazy { descriptor.author }
-
     var enabled = false
         internal set
 
@@ -38,7 +37,7 @@ abstract class SourceModule : JarExtension<ModuleDescriptor>() {
         return@lazy file.let(JsonConfiguration::fromFile)
     }
 
-    open val configurationInfo: ConfigurationInfo? = null
+    open val configurationInfo = ConfigurationInfo.EMPTY
 
     fun saveResource(source: String, target: String = source) {
         val targetPath = dataFolder.toPath().resolve(target)

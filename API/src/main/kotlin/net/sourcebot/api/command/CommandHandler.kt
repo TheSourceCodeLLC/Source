@@ -43,7 +43,7 @@ class CommandHandler(
             val transformer = it.transformer ?: return@find false
             if (!transformer.matches(identifier)) return@find false
             args = transformer.transformArguments(identifier, args)
-            identifier = args.next()!!.toLowerCase()
+            identifier = args.next()!!.lowercase()
             true
         } ?: return null to EmptyResponse()
         if (!rootCommand.module.enabled) return rootCommand to EmptyResponse()
@@ -159,7 +159,7 @@ class CommandHandler(
         module: SourceModule
     ) = commandMap.getCommands().filter { it.module == module }
 
-    fun getCommand(name: String) = commandMap[name.toLowerCase()]
+    fun getCommand(name: String) = commandMap[name.lowercase()]
 
     fun registerCommands(
         module: SourceModule,

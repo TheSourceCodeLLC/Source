@@ -14,6 +14,7 @@ class ModuleParentClassLoader(
 
     fun moduleExists(name: String) = loader.findExtension(name) != null
     inline fun <reified T : SourceModule> getExtension() = loader.getExtension(T::class.java)
+    fun <T : SourceModule> getExtension(type: Class<T>) = loader.getExtension(type)
 
     fun loadAndEnable(folder: File) = loadModules(folder).also {
         logger.info("Enabling modules from '${folder.path}'...")

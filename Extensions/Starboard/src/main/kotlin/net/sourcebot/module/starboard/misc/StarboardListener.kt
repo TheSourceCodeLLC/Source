@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.events.message.guild.react.GenericGuildMessageReactio
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionRemoveEvent
 import net.sourcebot.Source
+import net.sourcebot.api.configuration.config
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
@@ -18,9 +19,7 @@ import net.sourcebot.api.response.StandardWarningResponse
 import net.sourcebot.module.starboard.Starboard
 import org.bson.Document
 
-class StarboardListener(
-    private val dataManager: StarboardDataManager
-) : EventSubscriber<Starboard> {
+class StarboardListener : EventSubscriber<Starboard> {
     private val mongo = Source.MONGODB
 
     companion object {
@@ -42,7 +41,7 @@ class StarboardListener(
         listenReaction(event) { message ->
             if (event.user == message.author)
                 return@listenReaction event.reaction.removeReaction(message.author).queue()
-            val data = dataManager[event.guild]
+            val data = Starboard::class.config(message.guild)
             val threshold = data.required<Long>("threshold")
             val count = message.reactions.find { it.reactionEmote.name == UNICODE_STAR }?.count ?: 0
             if (count < threshold) return@listenReaction
@@ -72,7 +71,7 @@ class StarboardListener(
 
     private fun onReactionRemove(event: GuildMessageReactionRemoveEvent) {
         listenReaction(event) { message ->
-            val data = dataManager[event.guild]
+            val data = Starboard::class.config(message.guild)
             val linkObject = getLinkObject(event.guild, message.id)
             val starredId = linkObject?.get("starred") as String? ?: return@listenReaction
             val count = message.reactions.find { it.reactionEmote.name == UNICODE_STAR }?.count ?: 0
@@ -94,7 +93,7 @@ class StarboardListener(
         event: GenericGuildMessageReactionEvent,
         consumer: (Message) -> Unit
     ) {
-        val data = dataManager[event.guild]
+        val data = Starboard::class.config(event.guild)
         if (data.optional<List<String>>("excluded-channels")?.contains(event.channel.id) == true) return
         if (event.reactionEmote.name != UNICODE_STAR) return
         event.retrieveMessage().queue { message ->
@@ -105,7 +104,7 @@ class StarboardListener(
 
     private fun onMessageDelete(event: GuildMessageDeleteEvent) {
         val collection = getCollection(event.guild)
-        val data = dataManager[event.guild]
+        val data = Starboard::class.config(event.guild)
         if (event.channel.id == data.optional<String>(getChannelKey(event.channel))) {
             collection.findOneAndDelete(Document("starred", event.messageId))
         } else deleteStarredMessage(event.guild, event.messageId, getChannelKey(event.channel))
@@ -121,7 +120,7 @@ class StarboardListener(
         val collection = getCollection(guild)
         val deleted = collection.findOneAndDelete(Document("original", original))
         val starred = deleted?.get("starred") as String? ?: return
-        val data = dataManager[guild]
+        val data = Starboard::class.config(guild)
         val channel = data.optional<String>(channelKey)?.let {
             guild.getTextChannelById(it)
         } ?: return
@@ -134,7 +133,7 @@ class StarboardListener(
     ) = getCollection(guild).find(Document("original", original)).first()
 
     private fun getChannelKey(channel: TextChannel): String {
-        val data = dataManager[channel.guild]
+        val data = Starboard::class.config(channel.guild)
         return if (channel.isNSFW && !data.optional<String>("nsfw-channel")
                 .isNullOrBlank()
         ) "nsfw-channel" else "channel"

@@ -29,7 +29,7 @@ class KotlinHandler {
         val modifiedQuery = query.replace("#", ".")
             .removeSuffix(".")
             .removeSuffix("()")
-            .toLowerCase()
+            .lowercase()
 
         val foundInformation = arrayListOf<KotlinInformation>()
         val queryArgs = modifiedQuery.split(".").toTypedArray()
@@ -44,7 +44,7 @@ class KotlinHandler {
 
         if (foundTypeName.isNotEmpty()) {
             val foundType = retrieveType(foundTypeName)
-            val memberName = modifiedQuery.substringAfterLast(foundTypeName.toLowerCase()).removePrefix(".")
+            val memberName = modifiedQuery.substringAfterLast(foundTypeName.lowercase()).removePrefix(".")
 
             if (memberName.isNotEmpty()) {
                 foundInformation.addAll(foundType.searchMembers(memberName))
@@ -178,7 +178,7 @@ class KotlinHandler {
          * @return true or false depending on whether or not the map contains the query as a key
          */
         fun hasInformation(name: String): Boolean {
-            return kotlinCacheMap.containsKey(name.toLowerCase())
+            return kotlinCacheMap.containsKey(name.lowercase())
         }
 
         /**
@@ -187,7 +187,7 @@ class KotlinHandler {
          * @param kotlinInfo The [KotlinInformation] being added
          */
         fun putInformation(kotlinInfo: KotlinInformation) {
-            kotlinCacheMap[kotlinInfo.name.toLowerCase()] = kotlinInfo
+            kotlinCacheMap[kotlinInfo.name.lowercase()] = kotlinInfo
         }
 
         /**
@@ -197,7 +197,7 @@ class KotlinHandler {
          * @return The found [KotlinInformation] or null
          */
         fun getInformation(name: String): KotlinInformation? {
-            return kotlinCacheMap[name.toLowerCase()]
+            return kotlinCacheMap[name.lowercase()]
         }
     }
 

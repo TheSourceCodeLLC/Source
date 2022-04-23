@@ -21,7 +21,7 @@ class RoleUpdateIncident(
     override val source = sender.id
     override val target = member.id
     override val type = Incident.Type.ROLE_UPDATE
-    private val kind = action.name.toLowerCase().capitalize().let {
+    private val kind = action.name.lowercase().capitalize().let {
         it + if (it.endsWith("d")) "ed" else "d"
     }
     private val heading = "Role Update - #$id"

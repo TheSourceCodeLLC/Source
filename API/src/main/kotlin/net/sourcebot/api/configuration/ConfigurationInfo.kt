@@ -9,10 +9,22 @@ class ConfigurationInfo(
     init {
         this.init()
     }
+
+    companion object {
+        val EMPTY = ConfigurationInfo("") {}
+    }
+
+    fun applyDefaults(config: JsonConfiguration) {
+        children.filterIsInstance<DefaultNode>().forEach {
+            if (config.optional<Any>(it.fullName) == null) {
+                config[it.fullName] = it.defaultValue
+            }
+        }
+    }
 }
 
 abstract class ParentNode internal constructor() : ConfigurationNode() {
-    private val children = ArrayList<ConfigurationNode>()
+    protected val children = ArrayList<ConfigurationNode>()
     val resolved: Map<String, String> by lazy {
         val map = LinkedHashMap<String, String>()
         children.forEach {
@@ -33,6 +45,10 @@ abstract class ParentNode internal constructor() : ConfigurationNode() {
         name: String, description: String
     ) = registerNode(ChildNode(name, description))
 
+    fun node(
+        name: String, description: String, defaultValue: Any
+    ) = registerNode(DefaultNode(name, description, defaultValue))
+
     private fun registerNode(node: ConfigurationNode) {
         children += node
     }
@@ -43,12 +59,18 @@ abstract class ParentNode internal constructor() : ConfigurationNode() {
         override val fullName = "${this@ParentNode.fullName}.$namespace"
     }
 
-    inner class ChildNode internal constructor(
+    open inner class ChildNode internal constructor(
         namespace: String,
         val description: String
     ) : ConfigurationNode() {
         override val fullName = "${this@ParentNode.fullName}.$namespace"
     }
+
+    inner class DefaultNode internal constructor(
+        namespace: String,
+        description: String,
+        val defaultValue: Any
+    ) : ChildNode(namespace, description)
 }
 
 abstract class ConfigurationNode internal constructor() {

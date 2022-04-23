@@ -32,7 +32,7 @@ class TagHandler(private val defaultPrefix: String) : AbstractMessageHandler(), 
     override fun cascade(message: Message, label: String, arguments: Arguments) {
         if (!message.isFromGuild) return
         val tagCache = get(message.guild)
-        val tag = tagCache.getTag(label.toLowerCase()) ?: return
+        val tag = tagCache.getTag(label.lowercase()) ?: return
         val content = tag.processArguments(arguments.slice().raw)
         when (tag.type) {
             Tag.Type.TEXT -> message.channel.sendMessage(content).queue()

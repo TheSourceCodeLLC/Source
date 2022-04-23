@@ -19,7 +19,7 @@ class Selector(
     fun hasPermission(): Boolean = permission.isNotEmpty() && permission.isNotBlank()
 
     fun toActionRow(guild: Guild): ActionRow {
-        val selectionMenu = SelectionMenu.create("roleselector:${name.toLowerCase()}")
+        val selectionMenu = SelectionMenu.create("roleselector:${name.lowercase()}")
             .setPlaceholder(placeholder)
             .setDisabled(isDisabled)
             .setMinValues(0)

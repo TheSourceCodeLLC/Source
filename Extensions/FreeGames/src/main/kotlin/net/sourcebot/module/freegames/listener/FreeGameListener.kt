@@ -42,7 +42,7 @@ class FreeGameListener : EventSubscriber<FreeGames> {
                 getFreeGamesChannel(guild)?.let { channel ->
                     channel.sendMessage(msgBuilder.build()).queue { msg ->
                         val documentList = it.map { game ->
-                            Document("url", game.url.toLowerCase())
+                            Document("url", game.url.lowercase())
                                 .append("messageId", msg.id)
                                 .append("expirationEpoch", game.expirationEpoch)
                         }

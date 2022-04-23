@@ -48,7 +48,7 @@ class SelectorCommand(
             val name: String = arguments.required(
                 "name",
                 "You must specify a name for the role selector menu!",
-                String::toLowerCase
+                String::lowercase
             )
 
             val idString: String =
@@ -123,7 +123,7 @@ class SelectorCommand(
             val name: String = arguments.required(
                 "name",
                 "You must specify a name for the role selector menu!",
-                String::toLowerCase
+                String::lowercase
             )
 
             val cache = selectorHandler[guild]
@@ -169,7 +169,7 @@ class SelectorCommand(
             val name: String = arguments.required(
                 "name",
                 "You must specify a name for the role selector menu!",
-                String::toLowerCase
+                String::lowercase
             )
 
             val guild = sender.guild
@@ -197,7 +197,7 @@ class SelectorCommand(
             val name: String = arguments.required(
                 "name",
                 "You must specify a name for the role selector menu!",
-                String::toLowerCase
+                String::lowercase
             )
 
             val guild = sender.guild
@@ -239,7 +239,7 @@ class SelectorCommand(
             val name: String = arguments.required(
                 "name",
                 "You must specify a role selector name!",
-                String::toLowerCase
+                String::lowercase
             )
 
             val property = arguments.required<SelectorProperty>("property", "You did not specify a property to edit!")
@@ -266,7 +266,7 @@ class SelectorCommand(
             val name: String = arguments.required(
                 "name",
                 "You must specify a role selector name!",
-                String::toLowerCase
+                String::lowercase
             )
 
             val guild = sender.guild

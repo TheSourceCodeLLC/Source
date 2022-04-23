@@ -88,7 +88,7 @@ fun StringBuilder.appendIfRoom(str: String, limit: Int, ellipsis: String = "..."
  */
 fun String.capitalizeAllWords(): String {
     return split(" ")
-        .joinToString(" ") { it.toLowerCase().capitalize() }
+        .joinToString(" ") { it.lowercase().capitalize() }
 }
 
 /**

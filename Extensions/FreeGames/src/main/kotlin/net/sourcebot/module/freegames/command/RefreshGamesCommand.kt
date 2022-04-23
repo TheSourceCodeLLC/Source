@@ -2,6 +2,7 @@ package net.sourcebot.module.freegames.command
 
 import me.hwiggy.kommander.arguments.Arguments
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.User
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.response.EmptyResponse
 import net.sourcebot.api.response.Response
@@ -29,5 +30,9 @@ class RefreshGamesCommand : RootCommand() {
         }
 
         return EmptyResponse()
+    }
+
+    override fun postResponse(response: Response, forWhom: User, message: Message) {
+
     }
 }

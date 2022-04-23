@@ -22,7 +22,7 @@ abstract class AbstractMessageHandler : ListenerAdapter() {
         content = content.substring(prefix.length)
         if (content.isBlank()) return
         val args = Arguments.parse(content)
-        val label = args.next()?.toLowerCase() ?: return
+        val label = args.next()?.lowercase() ?: return
         cascade(message, label, args)
     }
 

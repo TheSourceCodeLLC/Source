@@ -211,15 +211,15 @@ class MDNCommand : DocumentationCommand(
         val mdnCache: MutableMap<String, Response> = mutableMapOf()
 
         fun hasResponse(query: String): Boolean {
-            return mdnCache.containsKey(query.toLowerCase())
+            return mdnCache.containsKey(query.lowercase())
         }
 
         fun putResponse(query: String, response: Response) {
-            mdnCache[query.toLowerCase()] = response
+            mdnCache[query.lowercase()] = response
         }
 
         fun getResponse(query: String): Response? {
-            return mdnCache[query.toLowerCase()]
+            return mdnCache[query.lowercase()]
         }
     }
 }

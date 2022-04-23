@@ -88,7 +88,7 @@ class FreeGameEmitter {
 
         val freeGamesCollection = mongo.getCollection(guild.id, "free-game-log")
         gameArray.removeIf {
-            freeGamesCollection.find(Document("url", it.url.toLowerCase())).first() != null
+            freeGamesCollection.find(Document("url", it.url.lowercase())).first() != null
         }
         if (gameArray.size == 0) return 0
         Source.SOURCE_EVENTS.fireEvent(FreeGameEvent(guild, gameArray))

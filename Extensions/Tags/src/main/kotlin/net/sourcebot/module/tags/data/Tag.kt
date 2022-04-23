@@ -39,7 +39,7 @@ data class Tag(
             append("creator", obj.creator)
             append("created", obj.created)
             append("category", obj.category)
-            append("type", obj.type.name.toLowerCase())
+            append("type", obj.type.name.lowercase())
             append("uses", obj.uses)
         }
     }

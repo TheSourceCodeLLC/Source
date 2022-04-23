@@ -116,7 +116,7 @@ class KotlinType(
         val inheritorsSB = StringBuilder()
 
         memberArray.forEach {
-            val type = it.type.toLowerCase()
+            val type = it.type.lowercase()
             val appendStr = "`${it.name}` "
             when (type) {
                 "property" -> propertiesSB.appendIfRoom(appendStr, limit)

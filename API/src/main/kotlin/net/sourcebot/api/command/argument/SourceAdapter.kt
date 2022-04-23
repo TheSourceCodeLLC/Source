@@ -5,8 +5,13 @@ import me.hwiggy.kommander.arguments.Adapter
 import me.hwiggy.kommander.arguments.BoundAdapter
 import me.hwiggy.kommander.arguments.or
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.*
+import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.api.DurationUtils
+import net.sourcebot.api.command.argument.resolvable.RoleResolvable
+import net.sourcebot.api.command.argument.resolvable.UserResolvable
 import java.time.Duration
 
 /**
@@ -34,23 +39,7 @@ object SourceAdapter {
     }
 
     @JvmStatic fun member() = Adapter.single { arg, extra ->
-        val guild: Guild by extra
-        member(guild, arg)
-    }
-
-    @JvmStatic fun user(jda: JDA, arg: String): User? {
-        val target = arg.replace("<@!?(\\d+)>".toRegex(), "$1")
-        return runCatching { jda.retrieveUserById(target).complete() }.getOrElse {
-            target.runCatching(jda::getUserByTag).getOrElse {
-                jda.getUsersByName(target, true).let {
-                    when {
-                        it.isEmpty() -> null
-                        it.size == 1 -> it[0]
-                        else -> throw InvalidSyntaxException("Argument '$target' matches multiple users!")
-                    }
-                }
-            }
-        }
+        member(extra["guild"], arg)
     }
 
     /**
@@ -59,12 +48,11 @@ object SourceAdapter {
      *
      */
     @JvmStatic fun user() = Adapter.single { arg, extra ->
-        val jda: JDA by extra
-        user(jda, arg)
+        UserResolvable(extra["jda"], arg).resolve()
     }
 
     @JvmStatic fun role(guild: Guild, arg: String): Role? {
-        val target = arg.replace("<@&(\\d+)>".toRegex(), "$1").toLowerCase()
+        val target = arg.replace("<@&(\\d+)>".toRegex(), "$1").lowercase()
         return if (target == "everyone") guild.publicRole
         else target.runCatching(guild::getRoleById).getOrElse {
             guild.getRolesByName(target, true).let {
@@ -82,8 +70,7 @@ object SourceAdapter {
      * If multiple Roles are matched, [InvalidSyntaxException] is thrown
      */
     @JvmStatic fun role() = Adapter.single { arg, extra ->
-        val guild: Guild by extra
-        role(guild, arg)
+        RoleResolvable(extra["guild"], arg).resolve()
     }
 
     @JvmStatic fun textChannel() = Adapter.single { arg, extra ->
