@@ -10,8 +10,8 @@ class FreeGames : SourceModule() {
     // TODO: ADD AUTO PUBLISH OPTION (This can not be done until the upgrade to JDA 5 is complete)
     override val configurationInfo = ConfigurationInfo("free-games") {
         section("services") {
-            node("steam", "Determines if the bot will post free games from Steam.")
-            node("epic-games", "Determines if the bot will post free games from the Epic Games Store.")
+            node("steam", "Determines if the bot will post free games from Steam.", true)
+            node("epic-games", "Determines if the bot will post free games from the Epic Games Store.", true)
         }
         node("channel", "Channel ID for the free-games channel.")
         node(
