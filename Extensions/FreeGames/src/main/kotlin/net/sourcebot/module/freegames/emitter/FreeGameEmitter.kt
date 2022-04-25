@@ -7,6 +7,8 @@ import com.google.gson.JsonParser
 import net.dv8tion.jda.api.entities.Guild
 import net.sourcebot.Source
 import net.sourcebot.api.configuration.config
+import net.sourcebot.api.configuration.optional
+import net.sourcebot.api.configuration.required
 import net.sourcebot.api.response.StandardEmbedResponse
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
