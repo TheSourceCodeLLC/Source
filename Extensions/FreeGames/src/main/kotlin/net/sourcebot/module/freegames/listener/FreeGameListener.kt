@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.MessageBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.events.GenericEvent
 import net.sourcebot.Source
+import net.sourcebot.api.configuration.config
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
@@ -13,7 +14,6 @@ import org.bson.Document
 
 class FreeGameListener : EventSubscriber<FreeGames> {
 
-    private val configManager = Source.CONFIG_MANAGER
     private val mongo = Source.MONGODB
 
     override fun subscribe(
@@ -43,20 +43,20 @@ class FreeGameListener : EventSubscriber<FreeGames> {
                     channel.sendMessage(msgBuilder.build()).queue { msg ->
                         val documentList = it.map { game ->
                             Document("url", game.url.lowercase())
+                                .append("name", game.name.lowercase())
                                 .append("messageId", msg.id)
                                 .append("expirationEpoch", game.expirationEpoch)
                         }
-
                         freeGamesCollection.insertMany(documentList)
                     }
                 }
             }
     }
 
-    private fun getFreeGamesChannel(guild: Guild) = configManager[guild].optional<String>("free-games.channel")
+    private fun getFreeGamesChannel(guild: Guild) = FreeGames::class.config(guild).optional<String>("channel")
         ?.let { guild.getTextChannelById(it) }
 
-    private fun getFreeGamesRole(guild: Guild) = configManager[guild].optional<String>("free-games.role")
+    private fun getFreeGamesRole(guild: Guild) = FreeGames::class.config(guild).optional<String>("role")
         ?.let { guild.getRoleById(it) }
 
 }

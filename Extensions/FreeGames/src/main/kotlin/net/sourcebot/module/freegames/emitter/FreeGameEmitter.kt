@@ -1,4 +1,4 @@
-package net.sourcebot.module.freegames.event
+package net.sourcebot.module.freegames.emitter
 
 import com.github.kittinunf.fuel.core.requests.CancellableRequest
 import com.github.kittinunf.fuel.httpGet
@@ -6,22 +6,25 @@ import com.github.kittinunf.result.Result
 import com.google.gson.JsonParser
 import net.dv8tion.jda.api.entities.Guild
 import net.sourcebot.Source
+import net.sourcebot.api.configuration.config
 import net.sourcebot.api.response.StandardEmbedResponse
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.api.response.StandardWarningResponse
+import net.sourcebot.module.freegames.FreeGames
 import net.sourcebot.module.freegames.data.Game
+import net.sourcebot.module.freegames.event.FreeGameEvent
 import org.bson.Document
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
 class FreeGameEmitter {
 
-    private val configManager = Source.CONFIG_MANAGER
     private val mongo = Source.MONGODB
 
     /**
-     * Starts the executor service which emits any newly found free games to all guilds that have this feature activated
+     * Starts the executor service that emits any newly found free games to all guilds that have this feature activated
+     * This executor service also monitors for expired games
      */
     fun startEmitting() {
         Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate({
@@ -29,16 +32,19 @@ class FreeGameEmitter {
 
             val steamGames = retrieveFreeSteamGames() ?: emptyList()
             val epicGames = retrieveFreeEpicGamesGames() ?: emptyList()
+            if (steamGames.isEmpty() && epicGames.isEmpty()) return@scheduleAtFixedRate
 
-            guilds.parallelStream()
-                .filter { getFreeGamesChannel(it) != null }
-                .forEach { emitToGuild(it, steamGames, epicGames) }
+            guilds.filter { getFreeGamesChannel(it) != null }
+                .forEach {
+                    emitToGuild(it, steamGames, epicGames)
+                    removeExpiredListings(it)
+                }
         }, 0, 2, TimeUnit.HOURS)
     }
 
     /**
      * Calls the free EpicGames and Steam game retrieval functions and then emits the NewGameEvent.
-     * This function will only emit games that have not already been posted
+     * This function will only emit games that have not already been posted and will delete ones that are expired.
      *
      * @param guild The guild to emit the NewGameEvent to
      * @param callback Sends a Response object back to the initiator
@@ -53,8 +59,8 @@ class FreeGameEmitter {
         }
 
         Source.EXECUTOR_SERVICE.submit {
-            val status = emitToGuild(guild, steamGames, epicGames)
-            if (status == 1) {
+            val status = emitToGuild(guild, steamGames, epicGames) + removeExpiredListings(guild)
+            if (status > 0) {
                 callback.invoke(StandardSuccessResponse("Success!", "Successfully refreshed the free game listings"))
             } else {
                 callback.invoke(
@@ -69,7 +75,7 @@ class FreeGameEmitter {
 
     /**
      * Emits free EpicGames and Steam Games through the NewGameEvent. This function does NOT call the retrieval free game functions!
-     * This function will only emit games that have not already been posted
+     * This function will only emit games that have not already been posted.
      *
      * @param guild The guild to emit the NewGameEvent to
      * @param steamGames The Steam games to emit
@@ -77,23 +83,47 @@ class FreeGameEmitter {
      * @return 0 if no games are emitted, 1 if games are emitted
      */
     private fun emitToGuild(guild: Guild, steamGames: List<Game>, epicGames: List<Game>): Int {
-        val gameArray = mutableListOf<Game>()
+        val gameList = mutableListOf<Game>()
 
-        isSteamEnabled(guild)?.let {
-            gameArray.addAll(steamGames)
-        }
-        isEpicGamesEnabled(guild)?.let {
-            gameArray.addAll(epicGames)
-        }
+        if (isSteamEnabled(guild)) gameList.addAll(steamGames)
+        if (isEpicGamesEnabled(guild)) gameList.addAll(epicGames)
 
         val freeGamesCollection = mongo.getCollection(guild.id, "free-game-log")
-        gameArray.removeIf {
+        gameList.removeIf {
             freeGamesCollection.find(Document("url", it.url.lowercase())).first() != null
         }
-        if (gameArray.size == 0) return 0
-        Source.SOURCE_EVENTS.fireEvent(FreeGameEvent(guild, gameArray))
+
+        if (gameList.size == 0) return 0
+        Source.SOURCE_EVENTS.fireEvent(FreeGameEvent(guild, gameList))
 
         return 1
+    }
+
+    /**
+     * Removes all expired game listings.
+     *
+     * @param guild The guild being checked for expired listings
+     * @return 0 if no expired listings are found, 1 if expired games are removed
+     */
+    private fun removeExpiredListings(guild: Guild): Int {
+        val freeGameLog = mongo.getCollection(guild.id, "free-game-log")
+        val channel = getFreeGamesChannel(guild) ?: return 0
+        var status = 0
+        freeGameLog.find()
+            .filter { document -> (document["expirationEpoch"] as Long) <= Instant.now().epochSecond }
+            .groupBy { document -> document["messageId"] }
+            .forEach { (_, documents) ->
+                val msgId = documents[0]["messageId"] as String
+                val names = documents.map { it["name"] as String }
+                channel.retrieveMessageById(msgId).queue { message ->
+                    val embeds = message.embeds.filter { embed -> !names.contains(embed?.title?.lowercase() ?: "") }
+                    if (embeds.isEmpty()) message.delete().queue()
+                    else message.editMessageEmbeds(embeds).queue()
+                }
+                documents.forEach { freeGameLog.deleteOne(it) }
+                status = 1
+            }
+        return status
     }
 
     private fun retrieveFreeSteamGames(): List<Game>? {
@@ -139,22 +169,43 @@ class FreeGameEmitter {
 
         val requests = mutableListOf<CancellableRequest>()
 
-        // TODO: ACCOUNT FOR MULTIPLE PACKAGE IDS AND SELECT FIRST ONE THAT WORKS (see witch it)
         appMap.forEach { (id, imageUrl) ->
             // These have to be a single request unfortunately because to do multiple app ids filters must be set to price_overview
             requests.add("https://store.steampowered.com/api/appdetails?appids=$id&filters=packages"
                 .httpGet()
                 .responseString { _, _, appResult ->
+
                     if (appResult is Result.Failure) return@responseString
 
-                    val packageObj = JsonParser.parseString(appResult.get())
+
+                    val dataObj = JsonParser.parseString(appResult.get())
                         .asJsonObject[id]
                         .asJsonObject["data"]
-                        .asJsonObject["packages"]
-                        .asJsonArray
+                        .asJsonObject
 
-                    if (packageObj.size() == 0) return@responseString
-                    packageMap[packageObj[0].asString] = imageUrl
+                    val packageObj = dataObj["packages"].asJsonArray
+
+                    when (packageObj.size()) {
+                        0 -> return@responseString
+                        1 -> packageMap[packageObj[0].asString] = imageUrl
+                        else -> {
+                            val pkgGroups = dataObj["package_groups"].asJsonArray[0].asJsonObject
+                            val gameName = pkgGroups["title"].asString.substringAfter("Buy").trim()
+                            val pkgGroupsInfo = pkgGroups["subs"].asJsonArray.map { it.asJsonObject }
+                            /*
+                            This retrieves the pkgId of the package that contains the game name in the option text
+                            and has text in the percent_savings_text (if this becomes an issue in the future possibly
+                            check if this field is equal to "-100% "
+                             */
+                            val pkgId = pkgGroupsInfo.filter {
+                                it["percent_savings_text"].asString.isNotBlank() && it["option_text"].asString.contains(
+                                    gameName
+                                )
+                            }[0]["packageid"].asString
+
+                            packageMap[pkgId] = imageUrl
+                        }
+                    }
                 })
 
         }
@@ -190,13 +241,14 @@ class FreeGameEmitter {
                     val packageId = it["packageid"].asString
                     val discountExpiration = it["discount_end_rtime"].asLong
                     val imageUrl = packageMap[packageId] ?: return@forEach
-
+                    // Bundle names must be retrieved from storage because bundle names/ids are not listed in the package obj only app ids and names
                     val title = with(imageUrl) {
                         when {
                             contains("bundles") -> bundleNames[packageId] ?: return@forEach
                             else -> it["name"].asString
                         }
                     }
+                    // This pulls the id from the imageUrl and creates the store url
                     val url = with(imageUrl) {
                         when {
                             contains("apps") -> {
@@ -217,7 +269,6 @@ class FreeGameEmitter {
             }.join()
 
         return gamesList
-
     }
 
     private fun retrieveFreeEpicGamesGames(): List<Game>? {
@@ -263,12 +314,13 @@ class FreeGameEmitter {
             }
     }
 
-    private fun getFreeGamesChannel(guild: Guild) = configManager[guild].optional<String>("free-games.channel")
+    private fun getFreeGamesChannel(guild: Guild) = FreeGames::class.config(guild).optional<String>("channel")
         ?.let { guild.getTextChannelById(it) }
 
-    private fun isSteamEnabled(guild: Guild) = configManager[guild].optional<Boolean>("free-games.services.steam")
+    private fun isSteamEnabled(guild: Guild) = FreeGames::class.config(guild)
+        .required<Boolean>("services.steam")
 
-    private fun isEpicGamesEnabled(guild: Guild) =
-        configManager[guild].optional<Boolean>("free-games.services.epic-games")
+    private fun isEpicGamesEnabled(guild: Guild) = FreeGames::class.config(guild)
+        .required<Boolean>("services.epic-games")
 
 }
