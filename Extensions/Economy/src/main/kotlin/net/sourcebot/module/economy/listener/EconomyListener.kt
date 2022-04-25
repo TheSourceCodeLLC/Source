@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameE
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.sourcebot.Source
 import net.sourcebot.api.asMessage
+import net.sourcebot.api.configuration.required
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent

@@ -89,7 +89,6 @@ class MDNCommand : DocumentationCommand(
                 return searchResultResponse
             }
 
-
             val docObjectResult = resultList[0]
             val resultUrl = "$baseUrl/en-US/docs/${docObjectResult["slug"].asText()}"
 
@@ -183,7 +182,6 @@ class MDNCommand : DocumentationCommand(
                 // Prevents text from a nested dl from being put into the item description
                 var descElement = it.nextElementSibling() ?: return@forEach
                 descElement = descElement.selectFirst("p") ?: descElement
-
 
                 // Removes HTML list elements
                 descElement.select("ul").remove()

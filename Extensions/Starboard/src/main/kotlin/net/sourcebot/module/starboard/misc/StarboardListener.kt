@@ -12,6 +12,8 @@ import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEve
 import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionRemoveEvent
 import net.sourcebot.Source
 import net.sourcebot.api.configuration.config
+import net.sourcebot.api.configuration.optional
+import net.sourcebot.api.configuration.required
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent

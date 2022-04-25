@@ -13,7 +13,10 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent
 import net.dv8tion.jda.api.events.message.guild.GuildMessageUpdateEvent
 import net.sourcebot.Source
 import net.sourcebot.api.asMessage
-import net.sourcebot.api.configuration.JsonConfiguration
+import net.sourcebot.api.configuration.Configuration
+import net.sourcebot.api.configuration.config
+import net.sourcebot.api.configuration.optional
+import net.sourcebot.api.configuration.required
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
@@ -39,9 +42,24 @@ class CountingListener : EventSubscriber<Counting> {
     private val lastMessages = HashMap<String, CountingMessage>()
     private val records = HashMap<String, Long>()
     private val recentDeletes = HashSet<String>()
+    private val rules = listOf(
+        CountingRule( // Do not permit counting twice
+            { id, _, last -> id == last.author },
+            { "Sorry, $it, you may not count twice in a row!" }
+        ),
+        CountingRule( // Don't allow prepending 0s
+            { _, input, _ -> input.startsWith("0") },
+            { "Sorry, $it, padding with zeros is not permitted!" }
+        ),
+        CountingRule( // Allow only numbers
+            { _, input, _ -> !input[0].isDigit() },
+            { "Sorry, $it, messages must begin with a number!" }
+        )
+    )
+
     private fun onReceive(event: GuildMessageReceivedEvent) {
         if (event.author.isBot) return
-        val counting = getCountingData(event.guild) ?: return
+        val counting = getCountingData(event.guild)
         val channel = counting.optional<String>("channel")?.let(
             event.guild::getTextChannelById
         ) ?: return
@@ -58,43 +76,22 @@ class CountingListener : EventSubscriber<Counting> {
             }.also { lastMessages[channel.id] = it }
             if (unknown) return
         }
-        val lastNumber = lastMessage.number
+
         val input = message.contentRaw
-        if (message.author.id == lastMessage.author) {
-            recentDeletes += channel.id
-            message.delete().queue()
-            return restart(
-                "Sorry, ${message.author.asMention}, you may not count twice in a row!",
-                channel,
-                counting,
-                message.author.id
-            )
+        rules.forEach {
+            if (it.test(message.author.id, input, lastMessage)) {
+                val err = it.errGen(message.author.asMention)
+                recentDeletes += channel.id
+                message.delete().queue()
+                return restart(err, channel, counting, message.author.id)
+            }
         }
-        if (input.startsWith("0")) {
-            recentDeletes += channel.id
-            message.delete().queue()
-            return restart(
-                "No funny business, ${message.author.asMention}.", channel, counting, message.author.id
-            )
-        }
+        val lastNumber = lastMessage.number
         val nextNumber = input.split(Regex("\\D+"))[0].toLongOrNull()
-        if (nextNumber == null) {
-            recentDeletes += channel.id
-            message.delete().queue()
-            return restart(
-                "Sorry, ${message.author.asMention}, messages must begin with a number!",
-                channel,
-                counting,
-                message.author.id
-            )
-        }
         if (nextNumber != lastNumber + 1) return restart(
             "${message.author.asMention} is bad at counting.", channel, counting, message.author.id
         )
-        CountingMessage(nextNumber, message.author.id).also {
-            lastMessages[channel.id] = it
-            counting["lastMessage"] = it
-        }
+        updateCount(event.guild, nextNumber, message.author.id)
         records[channel.id] = nextNumber
         configurationManager[channel.guild].let {
             it["counting"] = counting
@@ -102,10 +99,21 @@ class CountingListener : EventSubscriber<Counting> {
         }
     }
 
+    fun updateCount(guild: Guild, number: Long, who: String) {
+        val counting = getCountingData(guild)
+        val channel = counting.optional<String>("channel")?.let(
+            guild::getTextChannelById
+        ) ?: return
+        CountingMessage(number, who).also {
+            lastMessages[channel.id] = it
+            counting["lastMessage"] = it
+        }
+    }
+
     private fun onInvalidEvent(
         event: GenericGuildMessageEvent, message: String, blame: String? = null
     ) {
-        val data = getCountingData(event.guild) ?: return
+        val data = getCountingData(event.guild)
         val channel = data.optional<String>("channel")?.let {
             event.guild.getTextChannelById(it)
         } ?: return
@@ -126,7 +134,7 @@ class CountingListener : EventSubscriber<Counting> {
     private fun restart(
         failMessage: String,
         channel: TextChannel,
-        data: JsonConfiguration,
+        data: Configuration,
         blame: String? = null
     ) {
         var toSend = failMessage
@@ -176,7 +184,7 @@ class CountingListener : EventSubscriber<Counting> {
         Source.SCHEDULED_EXECUTOR_SERVICE.scheduleAtFixedRate({
             Source.EXECUTOR_SERVICE.submit {
                 Source.SHARD_MANAGER.guilds.forEach { guild ->
-                    val counting = getCountingData(guild) ?: return@forEach
+                    val counting = getCountingData(guild)
                     val channel = counting.optional<String>("channel")?.let(
                         guild::getTextChannelById
                     ) ?: return@forEach
@@ -194,11 +202,15 @@ class CountingListener : EventSubscriber<Counting> {
             }
         }, 0L, 10L, TimeUnit.MINUTES)
 
-    private fun getCountingData(guild: Guild) =
-        configurationManager[guild].optional<JsonConfiguration>("counting")
+    private fun getCountingData(guild: Guild) = Counting::class.config(guild)
 
     private fun getMuteRole(guild: Guild) =
-        configurationManager[guild].optional<String>("counting.mute-role")?.let(guild::getRoleById)
+        getCountingData(guild).optional<String>("mute-role")?.let(guild::getRoleById)
 }
 
 class CountingMessage @JsonCreator constructor(val number: Long, val author: String)
+
+private class CountingRule(
+    val test: (String, String, CountingMessage) -> Boolean,
+    val errGen: (String) -> String
+)

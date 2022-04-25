@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.GenericEvent
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.sourcebot.Source
+import net.sourcebot.api.configuration.required
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.event.EventSubscriber

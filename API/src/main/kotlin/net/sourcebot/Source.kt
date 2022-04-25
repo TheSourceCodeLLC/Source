@@ -16,6 +16,7 @@ import net.sourcebot.api.command.CommandHandler
 import net.sourcebot.api.configuration.ConfigurationManager
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.configuration.JsonSerial
+import net.sourcebot.api.configuration.required
 import net.sourcebot.api.database.MongoDB
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.event.EventSystem

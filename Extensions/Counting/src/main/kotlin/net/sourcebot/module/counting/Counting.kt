@@ -5,6 +5,8 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.requests.restaction.PermissionOverrideAction
 import net.sourcebot.Source
 import net.sourcebot.api.configuration.ConfigurationInfo
+import net.sourcebot.api.configuration.config
+import net.sourcebot.api.configuration.optional
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.counting.command.CountingCommand
 import net.sourcebot.module.counting.data.CountingListener
@@ -19,8 +21,8 @@ class Counting : SourceModule() {
     private val checkpointTask = countingListener.handleCheckpoints()
     override fun enable() {
         Source.SHARD_MANAGER.guilds.forEach(::clearCountingOverride)
-        registerCommands(CountingCommand())
         subscribeEvents(countingListener)
+        registerCommands(CountingCommand(countingListener))
     }
 
     override fun disable() {
@@ -43,8 +45,7 @@ class Counting : SourceModule() {
     private fun denyCountingOverride(guild: Guild) = setCountingOverride(guild) { a, b -> a.deny(b) }
 
     companion object {
-        @JvmStatic fun getCountingChannel(guild: Guild) = Source.CONFIG_MANAGER[guild].optional<String>(
-            "counting.channel"
-        )?.let(guild::getTextChannelById)
+        @JvmStatic fun getCountingChannel(guild: Guild) =
+            Counting::class.config(guild).optional<String>("channel")?.let(guild::getTextChannelById)
     }
 }

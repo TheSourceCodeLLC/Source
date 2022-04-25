@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import net.sourcebot.Source
 import net.sourcebot.api.command.PermissionCheck.Type.*
+import net.sourcebot.api.configuration.required
 import net.sourcebot.api.event.AbstractMessageHandler
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.api.response.EmptyResponse

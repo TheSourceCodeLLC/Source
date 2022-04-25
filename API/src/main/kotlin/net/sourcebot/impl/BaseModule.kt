@@ -6,6 +6,7 @@ import me.hwiggy.extensible.exception.InvalidExtensionException
 import net.sourcebot.Source
 import net.sourcebot.api.configuration.ConfigurationInfo
 import net.sourcebot.api.configuration.JsonSerial
+import net.sourcebot.api.configuration.required
 import net.sourcebot.api.getDeclaringArchive
 import net.sourcebot.api.module.ModuleDescriptor
 import net.sourcebot.api.module.SourceModule

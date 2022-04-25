@@ -3,6 +3,7 @@ package net.sourcebot.module.economy.command
 import me.hwiggy.kommander.arguments.Arguments
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.Source
+import net.sourcebot.api.configuration.required
 import net.sourcebot.api.differenceBetween
 import net.sourcebot.api.formatPlural
 import net.sourcebot.api.response.Response
@@ -51,7 +52,12 @@ class DailyCommand : EconomyRootCommand(
             if (winnings > baseWin) {
                 val difference = winnings - baseWin
                 it.appendDescription(
-                    "\nYou won an additional ${formatPlural(difference, "coin")} due to your daily streak of ${daily.count}!"
+                    "\nYou won an additional ${
+                        formatPlural(
+                            difference,
+                            "coin"
+                        )
+                    } due to your daily streak of ${daily.count}!"
                 )
             }
             economy.balance += winnings

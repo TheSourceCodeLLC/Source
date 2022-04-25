@@ -79,11 +79,12 @@ class Game(private val amount: Int, private val category: Int?) {
         } else {
             val question = current!!
             log.add("Current Question: \n\t${question.text}")
-            log.add("Possible Answers: \n${
-                question.answers.joinToString(
-                    separator = "\n",
-                    transform = { "\t${it.text}" })
-            }"
+            log.add(
+                "Possible Answers: \n${
+                    question.answers.joinToString(
+                        separator = "\n",
+                        transform = { "\t${it.text}" })
+                }"
             )
             log.add("Correct Answer: ${question.correct}")
             var firstBonus = true
