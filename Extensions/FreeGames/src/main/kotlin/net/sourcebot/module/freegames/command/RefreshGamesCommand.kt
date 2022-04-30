@@ -24,7 +24,7 @@ class RefreshGamesCommand : RootCommand() {
         )
 
         channel.sendMessageEmbeds(response.asEmbed(user)).queue { msg ->
-            FreeGames.gameEmitter.emitToGuild(sender.guild) {
+            FreeGames.gameEmitter.refreshGuild(sender.guild) {
                 channel.editMessageEmbedsById(msg.id, it.asEmbed(user)).queue()
             }
         }

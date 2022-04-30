@@ -13,6 +13,7 @@ import net.sourcebot.api.response.StandardSuccessResponse
 import net.sourcebot.api.response.StandardWarningResponse
 import net.sourcebot.module.freegames.FreeGames
 import net.sourcebot.module.freegames.data.Game
+import net.sourcebot.module.freegames.data.Platform
 import net.sourcebot.module.freegames.event.FreeGameEvent
 import org.bson.Document
 import java.time.Instant
@@ -38,6 +39,7 @@ class FreeGameEmitter {
                 .forEach {
                     emitToGuild(it, steamGames, epicGames)
                     removeExpiredListings(it)
+                    removeExpiredListingsByComparison(it, steamGames.plus(epicGames))
                 }
         }, 0, 2, TimeUnit.HOURS)
     }
@@ -49,7 +51,7 @@ class FreeGameEmitter {
      * @param guild The guild to emit the NewGameEvent to
      * @param callback Sends a Response object back to the initiator
      */
-    fun emitToGuild(guild: Guild, callback: (response: StandardEmbedResponse) -> Unit) {
+    fun refreshGuild(guild: Guild, callback: (response: StandardEmbedResponse) -> Unit) {
         val steamGames = retrieveFreeSteamGames()
         val epicGames = retrieveFreeEpicGamesGames()
 
@@ -59,7 +61,10 @@ class FreeGameEmitter {
         }
 
         Source.EXECUTOR_SERVICE.submit {
-            val status = emitToGuild(guild, steamGames, epicGames) + removeExpiredListings(guild)
+            val status = emitToGuild(guild, steamGames, epicGames) +
+                    removeExpiredListings(guild) +
+                    removeExpiredListingsByComparison(guild, steamGames.plus(epicGames))
+
             if (status > 0) {
                 callback.invoke(StandardSuccessResponse("Success!", "Successfully refreshed the free game listings"))
             } else {
@@ -99,33 +104,6 @@ class FreeGameEmitter {
         return 1
     }
 
-    /**
-     * Removes all expired game listings.
-     *
-     * @param guild The guild being checked for expired listings
-     * @return 0 if no expired listings are found, 1 if expired games are removed
-     */
-    private fun removeExpiredListings(guild: Guild): Int {
-        val freeGameLog = mongo.getCollection(guild.id, "free-game-log")
-        val channel = getFreeGamesChannel(guild) ?: return 0
-        var status = 0
-        freeGameLog.find()
-            .filter { document -> (document["expirationEpoch"] as Long) <= Instant.now().epochSecond }
-            .groupBy { document -> document["messageId"] }
-            .forEach { (_, documents) ->
-                val msgId = documents[0]["messageId"] as String
-                val names = documents.map { it["name"] as String }
-                channel.retrieveMessageById(msgId).queue { message ->
-                    val embeds = message.embeds.filter { embed -> !names.contains(embed?.title?.lowercase() ?: "") }
-                    if (embeds.isEmpty()) message.delete().queue()
-                    else message.editMessageEmbeds(embeds).queue()
-                }
-                documents.forEach { freeGameLog.deleteOne(it) }
-                status = 1
-            }
-        return status
-    }
-
     private fun retrieveFreeSteamGames(): List<Game>? {
         // Testing URL: https://store.steampowered.com/search/results/?ignore_preferences=1&maxprice=5&specials=1&json=1
         // Production URL: https://store.steampowered.com/search/results/?ignore_preferences=1&maxprice=free&specials=1&json=1
@@ -135,32 +113,48 @@ class FreeGameEmitter {
 
         if (result is Result.Failure) return null
 
-        // Key = ID, Value = Header Image URL
-        val bundleMap = mutableMapOf<String, String>()
-        val packageMap = mutableMapOf<String, String>()
-        val appMap = mutableMapOf<String, String>()
+        // Key = ID, Value = Game Obj
+        val appMap = mutableMapOf<String, Game>()
+        val bundleMap = mutableMapOf<String, Game>()
+        val packageMap = mutableMapOf<String, Game>()
 
         JsonParser.parseString(result.get())
             .asJsonObject["items"]
             .asJsonArray
-            .mapNotNull {
+            .forEach {
                 val obj = it.asJsonObject
                 val logoUrl = obj["logo"].asString
+                val name = obj["name"].asString
 
                 with(logoUrl) {
                     when {
                         contains("app") -> {
                             val id = substringAfter("apps/").substringBefore("/")
-                            appMap[id] = "https://cdn.akamai.steamstatic.com/steam/apps/$id/header.jpg"
+                            appMap[id] = Game(
+                                name,
+                                "https://store.steampowered.com/app/$id/",
+                                Platform.STEAM,
+                                "https://cdn.akamai.steamstatic.com/steam/apps/$id/header.jpg"
+                            )
                         }
                         contains("bundles") -> {
                             val idAndHash = substringAfter("bundles/").substringBefore("/capsule")
                             val id = idAndHash.substringBefore("/")
-                            bundleMap[id] = "https://cdn.akamai.steamstatic.com/steam/bundles/$idAndHash/header.jpg"
+                            bundleMap[id] = Game(
+                                name,
+                                "https://store.steampowered.com/bundle/$id/",
+                                Platform.STEAM,
+                                "https://cdn.akamai.steamstatic.com/steam/bundles/$idAndHash/header.jpg"
+                            )
                         }
                         contains("subs") -> {
                             val id = substringAfter("subs/").substringBefore("/")
-                            packageMap[id] = "https://cdn.akamai.steamstatic.com/steam/subs/$id/header.jpg"
+                            packageMap[id] = Game(
+                                name,
+                                "https://store.steampowered.com/sub/$id/",
+                                Platform.STEAM,
+                                "https://cdn.akamai.steamstatic.com/steam/subs/$id/header.jpg"
+                            )
                         }
                     }
                 }
@@ -169,25 +163,23 @@ class FreeGameEmitter {
 
         val requests = mutableListOf<CancellableRequest>()
 
-        appMap.forEach { (id, imageUrl) ->
+        appMap.forEach { (id, game) ->
             // These have to be a single request unfortunately because to do multiple app ids filters must be set to price_overview
-            requests.add("https://store.steampowered.com/api/appdetails?appids=$id&filters=packages"
-                .httpGet()
-                .responseString { _, _, appResult ->
+            requests.add(
+                "https://store.steampowered.com/api/appdetails?appids=$id&filters=packages"
+                    .httpGet()
+                    .responseString { _, _, appResult ->
+                        if (appResult is Result.Failure) return@responseString
 
-                    if (appResult is Result.Failure) return@responseString
-
-
-                    val dataObj = JsonParser.parseString(appResult.get())
-                        .asJsonObject[id]
-                        .asJsonObject["data"]
-                        .asJsonObject
-
+                        val dataObj = JsonParser.parseString(appResult.get())
+                            .asJsonObject[id]
+                            .asJsonObject["data"]
+                            .asJsonObject
                     val packageObj = dataObj["packages"].asJsonArray
 
                     when (packageObj.size()) {
                         0 -> return@responseString
-                        1 -> packageMap[packageObj[0].asString] = imageUrl
+                        1 -> packageMap[packageObj[0].asString] = game
                         else -> {
                             val pkgGroups = dataObj["package_groups"].asJsonArray[0].asJsonObject
                             val gameName = pkgGroups["title"].asString.substringAfter("Buy").trim()
@@ -201,9 +193,9 @@ class FreeGameEmitter {
                                 it["percent_savings_text"].asString.isNotBlank() && it["option_text"].asString.contains(
                                     gameName
                                 )
-                            }[0]["packageid"].asString
+                            }[0]["packageid"]?.asString ?: return@responseString
 
-                            packageMap[pkgId] = imageUrl
+                            packageMap[pkgId] = game
                         }
                     }
                 })
@@ -211,8 +203,6 @@ class FreeGameEmitter {
         }
 
 
-        // key = package id, value = bundle name
-        val bundleNames = mutableMapOf<String, String>()
         val csvBundleStr = bundleMap.keys.joinToString(",")
         requests.add("https://store.steampowered.com/actions/ajaxresolvebundles?bundleids=${csvBundleStr}&cc=US&l=english"
             .httpGet()
@@ -225,7 +215,6 @@ class FreeGameEmitter {
 
                     val packageId = packageObj[0].asString
                     packageMap[packageId] = bundleMap[it["bundleid"].asString] ?: return@forEach
-                    bundleNames[packageId] = it["name"].asString
                 }
             })
 
@@ -238,34 +227,14 @@ class FreeGameEmitter {
             .responseString { _, _, packageResult ->
                 if (packageResult is Result.Failure) return@responseString
                 val array = JsonParser.parseString(packageResult.get()).asJsonArray
-                array.map { it.asJsonObject }.parallelStream().forEach {
+                array.map { it.asJsonObject }.forEach {
                     val packageId = it["packageid"].asString
                     val discountExpiration = it["discount_end_rtime"].asLong
-                    val imageUrl = packageMap[packageId] ?: return@forEach
-                    // Bundle names must be retrieved from storage because bundle names/ids are not listed in the package obj only app ids and names
-                    val title = with(imageUrl) {
-                        when {
-                            contains("bundles") -> bundleNames[packageId] ?: return@forEach
-                            else -> it["name"].asString
-                        }
-                    }
-                    // This pulls the id from the imageUrl and creates the store url
-                    val url = with(imageUrl) {
-                        when {
-                            contains("apps") -> {
-                                val urlId = substringAfter("apps/").substringBefore("/")
-                                "https://store.steampowered.com/app/$urlId/"
-                            }
-                            contains("bundle") -> {
-                                val urlId = substringAfter("bundles/").substringBefore("/")
-                                "https://store.steampowered.com/bundle/$urlId/"
-                            }
-                            else -> {
-                                "https://store.steampowered.com/sub/$packageId/"
-                            }
-                        }
-                    }
-                    gamesList.add(Game(title, url, Game.Platform.STEAM, imageUrl, discountExpiration))
+
+                    val game = packageMap[packageId] ?: return@forEach
+                    game.expirationEpoch = discountExpiration
+
+                    gamesList.add(game)
                 }
             }.join()
 
@@ -301,7 +270,7 @@ class FreeGameEmitter {
                         "DieselStoreFrontWide",
                         true
                     )
-                }?.asJsonObject?.get("url")?.asString ?: Game.Platform.EPIC_GAMES.getLogo()
+                }?.asJsonObject?.get("url")?.asString ?: Platform.EPIC_GAMES.getLogo()
                 val expirationEpoch = Instant.parse(
                     it["promotions"]
                         .asJsonObject["promotionalOffers"]
@@ -311,8 +280,63 @@ class FreeGameEmitter {
                         .asJsonObject["endDate"]
                         .asString
                 ).epochSecond
-                Game(title, url, Game.Platform.EPIC_GAMES, imageUrl, expirationEpoch)
+                Game(title, url, Platform.EPIC_GAMES, imageUrl, expirationEpoch)
             }
+    }
+
+    /**
+     * Removes all expired game listings.
+     *
+     * @param guild The guild being checked for expired listings
+     * @return 0 if no expired listings are found, 1 if expired games are removed
+     */
+    private fun removeExpiredListings(guild: Guild): Int {
+        val freeGameLog = mongo.getCollection(guild.id, "free-game-log")
+        var status = 0
+        freeGameLog.find()
+            .filter { document ->
+                val expirationEpoch = (document["expirationEpoch"] as Long)
+                expirationEpoch != 0L && expirationEpoch <= Instant.now().epochSecond
+            }
+            .groupBy { document -> document["messageId"] }
+            .forEach { (_, documents) -> removeListingsFromMessage(guild, documents); status = 1 }
+        return status
+    }
+
+    /**
+     * This will only remove listings that have an expirationEpoch of 0 and are no longer free.
+     *
+     * @param guild The guild being checked for expired listings
+     * @param gameList The game list being compared against
+     * @return 0 if no listings are removed, 1 if listings are removed
+     */
+    private fun removeExpiredListingsByComparison(guild: Guild, gameList: List<Game>): Int {
+        var status = 0
+        mongo.getCollection(guild.id, "free-game-log").find(Document("expirationEpoch", 0))
+            .filter { document -> gameList.none { it.url.equals(document["url"] as String, true) } }
+            .groupBy { document -> document["messageId"] }
+            .forEach { (_, documents) -> removeListingsFromMessage(guild, documents); status = 1 }
+        return status
+    }
+
+    /**
+     * Deletes a group of listings from a message.
+     *
+     * @param guild The guild the listing is being removed from
+     * @param documents The mongodb documents of the listings being removed
+     */
+    private fun removeListingsFromMessage(guild: Guild, documents: List<Document>) {
+        val freeGameLog = mongo.getCollection(guild.id, "free-game-log")
+        val channel = getFreeGamesChannel(guild) ?: return
+
+        val msgId = documents[0]["messageId"] as String
+        val names = documents.map { it["name"] as String }
+        channel.retrieveMessageById(msgId).queue { message ->
+            val embeds = message.embeds.filter { embed -> !names.contains(embed?.title?.lowercase() ?: "") }
+            if (embeds.isEmpty()) message.delete().queue()
+            else message.editMessageEmbeds(embeds).queue()
+        }
+        documents.forEach { freeGameLog.deleteOne(it) }
     }
 
     private fun getFreeGamesChannel(guild: Guild) = FreeGames::class.config(guild).optional<String>("channel")
