@@ -175,30 +175,30 @@ class FreeGameEmitter {
                             .asJsonObject[id]
                             .asJsonObject["data"]
                             .asJsonObject
-                    val packageObj = dataObj["packages"].asJsonArray
+                        val packageObj = dataObj["packages"].asJsonArray
 
-                    when (packageObj.size()) {
-                        0 -> return@responseString
-                        1 -> packageMap[packageObj[0].asString] = game
-                        else -> {
-                            val pkgGroups = dataObj["package_groups"].asJsonArray[0].asJsonObject
-                            val gameName = pkgGroups["title"].asString.substringAfter("Buy").trim()
-                            val pkgGroupsInfo = pkgGroups["subs"].asJsonArray.map { it.asJsonObject }
-                            /*
-                            This retrieves the pkgId of the package that contains the game name in the option text
-                            and has text in the percent_savings_text (if this becomes an issue in the future possibly
-                            check if this field is equal to "-100% "
-                             */
-                            val pkgId = pkgGroupsInfo.filter {
-                                it["percent_savings_text"].asString.isNotBlank() && it["option_text"].asString.contains(
-                                    gameName
-                                )
-                            }[0]["packageid"]?.asString ?: return@responseString
+                        when (packageObj.size()) {
+                            0 -> return@responseString
+                            1 -> packageMap[packageObj[0].asString] = game
+                            else -> {
+                                val pkgGroups = dataObj["package_groups"].asJsonArray[0].asJsonObject
+                                val gameName = pkgGroups["title"].asString.substringAfter("Buy").trim()
+                                val pkgGroupsInfo = pkgGroups["subs"].asJsonArray.map { it.asJsonObject }
+                                /*
+                                This retrieves the pkgId of the package that contains the game name in the option text
+                                and has text in the percent_savings_text (if this becomes an issue in the future possibly
+                                check if this field is equal to "-100% "
+                                 */
+                                val pkgId = pkgGroupsInfo.filter {
+                                    it["percent_savings_text"].asString.isNotBlank() && it["option_text"].asString.contains(
+                                        gameName
+                                    )
+                                }[0]["packageid"]?.asString ?: return@responseString
 
-                            packageMap[pkgId] = game
+                                packageMap[pkgId] = game
+                            }
                         }
-                    }
-                })
+                    })
 
         }
 
@@ -258,12 +258,16 @@ class FreeGameEmitter {
             .filter {
                 val totalPriceObj = it["price"].asJsonObject["totalPrice"].asJsonObject
                 val discountPrice = totalPriceObj["discountPrice"].asInt
-                val originalPrice = totalPriceObj["originalPrice"].asInt
-                return@filter discountPrice == 0 && originalPrice > 0
+                val hasActivePromotion = it["promotions"].asJsonObject["promotionalOffers"].asJsonArray.size() > 0
+                return@filter discountPrice == 0 && hasActivePromotion
             }.map {
                 val title = it["title"].asString
-                val urlSlug = it["catalogNs"].asJsonObject["mappings"].asJsonArray[0].asJsonObject["pageSlug"].asString
+                val urlSlug = it["customAttributes"].asJsonArray
+                    .map { obj -> obj.asJsonObject }
+                    .first { obj -> obj["key"].asString.equals("com.epicgames.app.productSlug", true) }["value"]
+                    .asString
                 val url = "https://store.epicgames.com/en-US/p/$urlSlug/"
+
                 val imageUrl = it["keyImages"].asJsonArray.find { imageElement ->
                     val imageType = imageElement.asJsonObject["type"].asString
                     return@find imageType.equals("OfferImageWide", true) || imageType.equals(
@@ -271,6 +275,7 @@ class FreeGameEmitter {
                         true
                     )
                 }?.asJsonObject?.get("url")?.asString ?: Platform.EPIC_GAMES.getLogo()
+
                 val expirationEpoch = Instant.parse(
                     it["promotions"]
                         .asJsonObject["promotionalOffers"]
