@@ -162,57 +162,28 @@ class FreeGameEmitter {
             }
 
         val requests = mutableListOf<CancellableRequest>()
-
-        appMap.forEach { (id, game) ->
-            // These have to be a single request unfortunately because to do multiple app ids filters must be set to price_overview
-            requests.add(
-                "https://store.steampowered.com/api/appdetails?appids=$id&filters=packages"
-                    .httpGet()
-                    .responseString { _, _, appResult ->
-                        if (appResult is Result.Failure) return@responseString
-
-                        val dataObj = JsonParser.parseString(appResult.get())
-                            .asJsonObject[id]
-                            .asJsonObject["data"]
-                            .asJsonObject
-                        val packageObj = dataObj["packages"].asJsonArray
-
-                        when (packageObj.size()) {
-                            0 -> return@responseString
-                            1 -> packageMap[packageObj[0].asString] = game
-                            else -> {
-                                val pkgGroups = dataObj["package_groups"].asJsonArray[0].asJsonObject
-                                val gameName = pkgGroups["title"].asString.substringAfter("Buy").trim()
-                                val pkgGroupsInfo = pkgGroups["subs"].asJsonArray.map { it.asJsonObject }
-                                /*
-                                This retrieves the pkgId of the package that contains the game name in the option text
-                                and has text in the percent_savings_text (if this becomes an issue in the future possibly
-                                check if this field is equal to "-100% "
-                                 */
-                                val pkgId = pkgGroupsInfo.filter {
-                                    it["percent_savings_text"].asString.isNotBlank() && it["option_text"].asString.contains(
-                                        gameName
-                                    )
-                                }[0]["packageid"]?.asString ?: return@responseString
-
-                                packageMap[pkgId] = game
-                            }
-                        }
-                    })
-
-        }
-
+        val csvAppStr = appMap.keys.joinToString(",")
+        requests.add("https://store.steampowered.com/broadcast/ajaxgetbatchappcapsuleinfo?appids=$csvAppStr&cc=NL&l=english"
+            .httpGet()
+            .responseString { _, _, appResult ->
+                if (appResult is Result.Failure) return@responseString
+                val array = JsonParser.parseString(appResult.get()).asJsonObject["apps"].asJsonArray
+                array.map { it.asJsonObject }.forEach {
+                    val packageId = it["subid"]?.asString ?: return@forEach
+                    packageMap[packageId] = appMap[it["appid"].asString] ?: return@forEach
+                }
+            })
 
         val csvBundleStr = bundleMap.keys.joinToString(",")
-        requests.add("https://store.steampowered.com/actions/ajaxresolvebundles?bundleids=${csvBundleStr}&cc=US&l=english"
-            .httpGet()
-            .responseString { _, _, bundleResult ->
-                if (bundleResult is Result.Failure) return@responseString
-                val array = JsonParser.parseString(bundleResult.get()).asJsonArray
-                array.map { it.asJsonObject }.forEach {
-                    val packageObj = it["packageids"].asJsonArray
-                    if (packageObj.size() == 0) return@forEach
-
+        requests.add(
+            "https://store.steampowered.com/actions/ajaxresolvebundles?bundleids=${csvBundleStr}&cc=US&l=english"
+                .httpGet()
+                .responseString { _, _, bundleResult ->
+                    if (bundleResult is Result.Failure) return@responseString
+                    val array = JsonParser.parseString(bundleResult.get()).asJsonArray
+                    array.map { it.asJsonObject }.forEach {
+                        val packageObj = it["packageids"].asJsonArray
+                        if (packageObj.size() == 0) return@forEach
                     val packageId = packageObj[0].asString
                     packageMap[packageId] = bundleMap[it["bundleid"].asString] ?: return@forEach
                 }
@@ -229,9 +200,15 @@ class FreeGameEmitter {
                 val array = JsonParser.parseString(packageResult.get()).asJsonArray
                 array.map { it.asJsonObject }.forEach {
                     val packageId = it["packageid"].asString
-                    val discountExpiration = it["discount_end_rtime"].asLong
-
                     val game = packageMap[packageId] ?: return@forEach
+
+                    val discountExpiration = (it["discount_end_rtime"].asLong).let { end ->
+                        when (end) {
+                            0L -> getDiscountEndByClanId(it["creator_clan_ids"].asJsonArray[0].asString)
+                            else -> end
+                        }
+                    }
+                    // https://store.steampowered.com/events/ajaxgetadjacentpartnerevents/?clan_accountid=30421086
                     game.expirationEpoch = discountExpiration
 
                     gamesList.add(game)
@@ -239,6 +216,31 @@ class FreeGameEmitter {
             }.join()
 
         return gamesList
+    }
+
+    /**
+     * Retrieves a discount end time for a Steam game by fetching the end time for the most recent event.
+     * This only works if there is an active event and if the game is contained in that event.
+     * if the game is not included in the event, the end time will not be accurate
+     *
+     * @param clanId The creator clan id for the game
+     * @returns The discount end time in epoch seconds or 0 if there is no active event
+     */
+    private fun getDiscountEndByClanId(clanId: String): Long {
+        val (_, _, eventResult) = "https://store.steampowered.com/events/ajaxgetadjacentpartnerevents/?clan_accountid=$clanId"
+            .httpGet()
+            .responseString()
+
+        if (eventResult is Result.Failure) return 0
+        val array = JsonParser.parseString(eventResult.get()).asJsonObject["events"].asJsonArray
+        /*
+         If this causes issues in the future, check if the appId matches the appId of the game the discount end time is needed from.
+         I do not do this currently because I have no idea what happens if it is a bundle
+         */
+        return array.map { it.asJsonObject }
+            // This check is necessary
+            .firstOrNull { it["rtime32_end_time"].asLong > Instant.now().epochSecond }
+            ?.get("rtime32_end_time")?.asLong ?: 0
     }
 
     private fun retrieveFreeEpicGamesGames(): List<Game>? {
@@ -267,15 +269,13 @@ class FreeGameEmitter {
                     .first { obj -> obj["key"].asString.equals("com.epicgames.app.productSlug", true) }["value"]
                     .asString
                 val url = "https://store.epicgames.com/en-US/p/$urlSlug/"
-
-                val imageUrl = it["keyImages"].asJsonArray.find { imageElement ->
+                val imageUrl = (it["keyImages"].asJsonArray.find { imageElement ->
                     val imageType = imageElement.asJsonObject["type"].asString
                     return@find imageType.equals("OfferImageWide", true) || imageType.equals(
                         "DieselStoreFrontWide",
                         true
                     )
-                }?.asJsonObject?.get("url")?.asString ?: Platform.EPIC_GAMES.getLogo()
-
+                }?.asJsonObject?.get("url")?.asString ?: Platform.EPIC_GAMES.getLogo()).replace(" ", "%20")
                 val expirationEpoch = Instant.parse(
                     it["promotions"]
                         .asJsonObject["promotionalOffers"]
