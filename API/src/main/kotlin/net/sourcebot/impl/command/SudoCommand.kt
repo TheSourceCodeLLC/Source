@@ -11,7 +11,6 @@ import net.sourcebot.api.command.argument.SourceAdapter
 import net.sourcebot.api.response.EmbedResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
-import net.sourcebot.api.response.WrappedEmbedResponse
 import net.sourcebot.api.wrapped
 
 class SudoCommand : RootCommand() {
@@ -35,7 +34,6 @@ class SudoCommand : RootCommand() {
             ProxiedMessage(target, sender), label, arguments.parent.slice()
         )
         return when (response) {
-            is WrappedEmbedResponse -> response
             is EmbedResponse -> response.wrapped(target)
             else -> response
         }
