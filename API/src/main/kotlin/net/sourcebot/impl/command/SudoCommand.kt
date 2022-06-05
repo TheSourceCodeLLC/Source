@@ -22,7 +22,7 @@ class SudoCommand : RootCommand() {
 
     override val synopsis = Synopsis {
         reqParam("target", "The Member you would like to run the command as.", SourceAdapter.member())
-        reqParam("command", "The command you would like the Member to run.", Adapter.slurp(" "))
+        reqParam("command", "The command you would like the Member to run.", Adapter.single())
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {

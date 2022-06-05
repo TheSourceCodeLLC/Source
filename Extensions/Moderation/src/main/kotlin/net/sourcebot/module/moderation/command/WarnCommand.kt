@@ -19,7 +19,7 @@ class WarnCommand : ModerationRootCommand(
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
         val target = arguments.required<Member>("target", "You did not specify a valid member to warn!")
-        val reason = arguments.required<String>("it", "You did not specify a warning reason!")
+        val reason = arguments.required<String>("reason", "You did not specify a warning reason!")
         return Moderation.getPunishmentHandler(sender.guild) {
             warnIncident(sender.member!!, target, reason)
         }
