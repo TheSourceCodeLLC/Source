@@ -1,7 +1,6 @@
 package net.sourcebot.module.tags
 
 import net.sourcebot.api.configuration.ConfigurationInfo
-import net.sourcebot.api.configuration.required
 import net.sourcebot.api.database.MongoSerial
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.tags.command.TagsCommand

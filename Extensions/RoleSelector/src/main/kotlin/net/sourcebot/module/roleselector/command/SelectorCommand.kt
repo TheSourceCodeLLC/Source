@@ -296,6 +296,7 @@ class SelectorCommand(
         }
     }
 
+
     private enum class SelectorProperty(
         override val synopsisName: String,
         val synopsis: Synopsis,

@@ -1,18 +1,17 @@
 # Source V5
 
 # Build Instructions:
-
 **Notice:** You need Java **11** to run Source. </br>
 
 * Clone Source to your local machine:
-    - `git clone https://github.com/TheSourceCodeLLC/Source.git`
-    - `cd Source`
+  - `git clone https://github.com/TheSourceCodeLLC/Source.git`
+  - `cd Source`
 * Tell the compiler what modules to install (optional):
-    - Rename `INSTALL.example` to `INSTALL`
-    - Modify the `INSTALL` file to change what modules will be installed.__
-    - Note: Module names that are not in this list will not be installed.
+  - Rename `INSTALL.example` to `INSTALL`
+  - Modify the `INSTALL` file to change what modules will be installed.__
+  - Note: Module names that are not in this list will not be installed.
 * Compile Source and its modules:
-    - `./gradlew install`
+  - `./gradlew install`
 * Binary files (Main JAR & Modules) are located in the `target/bin` folder
 
 **NOTE:** It is recommended to let Source have full reign over a separate MongoDB instance! <br>
@@ -24,40 +23,34 @@ You will need to activate the two privileged Gateway Intents for Source to funct
 To do this, you will need to activate to the Discord Developers Portal, under the 'Bot' section. <br>
 
 * Start the bot:
-    * Windows: `java -DuseJansi=true -jar Source.jar`
-    * Unix: `java -jar Source.jar` </br>
-      If you need to configure the bot, the program will terminate after generating a default configuration.
+  * Windows: `java -DuseJansi=true -jar Source.jar`
+  * Unix: `java -jar Source.jar` </br>
+If you need to configure the bot, the program will terminate after generating a default configuration.
 
 # Using Permissions
-
 Members that permissions do not apply to: <br>
-
-- Members in a server that have `ADMINISTRATOR` permissions
-- Global Admins as defined in the `config.json`
+-  Members in a server that have `ADMINISTRATOR` permissions
+-  Global Admins as defined in the `config.json`
 
 Global Admins are the ONLY people who may use commands marked as global. <br>
 
 # Base Module Information
-
 Configuration Values: <br>
-Root Node: `source` <br>
-
-- `connections`: Configuration data for the join / leave listener <br>
+  Root Node: `source` <br>
+  - `connections`: Configuration data for the join / leave listener <br>
     * `channel`: The channel ID join / leave messages will be sent to. <br>
     * `joinMessages`: Messages to be sent when Members join <br>
     * `leaveMessages`: Messages to be sent when Members leave <br>
-- `command`: Configuration data for the command handler <br>
+  - `command`: Configuration data for the command handler <br>
     * `prefix`: The prefix to use for commands <br>
     * `cleanup`: Configuration data for the cleanup system <br>
-        * `enabled`: Whether the cleanup system is active <br>
-        * `seconds`: The number of seconds after a command has been run to cleanup the response. <br>
-
+      * `enabled`: Whether the cleanup system is active <br>
+      * `seconds`: The number of seconds after a command has been run to cleanup the response. <br>
+        
 # Artifact Information
-
 Note: `x.y.z` must be replaced with the version of Source you wish to use!
 
 ## Gradle
-
 ```kotlin
 repository {
   maven("https://nexus.dveloped.net/repository/dveloped/")
@@ -69,7 +62,6 @@ dependency {
 ```
 
 ## Maven
-
 ```xml
 <repositories>
   <repository>

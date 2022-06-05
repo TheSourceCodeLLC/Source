@@ -9,7 +9,6 @@ import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.Source
 import net.sourcebot.api.command.argument.SourceAdapter
 import net.sourcebot.api.configuration.JsonConfiguration
-import net.sourcebot.api.configuration.optional
 import net.sourcebot.api.formatLong
 import net.sourcebot.api.ifPresentOrElse
 import net.sourcebot.api.response.Response

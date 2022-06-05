@@ -77,12 +77,8 @@ class PermissionData(mongodb: MongoDatabase) {
     }
 
     private fun dropContexts(collection: MongoCollection<Document>, context: String) {
-        collection.updateMany(
-            Document(), Document(
-                "\$pull", Document(
-                    "permissions", Document("context", context)
-                )
-            )
-        )
+        collection.updateMany(Document(), Document("\$pull", Document(
+            "permissions", Document("context", context)
+        )))
     }
 }

@@ -33,6 +33,7 @@ class KotlinType(
     private val mainPageDiv = document.selectFirst("div.node-page-main")
     private val memberArray: ArrayList<KotlinMember> by lazy { retrieveMembers() }
 
+
     /**
      * Retrieves all found [KotlinMember]s, apart of this [KotlinType], with a specific name
      *
@@ -151,5 +152,6 @@ class KotlinType(
 
         return memberArray
     }
+
 
 }

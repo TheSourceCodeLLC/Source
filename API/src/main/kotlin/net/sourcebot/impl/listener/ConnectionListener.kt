@@ -6,7 +6,6 @@ import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent
 import net.sourcebot.Source
 import net.sourcebot.api.configuration.JsonConfiguration
-import net.sourcebot.api.configuration.optional
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent

@@ -19,8 +19,6 @@ import net.dv8tion.jda.api.utils.MarkdownUtil
 import net.sourcebot.Source
 import net.sourcebot.api.*
 import net.sourcebot.api.DurationUtils.parseDuration
-import net.sourcebot.api.configuration.optional
-import net.sourcebot.api.configuration.required
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent

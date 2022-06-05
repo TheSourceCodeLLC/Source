@@ -18,13 +18,13 @@ import kotlin.reflect.KProperty
 
 open class JsonConfiguration @JsonCreator constructor(
     internal val json: ObjectNode = JsonSerial.newObject()
-) : Configuration {
+) {
     constructor(json: JsonConfiguration) : this(json.json)
     constructor(map: Map<String, Any?>) : this() {
         map.forEach(::set)
     }
 
-    override operator fun <T> set(path: String, obj: T): T {
+    operator fun <T> set(path: String, obj: T): T {
         if (path.isBlank()) throw IllegalArgumentException(
             "Argument 'path' may not be empty!"
         )
@@ -41,21 +41,30 @@ open class JsonConfiguration @JsonCreator constructor(
         return obj
     }
 
-    override fun <T> optRef(path: String, typeRef: TypeReference<T>): T? {
+    fun <T> optional(path: String, typeReference: TypeReference<T>): T? {
         val levels = path.split(".").iterator()
         var lastElem: JsonNode? = json[levels.next()]
         while (lastElem != null && levels.hasNext()) {
             lastElem = lastElem[levels.next()]
         }
-        return lastElem?.let { JsonSerial.fromJson(it, typeRef) }
+        return lastElem?.let { JsonSerial.fromJson(it, typeReference) }
     }
 
-    override fun <T> reqRef(
+    inline fun <reified T> optional(path: String): T? = optional(path, typeRefOf())
+
+    @JvmOverloads
+    fun <T> required(
         path: String,
-        typeRef: TypeReference<T>,
-        supplier: () -> T?
-    ): T = optRef(path, typeRef) ?: supplier()?.let { set(path, it) }
+        typeReference: TypeReference<T>,
+        supplier: () -> T? = { null }
+    ): T = optional(path, typeReference) ?: supplier()?.let { set(path, it) }
     ?: throw IllegalArgumentException("Could not load value at '$path'!")
+
+    @JvmOverloads
+    inline fun <reified T> required(
+        path: String,
+        noinline supplier: () -> T? = { null }
+    ): T = required(path, typeRefOf(), supplier)
 
     class JsonSerialization : JsonSerial<JsonConfiguration> {
         override val serializer = object : StdSerializer<JsonConfiguration>(JsonConfiguration::class.java) {
@@ -107,7 +116,7 @@ open class JsonConfiguration @JsonCreator constructor(
     ) : SimpleVarDelegate<T>(path) {
         operator fun getValue(
             thisRef: Any?, prop: KProperty<*>
-        ) = this@JsonConfiguration.optRef(path ?: prop.name, typeReference)
+        ) = this@JsonConfiguration.optional(path ?: prop.name, typeReference)
     }
 
     inner class RequiredDelegate<T>(
@@ -116,7 +125,7 @@ open class JsonConfiguration @JsonCreator constructor(
         private val supplier: () -> T? = { null }
     ) : SimpleVarDelegate<T>(path) {
         operator fun getValue(thisRef: Any?, prop: KProperty<*>): T =
-            this@JsonConfiguration.reqRef(path ?: prop.name, typeReference, supplier)
+            this@JsonConfiguration.required(path ?: prop.name, typeReference, supplier)
     }
 
     open inner class SimpleVarDelegate<T>(private val path: String?) {

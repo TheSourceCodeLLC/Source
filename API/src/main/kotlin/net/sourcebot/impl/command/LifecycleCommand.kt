@@ -5,7 +5,6 @@ import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.Message
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.configuration.JsonConfiguration
-import net.sourcebot.api.configuration.required
 import net.sourcebot.api.response.*
 
 abstract class LifecycleCommand(

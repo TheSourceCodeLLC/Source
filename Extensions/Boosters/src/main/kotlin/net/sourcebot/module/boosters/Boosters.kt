@@ -2,7 +2,6 @@ package net.sourcebot.module.boosters
 
 import net.dv8tion.jda.api.entities.Member
 import net.sourcebot.api.configuration.JsonConfiguration
-import net.sourcebot.api.configuration.required
 import net.sourcebot.api.module.SourceModule
 import net.sourcebot.module.boosters.data.Booster
 import net.sourcebot.module.boosters.listener.BoosterListener

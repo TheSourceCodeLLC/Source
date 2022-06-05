@@ -3,7 +3,6 @@ package net.sourcebot.api.module
 import com.fasterxml.jackson.databind.node.ObjectNode
 import me.hwiggy.extensible.binding.jvm.contract.JarDescriptor
 import net.sourcebot.api.configuration.JsonConfiguration
-import net.sourcebot.api.configuration.optional
 
 class ModuleDescriptor(json: ObjectNode) : JsonConfiguration(json), JarDescriptor {
     override val mainClass by delegateRequired<String>("main")

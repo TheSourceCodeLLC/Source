@@ -10,8 +10,6 @@ import net.sourcebot.Source
 import net.sourcebot.api.command.RootCommand
 import net.sourcebot.api.command.SourceCommand
 import net.sourcebot.api.configuration.JsonSerial
-import net.sourcebot.api.configuration.optional
-import net.sourcebot.api.configuration.required
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
 import net.sourcebot.api.response.StandardSuccessResponse

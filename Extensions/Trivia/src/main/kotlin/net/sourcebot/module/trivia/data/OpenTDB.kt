@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.configuration.JsonSerial
-import net.sourcebot.api.configuration.required
 import net.sourcebot.api.urlDecoded
 
 object OpenTDB {

@@ -20,11 +20,11 @@ class RefreshGamesCommand : RootCommand() {
         val channel = sender.textChannel
         val response = StandardInfoResponse(
             "Checking For Games",
-            "Started checking for new free game listings! This make take a few second."
+            "Started checking for new free game listings! This make take a few seconds."
         )
 
         channel.sendMessageEmbeds(response.asEmbed(user)).queue { msg ->
-            FreeGames.gameEmitter.emitToGuild(sender.guild) {
+            FreeGames.gameEmitter.refreshGuild(sender.guild) {
                 channel.editMessageEmbedsById(msg.id, it.asEmbed(user)).queue()
             }
         }
