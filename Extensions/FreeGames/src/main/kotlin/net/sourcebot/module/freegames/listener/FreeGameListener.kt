@@ -27,7 +27,6 @@ class FreeGameListener : EventSubscriber<FreeGames> {
     private fun onFreeGame(event: FreeGameEvent) {
         val guild = event.guild
         val freeGamesCollection = mongo.getCollection(guild.id, "free-game-log")
-
         var shouldPing = true
         event.games.windowed(10, 10, true)
             .forEach {

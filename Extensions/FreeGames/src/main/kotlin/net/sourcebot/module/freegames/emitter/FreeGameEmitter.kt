@@ -184,10 +184,10 @@ class FreeGameEmitter {
                     array.map { it.asJsonObject }.forEach {
                         val packageObj = it["packageids"].asJsonArray
                         if (packageObj.size() == 0) return@forEach
-                    val packageId = packageObj[0].asString
-                    packageMap[packageId] = bundleMap[it["bundleid"].asString] ?: return@forEach
-                }
-            })
+                        val packageId = packageObj[0].asString
+                        packageMap[packageId] = bundleMap[it["bundleid"].asString] ?: return@forEach
+                    }
+                })
 
         requests.forEach { it.join() }
 
@@ -201,16 +201,13 @@ class FreeGameEmitter {
                 array.map { it.asJsonObject }.forEach {
                     val packageId = it["packageid"].asString
                     val game = packageMap[packageId] ?: return@forEach
-
                     val discountExpiration = (it["discount_end_rtime"].asLong).let { end ->
                         when (end) {
                             0L -> getDiscountEndByClanId(it["creator_clan_ids"].asJsonArray[0].asString)
                             else -> end
                         }
                     }
-                    // https://store.steampowered.com/events/ajaxgetadjacentpartnerevents/?clan_accountid=30421086
                     game.expirationEpoch = discountExpiration
-
                     gamesList.add(game)
                 }
             }.join()
@@ -227,20 +224,24 @@ class FreeGameEmitter {
      * @returns The discount end time in epoch seconds or 0 if there is no active event
      */
     private fun getDiscountEndByClanId(clanId: String): Long {
-        val (_, _, eventResult) = "https://store.steampowered.com/events/ajaxgetadjacentpartnerevents/?clan_accountid=$clanId"
-            .httpGet()
-            .responseString()
+        try {
+            val (_, _, eventResult) = "https://store.steampowered.com/events/ajaxgetadjacentpartnerevents/?clan_accountid=$clanId"
+                .httpGet()
+                .responseString()
 
-        if (eventResult is Result.Failure) return 0
-        val array = JsonParser.parseString(eventResult.get()).asJsonObject["events"].asJsonArray
-        /*
-         If this causes issues in the future, check if the appId matches the appId of the game the discount end time is needed from.
-         I do not do this currently because I have no idea what happens if it is a bundle
-         */
-        return array.map { it.asJsonObject }
-            // This check is necessary
-            .firstOrNull { it["rtime32_end_time"].asLong > Instant.now().epochSecond }
-            ?.get("rtime32_end_time")?.asLong ?: 0
+            if (eventResult is Result.Failure) return 0
+            val array = JsonParser.parseString(eventResult.get()).asJsonObject["events"].asJsonArray
+            /*
+            If this causes issues in the future, check if the appId matches the appId of the game the discount end time is needed from.
+            I do not do this currently because I have no idea what happens if it is a bundle
+            */
+            return array.map { it.asJsonObject }
+                // This check is necessary
+                .firstOrNull { (it["rtime32_end_time"]?.asLong ?: 0) > Instant.now().epochSecond }
+                ?.get("rtime32_end_time")?.asLong ?: 0
+        } catch (ex: Exception) {
+            return 0
+        }
     }
 
     private fun retrieveFreeEpicGamesGames(): List<Game>? {
@@ -258,10 +259,15 @@ class FreeGameEmitter {
             .asJsonArray
             .map { it.asJsonObject }
             .filter {
-                val totalPriceObj = it["price"].asJsonObject["totalPrice"].asJsonObject
-                val discountPrice = totalPriceObj["discountPrice"].asInt
-                val hasActivePromotion = it["promotions"].asJsonObject["promotionalOffers"].asJsonArray.size() > 0
-                return@filter discountPrice == 0 && hasActivePromotion
+                try {
+                    val totalPriceObj = it["price"].asJsonObject["totalPrice"].asJsonObject
+                    val discountPrice = totalPriceObj["discountPrice"].asInt
+                    val promotionsSize =
+                        it["promotions"]?.asJsonObject?.get("promotionalOffers")?.asJsonArray?.size() ?: 0
+                    return@filter discountPrice == 0 && promotionsSize > 0
+                } catch (ex: Exception) {
+                    return@filter false
+                }
             }.map {
                 val title = it["title"].asString
                 val urlSlug = it["customAttributes"].asJsonArray
