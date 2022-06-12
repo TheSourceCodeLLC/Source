@@ -11,7 +11,6 @@ import net.sourcebot.api.command.argument.SourceAdapter
 import net.sourcebot.api.response.EmbedResponse
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
-import net.sourcebot.api.response.WrappedEmbedResponse
 import net.sourcebot.api.wrapped
 
 class SudoCommand : RootCommand() {
@@ -22,7 +21,7 @@ class SudoCommand : RootCommand() {
 
     override val synopsis = Synopsis {
         reqParam("target", "The Member you would like to run the command as.", SourceAdapter.member())
-        reqParam("command", "The command you would like the Member to run.", Adapter.slurp(" "))
+        reqParam("command", "The command you would like the Member to run.", Adapter.single())
     }
 
     override fun execute(sender: Message, arguments: Arguments.Processed): Response {
@@ -35,7 +34,6 @@ class SudoCommand : RootCommand() {
             ProxiedMessage(target, sender), label, arguments.parent.slice()
         )
         return when (response) {
-            is WrappedEmbedResponse -> response
             is EmbedResponse -> response.wrapped(target)
             else -> response
         }
