@@ -270,10 +270,14 @@ class FreeGameEmitter {
                 }
             }.map {
                 val title = it["title"].asString
-                val urlSlug = it["customAttributes"].asJsonArray
-                    .map { obj -> obj.asJsonObject }
-                    .first { obj -> obj["key"].asString.equals("com.epicgames.app.productSlug", true) }["value"]
-                    .asString
+                val urlSlug = try {
+                    it["customAttributes"].asJsonArray
+                        .map { obj -> obj.asJsonObject }
+                        .first { obj -> obj["key"].asString.equals("com.epicgames.app.productSlug", true) }["value"]
+                        .asString
+                } catch (ex: Exception) {
+                    it["catalogNs"].asJsonObject["mappings"].asJsonArray[0].asJsonObject["pageSlug"].asString
+                }
                 val url = "https://store.epicgames.com/en-US/p/$urlSlug/"
                 val imageUrl = (it["keyImages"].asJsonArray.find { imageElement ->
                     val imageType = imageElement.asJsonObject["type"].asString
