@@ -14,7 +14,7 @@ internal class ProfileHandler(guild: Guild) {
     private val collection = Source.MONGODB.getCollection(guild.id, "profiles")
     private val cache = CacheBuilder.newBuilder()
         .expireAfterAccess(10, TimeUnit.MINUTES)
-        .removalListener<String, JsonConfiguration> { (member, profile) -> save(member, profile) }
+        .removalListener<String, JsonConfiguration> { (member, profile) -> save(member!!, profile!!) }
         .build(object : CacheLoader<String, JsonConfiguration>() {
             override fun load(
                 id: String

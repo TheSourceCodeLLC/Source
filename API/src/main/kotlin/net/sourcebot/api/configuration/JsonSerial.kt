@@ -5,11 +5,11 @@ import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import net.sourcebot.api.typeRefOf
 import java.io.File
 import java.net.URL
@@ -20,11 +20,11 @@ interface JsonSerial<T> {
 
     companion object {
         @JvmStatic
-        val mapper: ObjectMapper = jacksonObjectMapper().enable(
+        val mapper: JsonMapper = JsonMapper.builder().enable(
             SerializationFeature.INDENT_OUTPUT
         ).enable(
             MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS
-        )
+        ).build()
 
         @JvmStatic
         fun <T> register(type: Class<T>, serial: JsonSerial<T>) {

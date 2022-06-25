@@ -3,6 +3,7 @@ package net.sourcebot.module.documentation.utility
 import com.overzealous.remark.Remark
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.MessageEmbed
+import net.sourcebot.api.capital
 import org.jsoup.nodes.Element
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -88,7 +89,7 @@ fun StringBuilder.appendIfRoom(str: String, limit: Int, ellipsis: String = "..."
  */
 fun String.capitalizeAllWords(): String {
     return split(" ")
-        .joinToString(" ") { it.lowercase().capitalize() }
+        .joinToString(" ") { it.lowercase().capital() }
 }
 
 /**

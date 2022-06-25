@@ -3,6 +3,7 @@ package net.sourcebot.module.boosters.listener
 import net.dv8tion.jda.api.events.GenericEvent
 import net.sourcebot.api.DurationUtils
 import net.sourcebot.api.FormatStrategy
+import net.sourcebot.api.capital
 import net.sourcebot.api.event.EventSubscriber
 import net.sourcebot.api.event.EventSystem
 import net.sourcebot.api.event.SourceEvent
@@ -31,7 +32,7 @@ class BoosterListener : EventSubscriber<Boosters> {
                 expiry!!.toEpochMilli() - Instant.now().toEpochMilli(),
                 FormatStrategy.SHORT
             )
-            "**${key.capitalize()}**: ${multi}x ($duration)"
+            "**${key.capital()}**: ${multi}x ($duration)"
         }
         embed.addField("Boosters:", listing, false)
     }

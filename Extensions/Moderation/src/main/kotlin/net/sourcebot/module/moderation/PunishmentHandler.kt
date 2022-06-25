@@ -444,7 +444,7 @@ class PunishmentHandler(private val guild: Guild) {
     fun getPoints(user: User): Double = incidents.find(Document().also {
         it["target"] = user.id
         it["points"] = Document("\$exists", true)
-    }).sumByDouble { (it["points"] as Document)["value"] as Double }
+    }).sumOf { (it["points"] as Document)["value"] as Double }
 
     private fun getOffense(id: Int): Document? = offenses.find().sortedBy {
         it["level"] as Int

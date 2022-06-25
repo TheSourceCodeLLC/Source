@@ -4,12 +4,9 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.TextChannel
 import net.sourcebot.Source
-import net.sourcebot.api.DurationUtils
-import net.sourcebot.api.durationOf
-import net.sourcebot.api.formatLong
+import net.sourcebot.api.*
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardInfoResponse
-import net.sourcebot.api.round
 import net.sourcebot.module.moderation.data.Incident.Type
 import org.bson.Document
 import java.time.Duration
@@ -102,7 +99,7 @@ abstract class ExpiringPunishment(
     val heading = when (type) {
         Type.CASE_DELETE -> "Case Deletion"
         Type.ROLE_UPDATE -> "Role Update"
-        else -> type.name.lowercase().capitalize()
+        else -> type.name.lowercase().capital()
     }
     private val action = when {
         type.name.contains("ban", true) -> "${type.name}ned"
@@ -110,7 +107,7 @@ abstract class ExpiringPunishment(
         type == Type.ROLE_UPDATE -> "Updated"
         type == Type.CASE_DELETE -> "Deleted"
         else -> "${type.name}ed"
-    }.lowercase().capitalize()
+    }.lowercase().capital()
 
     private val targetType = when (type) {
         Type.CLEAR -> "Channel"
@@ -148,7 +145,7 @@ abstract class ExpiringPunishment(
                     appendDescription("**Amount Cleared:** ${document["amount"] as Int}\n")
                 }
                 Type.ROLE_UPDATE -> {
-                    val kind = (document["action"] as String).lowercase().capitalize().let {
+                    val kind = (document["action"] as String).lowercase().capital().let {
                         it + if (it.endsWith("d")) "ed" else "d"
                     }
                     val role = (document["role"] as String).let {

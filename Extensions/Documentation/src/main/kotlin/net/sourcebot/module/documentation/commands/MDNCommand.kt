@@ -7,6 +7,7 @@ import me.hwiggy.kommander.arguments.Arguments
 import me.hwiggy.kommander.arguments.Synopsis
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.utils.MarkdownUtil
+import net.sourcebot.api.capital
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardErrorResponse
@@ -89,7 +90,6 @@ class MDNCommand : DocumentationCommand(
                 return searchResultResponse
             }
 
-
             val docObjectResult = resultList[0]
             val resultUrl = "$baseUrl/en-US/docs/${docObjectResult["slug"].asText()}"
 
@@ -126,7 +126,7 @@ class MDNCommand : DocumentationCommand(
 
             val headerNames = arrayOf("parameters", "return_value", "returns", "exceptions", "value", "throws")
             headerNames.forEach {
-                val fieldName = if (it.equals("return_value", true)) "Returns:" else "${it.capitalize()}:"
+                val fieldName = if (it.equals("return_value", true)) "Returns:" else "${it.capital()}:"
                 val fieldDescription = retrieveFormattedElement(resultDocument, it)
 
                 docResponse.attemptAddEmbedField(fieldName, fieldDescription)
@@ -183,7 +183,6 @@ class MDNCommand : DocumentationCommand(
                 // Prevents text from a nested dl from being put into the item description
                 var descElement = it.nextElementSibling() ?: return@forEach
                 descElement = descElement.selectFirst("p") ?: descElement
-
 
                 // Removes HTML list elements
                 descElement.select("ul").remove()

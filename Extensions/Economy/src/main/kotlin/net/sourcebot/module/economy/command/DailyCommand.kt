@@ -51,7 +51,12 @@ class DailyCommand : EconomyRootCommand(
             if (winnings > baseWin) {
                 val difference = winnings - baseWin
                 it.appendDescription(
-                    "\nYou won an additional ${formatPlural(difference, "coin")} due to your daily streak of ${daily.count}!"
+                    "\nYou won an additional ${
+                        formatPlural(
+                            difference,
+                            "coin"
+                        )
+                    } due to your daily streak of ${daily.count}!"
                 )
             }
             economy.balance += winnings

@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.requests.RestAction
 import net.sourcebot.Source
+import net.sourcebot.api.capital
 import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.Response
 import net.sourcebot.api.response.StandardEmbedResponse
@@ -79,11 +80,12 @@ class Game(private val amount: Int, private val category: Int?) {
         } else {
             val question = current!!
             log.add("Current Question: \n\t${question.text}")
-            log.add("Possible Answers: \n${
-                question.answers.joinToString(
-                    separator = "\n",
-                    transform = { "\t${it.text}" })
-            }"
+            log.add(
+                "Possible Answers: \n${
+                    question.answers.joinToString(
+                        separator = "\n",
+                        transform = { "\t${it.text}" })
+                }"
             )
             log.add("Correct Answer: ${question.correct}")
             var firstBonus = true
@@ -125,7 +127,7 @@ class Game(private val amount: Int, private val category: Int?) {
     fun stop(cause: StopCause) {
         updateMessage(ScoreResponse(getTopFive()).asEmbed(message.author))
         lastTick.cancel(true)
-        log.add("Trivia ${cause.name.lowercase().capitalize()}")
+        log.add("Trivia ${cause.name.lowercase().capital()}")
         if (scores.isNotEmpty()) {
             log.add("Final Scores:")
             scores.entries.sortedByDescending { (_, v) -> v }.forEach {

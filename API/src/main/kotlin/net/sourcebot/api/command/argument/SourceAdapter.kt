@@ -108,6 +108,25 @@ object SourceAdapter {
         }
     }
 
+    @JvmStatic fun <K, V> dictionary(
+        columnSeparator: String,
+        rowSeparator: String,
+        keyTransform: (String) -> K,
+        valTransform: (String) -> V
+    ) = Adapter.single<Map<K, V>> { arg ->
+        val map = hashMapOf<K, V>()
+        arg.split(rowSeparator).forEach {
+            val (k, v) = it.split(columnSeparator)
+            map[keyTransform(k)] = valTransform(v)
+        }
+        return@single map
+    }
+
+    @JvmStatic fun dictionary(
+        columnSeparator: String,
+        rowSeparator: String
+    ) = dictionary(columnSeparator, rowSeparator, { it }, { it })
+
     @JvmStatic fun guildMessageChannel() = textChannel() or category()
 
     @JvmStatic fun duration() = Adapter.single { it ->

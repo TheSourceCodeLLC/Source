@@ -20,7 +20,7 @@ class Profiles : SourceModule() {
     private lateinit var cleanup: ScheduledFuture<*>
     override fun enable() {
         profiles = CacheBuilder.newBuilder().weakKeys()
-            .removalListener<Guild, ProfileHandler> { (_, v) -> v.saveAll() }
+            .removalListener<Guild, ProfileHandler> { (_, v) -> v?.saveAll() }
             .build(object : CacheLoader<Guild, ProfileHandler>() {
                 override fun load(key: Guild) = ProfileHandler(key)
             })

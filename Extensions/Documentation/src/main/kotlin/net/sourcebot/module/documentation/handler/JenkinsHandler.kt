@@ -124,7 +124,6 @@ class JenkinsHandler(
             rawExtraInfo.forEach { (key, value) ->
                 val modifiedValue = value.replace("\n", "<br>")
 
-
                 val valueElement: Element = Jsoup.parse("<div>$modifiedValue</div>").selectFirst("div")
                 val convertedValue = convertHyperlinksToMarkdown(valueElement, infoUrl)
                     .toMarkdown()

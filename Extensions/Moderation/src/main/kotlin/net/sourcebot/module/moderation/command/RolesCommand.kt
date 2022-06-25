@@ -18,6 +18,7 @@ class RolesCommand : ModerationRootCommand(
     "roles", "Manage member roles."
 ) {
     override val aliases = listOf("role")
+
     private inner class RolesAddCommand : ModerationCommand(
         "add", "Add a role to a member."
     ) {

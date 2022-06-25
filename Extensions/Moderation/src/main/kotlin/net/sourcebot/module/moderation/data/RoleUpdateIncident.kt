@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.TextChannel
 import net.dv8tion.jda.api.exceptions.HierarchyException
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException
+import net.sourcebot.api.capital
 import net.sourcebot.api.formatLong
 import net.sourcebot.api.response.StandardErrorResponse
 import net.sourcebot.api.response.StandardSuccessResponse
@@ -21,7 +22,7 @@ class RoleUpdateIncident(
     override val source = sender.id
     override val target = member.id
     override val type = Incident.Type.ROLE_UPDATE
-    private val kind = action.name.lowercase().capitalize().let {
+    private val kind = action.name.lowercase().capital().let {
         it + if (it.endsWith("d")) "ed" else "d"
     }
     private val heading = "Role Update - #$id"

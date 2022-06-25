@@ -19,6 +19,7 @@ import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.time.Duration
+import java.util.*
 import kotlin.math.max
 
 fun String.urlEncoded(charset: Charset = StandardCharsets.UTF_8): String = URLEncoder.encode(this, charset)
@@ -86,3 +87,6 @@ fun <T : EmbedBuilder> T.sortFields() = this.also {
 fun String.insert(position: Int, other: String) = substring(0, position) + other + substring(position, length)
 
 fun <T> Class<T>.getDeclaringArchive() = File(this.protectionDomain.codeSource.location.toURI())
+
+fun String.capital() =
+    this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }

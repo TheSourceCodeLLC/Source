@@ -2,6 +2,7 @@ package net.sourcebot.module.trivia.data
 
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonProperty
+import net.sourcebot.api.capital
 import net.sourcebot.api.configuration.JsonConfiguration
 import net.sourcebot.api.configuration.JsonSerial
 import net.sourcebot.api.urlDecoded
@@ -46,8 +47,8 @@ object OpenTDB {
         @JsonProperty("incorrect_answers") incorrect: Array<String>,
     ) {
         val category: String = category.urlDecoded()
-        val type: String = type.urlDecoded().capitalize()
-        val difficulty: String = difficulty.urlDecoded().capitalize()
+        val type: String = type.urlDecoded().capital()
+        val difficulty: String = difficulty.urlDecoded().capital()
         val text: String = question.urlDecoded()
         val correct: String = correct.urlDecoded()
         val answers = listOf(
