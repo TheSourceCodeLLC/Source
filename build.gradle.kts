@@ -1,8 +1,6 @@
 plugins {
     id("org.jetbrains.kotlin.jvm").version("1.6.0") apply false
     id("com.github.johnrengelman.shadow").version("6.1.0") apply false
-    id("maven-publish")
-    id("java-library")
 }
 
 allprojects {
