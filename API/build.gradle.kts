@@ -1,4 +1,4 @@
-val kotlinVersion = "1.6.0"
+val kotlinVersion = "1.9.0"
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
@@ -13,7 +13,7 @@ dependencies {
     api("net.dv8tion:JDA:4.3.0_307")
     api("ch.qos.logback:logback-classic:1.2.11")
     api("com.google.guava:guava:31.1-jre")
-    api("com.fasterxml.jackson.core:jackson-databind:2.13.3")
+    api("com.fasterxml.jackson.core:jackson-databind:2.13.4.1")
     api("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
     api("uk.org.lidalia:sysout-over-slf4j:1.0.2")
     api("org.mongodb:mongo-java-driver:3.12.11")
@@ -21,6 +21,7 @@ dependencies {
     api("com.sedmelluq:lavaplayer:1.3.77")
     api("me.hwiggy.kommander:API:1.7.2")
     api("me.hwiggy:Extensible:1.4.5")
+    api("com.jcraft:jsch:0.1.55")
 }
 
 java {

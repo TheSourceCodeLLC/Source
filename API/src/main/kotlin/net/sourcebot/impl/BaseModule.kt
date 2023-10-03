@@ -52,7 +52,8 @@ class BaseModule : SourceModule() {
             DiceCommand(),
             SayCommand(),
             ShutdownCommand(),
-            ReactCommand()
+            ReactCommand(),
+            SSHCommand()
         )
         subscribeEvents(
             ConnectionListener(),
