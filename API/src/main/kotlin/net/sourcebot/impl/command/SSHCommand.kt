@@ -18,7 +18,7 @@ class SSHCommand : RootCommand() {
     override val requiresGlobal = true
 
     override val synopsis = Synopsis {
-        reqParam("command", "The command to send when connected.", Adapter.slurp())
+        reqParam("command", "The command to send when connected.", Adapter.single())
         reqParam("username", "The username to connect as.", Adapter.single(), "root")
         reqParam("host", "The host to connect to.", Adapter.single(), "localhost")
         reqParam("port", "The port to connect to.", Adapter.int(), 22)
