@@ -5,7 +5,7 @@ plugins {
 
 allprojects {
     group = "net.sourcebot"
-    version = "5.5.1"
+    version = "5.5.2"
     buildDir = File(rootProject.projectDir, "target/output/$name")
 
     repositories {
