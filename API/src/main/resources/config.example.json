@@ -1,0 +1,22 @@
+{
+  "log-level": "INFO",
+  "mongodb": "mongodb://username:password@host:27017",
+  "global-admins": [],
+  "commands": {
+    "prefix": "!",
+    "delete-seconds": 20
+  },
+  "embed-response": {
+    "footer": "SourceBot"
+  },
+  "activity": {
+    "type": "DEFAULT",
+    "value": "Source - Shard %d"
+  },
+  "lifecycle": {
+    "restart-script": "./restart.sh",
+    "update-script": "./update.sh",
+    "stop-script": "./stop.sh"
+  },
+  "token": ""
+}

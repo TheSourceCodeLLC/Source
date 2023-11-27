@@ -1,0 +1,63 @@
+package net.sourcebot.module.trivia.data
+
+import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.events.GenericEvent
+import net.dv8tion.jda.api.events.message.guild.react.GuildMessageReactionAddEvent
+import net.sourcebot.api.event.EventSubscriber
+import net.sourcebot.api.event.EventSystem
+import net.sourcebot.api.event.SourceEvent
+import net.sourcebot.module.trivia.Trivia
+
+val validEmotes = arrayOf(
+    "\uD83C\uDDE6",
+    "\uD83C\uDDE7",
+    "\uD83C\uDDE8",
+    "\uD83C\uDDE9"
+)
+
+class TriviaListener : EventSubscriber<Trivia> {
+    private val gameMap = HashMap<String, HashMap<String, Int>>()
+    private val messageCache = HashMap<String, Message>()
+
+    fun link(
+        message: Message,
+        answerMap: HashMap<String, Int>
+    ) {
+        gameMap[message.id] = answerMap
+        messageCache[message.id] = message
+    }
+
+    fun unlink(messageId: String) {
+        gameMap.remove(messageId)
+        messageCache.remove(messageId)
+    }
+
+    private fun onReaction(event: GuildMessageReactionAddEvent) {
+        if (event.user.isBot) return
+        val answerMap = gameMap[event.messageId] ?: return
+        val message = messageCache.computeIfAbsent(event.messageId) {
+            event.retrieveMessage().complete()
+        }
+        val reaction = event.reactionEmote
+        if (reaction.isEmote) {
+            message.removeReaction(reaction.emote, event.user).complete()
+            return
+        }
+        val unicode = reaction.name
+        if (unicode !in validEmotes) {
+            message.removeReaction(unicode, event.user).complete()
+            return
+        }
+        val answer = validEmotes.indexOf(unicode)
+        answerMap[event.userId] = answer
+        message.removeReaction(unicode, event.user).queue()
+    }
+
+    override fun subscribe(
+        module: Trivia,
+        jdaEvents: EventSystem<GenericEvent>,
+        sourceEvents: EventSystem<SourceEvent>
+    ) {
+        jdaEvents.listen(module, this::onReaction)
+    }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Source",
+  "version": "${project.version}",
+  "description": "Source base commands.",
+  "author": "TheSourceCode",
+  "main": "net.sourcebot.Source"
+}

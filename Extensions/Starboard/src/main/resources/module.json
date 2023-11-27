@@ -1,0 +1,7 @@
+{
+  "main": "net.sourcebot.module.starboard.Starboard",
+  "name": "${project.name}",
+  "version": "${project.version}",
+  "description": "${project.description}",
+  "author": "Hwiggy#0001"
+}

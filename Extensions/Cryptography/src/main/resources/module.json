@@ -1,0 +1,7 @@
+{
+  "main": "net.sourcebot.module.cryptography.Cryptography",
+  "name": "${project.name}",
+  "version": "${project.version}",
+  "description": "${project.description}",
+  "author": "Hwiggy#0001"
+}

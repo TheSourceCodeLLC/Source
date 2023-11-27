@@ -1,0 +1,24 @@
+# This file is a template, and might need editing before it works on your project.
+# This is the Gradle build system for JVM applications
+# https://gradle.org/
+# https://github.com/gradle/gradle
+image: openjdk:11.0.8-slim
+
+before_script:
+  - export GRADLE_USER_HOME=`pwd`/.gradle
+  - chmod +x ./gradlew
+
+cache:
+  paths:
+    - target/output
+    - .gradle
+
+stages: [ "build", "deploy" ]
+
+build:
+  stage: build
+  script: ./gradlew install
+
+deploy:
+  stage: deploy
+  script: ./gradlew publish -Pdeploy=remote

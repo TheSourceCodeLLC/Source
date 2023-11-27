@@ -1,0 +1,7 @@
+{
+  "main": "net.sourcebot.module.documentation.Documentation",
+  "name": "${project.name}",
+  "version": "${project.version}",
+  "description": "${project.description}",
+  "author": "TheForbiddenAi#3797"
+}

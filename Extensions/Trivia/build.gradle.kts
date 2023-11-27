@@ -1,0 +1,1 @@
+description = "Module responsible for trivia games."
